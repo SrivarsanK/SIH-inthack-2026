@@ -10,6 +10,7 @@ import {
   MapPin,
   MoreVertical,
   ShieldCheck,
+  Wifi,
   X,
   Zap,
 } from "lucide-react";
@@ -140,7 +141,7 @@ const DetailMap: React.FC<{
       <div ref={containerRef} className="w-full h-full" />
       {/* Clean HTML overlay badge for status */}
       <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl px-3 py-1.5 shadow-md border border-slate-200/80 flex items-center gap-2">
-        <Zap className="w-3.5 h-3.5 text-[#f7a501]" />
+        <Wifi className="w-3.5 h-3.5 text-blue-600" />
         <span className="text-xs font-extrabold text-slate-800">Updated 1 min ago</span>
       </div>
     </div>

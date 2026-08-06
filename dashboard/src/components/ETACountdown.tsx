@@ -1,5 +1,5 @@
 import React from "react";
-import { Clock, AlertTriangle, ShieldCheck, Zap } from "lucide-react";
+import { Clock, AlertTriangle, ShieldCheck, Wifi } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
 
 interface ETACountdownProps {
@@ -54,7 +54,7 @@ export const ETACountdown: React.FC<ETACountdownProps> = ({ data }) => {
           </div>
         ) : (
           <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700">
-            <Zap className="w-3.5 h-3.5 text-[#b17816]" />
+            <Wifi className="w-3.5 h-3.5 text-blue-600" />
             <span>Live compounding calculation</span>
           </div>
         )}

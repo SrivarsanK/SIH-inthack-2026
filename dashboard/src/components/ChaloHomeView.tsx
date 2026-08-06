@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
+  ArrowRight,
   Bell,
   Bus,
   ChevronLeft,
@@ -18,6 +19,7 @@ import {
   Tv,
   User,
   Users,
+  Wifi,
   Zap,
 } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
@@ -403,18 +405,18 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
                   <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-md border border-slate-200/80 flex items-start gap-3">
                     <div className="w-9 h-9 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center shrink-0">
-                      <Bus className="w-5 h-5 text-blue-700" />
+                      <Bus className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                      <span className="font-black text-slate-900 text-xs sm:text-sm block">
+                      <span className="font-extrabold text-slate-900 text-xs sm:text-sm block">
                         {selectedAgency.shortName}-{route?.code}
                       </span>
                       <span className="text-[11px] text-slate-500 block">
                         To {route?.destination}
                       </span>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Zap className="w-3 h-3 text-[#f7a501]" />
-                        <span className="text-xs font-extrabold text-[#f7a501]">
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <Wifi className="w-3.5 h-3.5 text-blue-600" />
+                        <span className="text-xs font-extrabold text-blue-600">
                           In {formatMin(T_inbound_sec)}
                         </span>
                       </div>
@@ -490,8 +492,8 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                           </span>
                           <div className="mt-1">
                             {isFirst ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-[#b17816] text-[10px] font-extrabold border border-amber-200">
-                                <Zap className="w-2.5 h-2.5 text-[#f7a501]" />
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold border border-blue-200">
+                                <Wifi className="w-2.5 h-2.5 text-blue-600" />
                                 In {formatMin(T_inbound_sec)}
                               </span>
                             ) : (
@@ -526,28 +528,40 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               {/* Nearest Bus Stop Card */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-black text-slate-900 text-base">Nearest Bus Stop</h3>
-                  <span className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-                    Nearest stop
-                  </span>
+                  <h3 className="font-black text-slate-900 text-base">Nearest bus stop</h3>
+                  <button
+                    onClick={() => setActiveNav("routes")}
+                    className="text-xs font-extrabold text-[#f7a501] hover:underline flex items-center gap-1 group"
+                  >
+                    <span>See all stops</span>
+                    <span className="w-4 h-4 rounded-full bg-[#f7a501] text-white flex items-center justify-center text-[10px]">➔</span>
+                  </button>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-                    <Bus className="w-5 h-5 text-slate-800" />
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                      <MapPin className="w-5 h-5 text-slate-900" />
+                    </div>
+                    <div>
+                      <span className="font-extrabold text-slate-900 text-base block leading-snug">
+                        {stops[0]?.name ?? "Ekkattuthangal Or Ambal Nagar"}
+                      </span>
+                      <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
+                        Nearest stop
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-extrabold text-slate-900 text-base block leading-snug">
-                      {stops[0]?.name ?? "Majestic Kempegowda BS"}
-                    </span>
-                    <span className="text-xs text-slate-500 block mt-0.5">
-                      {selectedAgency.city} · Live ETAs updated
-                    </span>
-                  </div>
+                  <button
+                    onClick={() => setActiveNav("routes")}
+                    className="text-xs font-bold text-[#f7a501] hover:underline shrink-0"
+                  >
+                    View timetable
+                  </button>
                 </div>
 
-                {/* Upcoming Bus ETA rows */}
-                <div className="divide-y divide-slate-100 border-t border-slate-100 pt-2">
+                {/* Upcoming Bus ETA rows in soft rounded box */}
+                <div className="bg-slate-50/80 rounded-2xl p-3 space-y-3 border border-slate-100">
                   {selectedAgency.routes.slice(0, 2).map((r, idx) => {
                     const etaMin = idx === 0
                       ? Math.floor(T_inbound_sec / 60)
@@ -556,17 +570,17 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       <div
                         key={r.id}
                         onClick={() => setActiveNav("track")}
-                        className="flex items-center justify-between py-3 cursor-pointer hover:bg-slate-50 transition-colors rounded-xl px-2 -mx-2"
+                        className="flex items-center justify-between cursor-pointer hover:bg-white p-2 rounded-xl transition-all group"
                       >
                         <div className="flex items-center gap-3">
-                          <Bus className="w-4 h-4 text-slate-400" />
+                          <Bus className="w-5 h-5 text-slate-700" />
                           <div>
-                            <span className="font-extrabold text-slate-900 text-sm">{r.code}</span>
+                            <span className="font-extrabold text-slate-900 text-sm block">{r.code}</span>
                             <span className="text-xs text-slate-500 block">To {r.destination}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 font-bold text-sm text-[#f7a501]">
-                          <Zap className="w-4 h-4" />
+                        <div className="flex items-center gap-1.5 font-bold text-sm text-blue-600">
+                          <Wifi className="w-4 h-4 text-blue-600" />
                           <span>{etaMin} min away</span>
                         </div>
                       </div>
