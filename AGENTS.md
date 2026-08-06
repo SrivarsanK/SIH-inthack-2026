@@ -92,6 +92,10 @@ The simulator (CH-1) is the single source of truth for all test data. Do not har
 - **Never bundle unrelated work**: Do not combine refactoring, styling, and feature logic into a single commit.
 - **Clean commit scope & message**: Use Conventional Commits (`feat(chN): ...`, `fix(chN): ...`, `refactor(chN): ...`). Ensure project builds and tests pass cleanly at every commit checkpoint.
 
+### 12. Leverage project & global skills
+- **Check available skills**: Before starting UI design, PDF processing, research, or complex tasks, inspect `.agents/skills/` or global skills available in your workspace.
+- **Follow skill workflows**: When a task matches a skill (e.g. `impeccable` for frontend UI/UX, `pdf` for PDF processing, `gemini-deep-research` for research), read its `SKILL.md` first and adhere strictly to its workflow and quality bar.
+
 ---
 
 ## Shared Setup (run once, first)
