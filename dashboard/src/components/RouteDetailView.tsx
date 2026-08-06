@@ -254,7 +254,7 @@ const StopTimetableModal: React.FC<{
   );
 };
 
-// ─── Stop Timeline ────────────────────────────────────────────────────────────
+// ─── Chalo App Style Stop Timeline ───────────────────────────────────────────
 const StopTimeline: React.FC<{
   stops: TransitAgency["routes"][0]["coords"];
   inboundSec: number;
@@ -271,89 +271,99 @@ const StopTimeline: React.FC<{
   }
 
   return (
-    <div className="relative space-y-1.5">
-      {/* Continuous Vertical Line Track connecting all stops */}
-      <div className="absolute left-[21px] top-4 bottom-6 w-0.5 bg-slate-200 z-0 pointer-events-none" />
+    <div className="relative py-2">
+      {/* Chalo App Continuous Solid Left Axis Line */}
+      <div className="absolute left-[13px] top-4 bottom-6 w-[2px] bg-slate-800 z-0 pointer-events-none" />
 
-      {stops.map((stop, idx) => {
-        const isNearest = idx === nearestIdx;
-        const isSelected = selectedStopId === stop.id;
-        const isLast = idx === stops.length - 1;
-        const arrMin = Math.round((totalSec * (idx / Math.max(stops.length - 1, 1))) / 60);
+      <div className="space-y-4">
+        {stops.map((stop, idx) => {
+          const isNearest = idx === nearestIdx;
+          const isSelected = selectedStopId === stop.id;
+          const isLast = idx === stops.length - 1;
+          const isFirst = idx === 0;
+          const arrMin = Math.round((totalSec * (idx / Math.max(stops.length - 1, 1))) / 60);
 
-        return (
-          <div
-            key={stop.id}
-            onClick={() => onSelectStop(stop)}
-            className={`relative z-10 flex items-start gap-4 p-3 rounded-2xl transition-all cursor-pointer select-none ${
-              isSelected
-                ? "bg-amber-50/90 border-2 border-[#f7a501] shadow-xs"
-                : "bg-white hover:bg-slate-50 border-2 border-transparent"
-            }`}
-          >
-            {/* Timeline connector dot */}
-            <div className="relative flex flex-col items-center shrink-0 pt-0.5 w-5 z-10">
-              <div
-                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                  isNearest || isSelected
-                    ? "bg-[#f7a501] border-[#f7a501] shadow-md ring-4 ring-amber-100"
-                    : isLast
-                    ? "bg-slate-900 border-slate-900"
-                    : "bg-white border-slate-300"
-                }`}
-              >
+          return (
+            <div
+              key={stop.id}
+              onClick={() => onSelectStop(stop)}
+              className="relative z-10 flex items-start gap-3 cursor-pointer select-none group"
+            >
+              {/* Chalo App Timeline Circle Nodes */}
+              <div className="w-[28px] shrink-0 flex items-center justify-center pt-1">
                 {isNearest ? (
-                  <Bus className="w-3 h-3 text-slate-950 font-black" />
+                  /* Nearest/Live Stop Node: Solid Amber/Black filled circle */
+                  <div className="w-4 h-4 rounded-full bg-slate-900 border-2 border-slate-900 shadow-xs z-10 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  </div>
+                ) : isFirst ? (
+                  /* First Stop: Solid black filled circle */
+                  <div className="w-3.5 h-3.5 rounded-full bg-slate-900 border-2 border-slate-900 z-10" />
                 ) : isLast ? (
-                  <Flag className="w-2.5 h-2.5 text-white" />
+                  /* Terminus Stop: Black flag circle node */
+                  <div className="w-4 h-4 rounded-full bg-slate-900 border-2 border-slate-900 z-10 flex items-center justify-center">
+                    <Flag className="w-2 h-2 text-white" />
+                  </div>
                 ) : (
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                  /* Intermediate Stop: Hollow Ring Circle sitting directly on the line */
+                  <div className={`w-3.5 h-3.5 rounded-full border-2 bg-white transition-colors z-10 ${
+                    isSelected ? "border-[#f7a501] ring-2 ring-amber-100" : "border-slate-800 group-hover:border-slate-900"
+                  }`} />
                 )}
               </div>
-            </div>
 
-            {/* Stop Information */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2 mb-0.5">
-                <div className="flex items-center gap-2">
-                  <span className={`font-extrabold text-sm ${isSelected || isNearest ? "text-slate-900" : "text-slate-700"}`}>
-                    {stop.name}
-                  </span>
-                  {isNearest && (
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
+              {/* Stop Content & Selected Action Card */}
+              <div className="flex-1 min-w-0 pr-1">
+                
+                {/* Green Nearest Bus Stop Pill (Chalo Style) */}
+                {isNearest && (
+                  <div className="mb-1">
+                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">
                       Nearest bus stop
                     </span>
+                  </div>
+                )}
+
+                {/* Stop Name & Report Issue Row */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`text-slate-800 transition-colors ${
+                    isSelected ? "font-black text-base text-slate-900" : "font-semibold text-sm hover:text-slate-900"
+                  }`}>
+                    {stop.name}
+                  </span>
+
+                  {isSelected && (
+                    <button className="text-[#f7a501] text-xs font-bold hover:underline shrink-0">
+                      Report issue
+                    </button>
                   )}
                 </div>
 
-                <span className={`text-xs font-bold shrink-0 ${isNearest || isSelected ? "text-[#f7a501]" : "text-slate-400"}`}>
-                  {isNearest ? `In ${formatMin(inboundSec)}` : `${arrMin} min`}
-                </span>
-              </div>
-
-              {/* Action Card ONLY for Currently Selected Stop */}
-              {isSelected && (
-                <div className="mt-2.5 p-3 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-center justify-between gap-3 shadow-2xs">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
-                    <Zap className="w-4 h-4 text-[#f7a501]" />
-                    <span>{isNearest ? "Live vehicle approaching stop" : `Next arrival in ${arrMin} min`}</span>
+                {/* Chalo Style Action Box ONLY when Selected */}
+                {isSelected && (
+                  <div className="mt-2.5 p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between gap-3">
+                    <span className="text-xs font-medium text-slate-500">
+                      {isNearest
+                        ? `Live vehicle approaching (${formatMin(inboundSec)})`
+                        : `Next arrival in ${arrMin} min`}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenTimetable(stop);
+                      }}
+                      className="text-[#f7a501] text-xs font-bold hover:underline shrink-0"
+                    >
+                      View timetable
+                    </button>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenTimetable(stop);
-                    }}
-                    className="text-[#b17816] text-xs font-black hover:underline shrink-0 flex items-center gap-1"
-                  >
-                    <span>View Timetable</span>
-                    <ChevronRight className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
+                )}
+
+              </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 };
@@ -374,7 +384,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
 
-      {/* Navigation Header Bar */}
+      {/* Navigation Header Bar (Chalo Style Top Header) */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <div className="flex items-center gap-3">
           <button
@@ -389,7 +399,10 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
             <span className="px-2.5 py-0.5 rounded-md bg-[#f7a501] text-slate-950 text-[10px] font-extrabold">
               {selectedAgency.dataStatus === "Chalo Chained Feed" ? "Deluxe" : "LIVE"}
             </span>
-            <h1 className="text-xl font-black text-slate-900">Route {route?.code}</h1>
+            <div>
+              <h1 className="text-xl font-black text-slate-900 leading-tight">Route {route?.code}</h1>
+              <span className="text-xs text-slate-500 font-bold block">To {route?.destination}</span>
+            </div>
           </div>
         </div>
 
@@ -435,7 +448,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Interactive Vertical Stop Timeline (6 cols) */}
+        {/* Right Column: Chalo App Vertical Stop Timeline (6 cols) */}
         <div className="lg:col-span-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
