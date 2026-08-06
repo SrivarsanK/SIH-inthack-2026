@@ -166,6 +166,22 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
   const timelineRef = useRef<HTMLDivElement>(null);
 
+  // Convert vertical mouse wheel / trackpad scroll into horizontal scroll when hovering timeline
+  useEffect(() => {
+    const el = timelineRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY * 1.2;
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, []);
+
   const route = selectedAgency.routes[0];
   const stops = route?.coords ?? [];
   const { T_total_sec, T_outbound_sec, T_inbound_sec, occupancy_band } = data.inbound;
