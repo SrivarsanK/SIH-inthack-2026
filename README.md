@@ -91,27 +91,71 @@ stateDiagram-v2
 
 ---
 
-## 🚀 Quick Start & Local Setup
+## 💻 Teammate Local Setup Guide (Per Channel)
 
-### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- Docker (for Mosquitto MQTT broker)
-
-### 1. Start MQTT Broker
+### 1. Base Setup (All Teammates)
 ```bash
-docker run -d --name mqtt-broker -p 1883:1883 eclipse-mosquitto
+# Clone repository
+git clone https://github.com/SrivarsanK/SIH-inthack-2026.git
+cd SIH-inthack-2026
+
+# Install shared Python dependencies
+pip install paho-mqtt fastapi uvicorn numpy
 ```
 
-### 2. Install Dependencies
-```bash
-# Python dependencies
-pip install paho-mqtt fastapi uvicorn numpy
+---
 
-# Dashboard dependencies
+### 2. Run Your Assigned Channel
+
+#### 🟠 CH-1: Simulator Engine (Teammate A)
+```bash
+# Terminal 1 — Start MQTT Broker (one person runs this)
+docker run -d --name mqtt-broker -p 1883:1883 eclipse-mosquitto
+
+# Terminal 2 — Run Telemetry Simulator & Control API (port 8001)
+python simulator/simulator.py & python simulator/control_api.py
+```
+👉 **Agent Prompt:**
+```text
+Start task in channel CH-1. My name is <YourName>.
+```
+
+---
+
+#### 🟡 CH-2: Kalman Fusion Service (Teammate B)
+```bash
+# Run Kalman Fusion Subscriber & Smoother
+python kalman_service/subscriber.py
+```
+👉 **Agent Prompt:**
+```text
+Start task in channel CH-2. My name is <YourName>.
+```
+
+---
+
+#### 🔵 CH-3: ETA Engine & Density Aggregator (Teammate C)
+```bash
+# Run ETA Engine & SSE Stream Server (port 8002)
+python eta_engine/api.py
+```
+👉 **Agent Prompt:**
+```text
+Start task in channel CH-3. My name is <YourName>.
+```
+
+---
+
+#### 🟢 CH-4: Dashboard UI (Srivarsan / Teammate D)
+```bash
+# Install frontend deps & launch dev server (port 4321)
 cd dashboard
 npm install
-cd ..
+npm run dev
+```
+👉 **Agent Prompt:**
+```text
+Start task in channel CH-4. My name is Srivarsan.
 ```
 
 ---
