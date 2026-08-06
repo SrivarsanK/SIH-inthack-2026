@@ -1,7 +1,0 @@
-service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date
-Regular,1,1,1,1,1,1,1,20240501,20300501
-Weekend,0,0,0,0,0,1,1,20240501,20300501
-Hybrid,0,0,0,1,1,0,1,20240501,20300501
-HSC,1,1,1,1,1,1,0,20240501,20300501
-test ,1,1,1,0,0,0,0,20240501,20300501
-'/><script>alert(1)</script>,1,0,0,0,0,0,0,20240501,20300501
