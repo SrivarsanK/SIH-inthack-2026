@@ -271,7 +271,10 @@ const StopTimeline: React.FC<{
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="relative space-y-1.5">
+      {/* Continuous Vertical Line Track connecting all stops */}
+      <div className="absolute left-[21px] top-4 bottom-6 w-0.5 bg-slate-200 z-0 pointer-events-none" />
+
       {stops.map((stop, idx) => {
         const isNearest = idx === nearestIdx;
         const isSelected = selectedStopId === stop.id;
@@ -282,14 +285,14 @@ const StopTimeline: React.FC<{
           <div
             key={stop.id}
             onClick={() => onSelectStop(stop)}
-            className={`flex items-start gap-4 p-3 rounded-2xl transition-all cursor-pointer select-none ${
+            className={`relative z-10 flex items-start gap-4 p-3 rounded-2xl transition-all cursor-pointer select-none ${
               isSelected
                 ? "bg-amber-50/90 border-2 border-[#f7a501] shadow-xs"
                 : "bg-white hover:bg-slate-50 border-2 border-transparent"
             }`}
           >
-            {/* Timeline connector dot & line */}
-            <div className="flex flex-col items-center shrink-0 pt-1">
+            {/* Timeline connector dot */}
+            <div className="relative flex flex-col items-center shrink-0 pt-0.5 w-5 z-10">
               <div
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                   isNearest || isSelected
@@ -307,12 +310,6 @@ const StopTimeline: React.FC<{
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                 )}
               </div>
-              {!isLast && (
-                <div
-                  className={`w-0.5 flex-1 mt-1 ${isNearest || isSelected ? "bg-[#f7a501]" : "bg-slate-200"}`}
-                  style={{ minHeight: 28 }}
-                />
-              )}
             </div>
 
             {/* Stop Information */}
