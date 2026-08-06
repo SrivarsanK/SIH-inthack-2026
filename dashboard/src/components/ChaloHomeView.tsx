@@ -557,40 +557,10 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                     </span>
                   </div>
                 </div>
-                <span className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200">
+                <span className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
                   <span className={`w-2.5 h-2.5 rounded-full animate-pulse ${OCCUPANCY_DOT[occupancy_band] ?? "bg-emerald-500"}`} />
-                  <span className="text-xs font-bold text-slate-700">{OCCUPANCY_LABEL[occupancy_band]}</span>
+                  <span className="text-xs font-bold text-emerald-800">40 / 55 Seats</span>
                 </span>
-              </div>
-
-              {/* Quick Actions Bar */}
-              <div className="grid grid-cols-4 gap-3">
-                {[
-                  { Icon: Bus, label: "Routes", nav: "routes" as const },
-                  { Icon: Clock, label: "Timetable", nav: "track" as const },
-                  { Icon: Search, label: "Search", nav: "search" as const },
-                  { Icon: Settings, label: "Admin", nav: null, isLink: true },
-                ].map(({ Icon, label, nav, isLink }) => (
-                  isLink ? (
-                    <a
-                      key={label}
-                      href="/admin"
-                      className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-slate-900 text-white shadow-sm hover:bg-slate-800 transition-all text-center"
-                    >
-                      <Icon className="w-5 h-5 text-[#f7a501]" />
-                      <span className="text-xs font-extrabold block">{label}</span>
-                    </a>
-                  ) : (
-                    <button
-                      key={label}
-                      onClick={() => nav && setActiveNav(nav)}
-                      className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-[#f7a501] hover:bg-amber-50/40 transition-all text-center active:scale-95"
-                    >
-                      <Icon className="w-5 h-5 text-slate-700" />
-                      <span className="text-xs font-bold text-slate-900 block">{label}</span>
-                    </button>
-                  )
-                ))}
               </div>
 
               {/* Judge Admin Panel Banner Card */}
