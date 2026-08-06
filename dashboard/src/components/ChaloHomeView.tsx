@@ -596,25 +596,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 </span>
               </div>
 
-              {/* Judge Admin Panel Banner Card */}
-              <a
-                href="/admin"
-                className="flex items-center justify-between p-4 rounded-3xl bg-slate-900 border border-slate-800 shadow-sm hover:bg-slate-800 transition-all group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-[#f7a501] flex items-center justify-center shrink-0 shadow-sm">
-                    <Settings className="w-5 h-5 text-slate-950" />
-                  </div>
-                  <div>
-                    <span className="font-black text-white block text-sm">Judge Injection & Admin Panel</span>
-                    <span className="text-xs text-slate-400">
-                      Inject delay, dropout & crowd events
-                    </span>
-                  </div>
-                </div>
-                <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors shrink-0" />
-              </a>
-
             </div>
           </div>
         </main>
