@@ -28,7 +28,6 @@ const DetailMap: React.FC<{
 }> = ({ data, selectedAgency, selectedStop }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const activeMarkerRef = useRef<any>(null);
 
   const route = selectedAgency.routes[0];
   const stops = route?.coords ?? [];
@@ -111,15 +110,6 @@ const DetailMap: React.FC<{
 
         L.marker([data.vehicle.lat, data.vehicle.lon], { icon: busIcon }).addTo(map);
 
-        // Live status overlay popup
-        L.marker([data.vehicle.lat, data.vehicle.lon + 0.004], {
-          icon: L.divIcon({
-            className: "",
-            html: `<div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:6px 12px;font-size:11px;font-weight:700;color:#1e293b;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,0.1);display:flex;align-items:center;gap:6px"><span style="color:#f7a501">⚡</span>Updated 1 min ago</div>`,
-            iconAnchor: [-10, 20],
-          }),
-        }).addTo(map);
-
         map.fitBounds(L.latLngBounds(latLons), { padding: [40, 40] });
       }
 
@@ -143,7 +133,16 @@ const DetailMap: React.FC<{
     }
   }, [selectedStop]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div className="relative w-full h-full">
+      <div ref={containerRef} className="w-full h-full" />
+      {/* Clean HTML overlay badge for status */}
+      <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl px-3 py-1.5 shadow-md border border-slate-200/80 flex items-center gap-2">
+        <Zap className="w-3.5 h-3.5 text-[#f7a501]" />
+        <span className="text-xs font-extrabold text-slate-800">Updated 1 min ago</span>
+      </div>
+    </div>
+  );
 };
 
 // ─── Stop Timeline ────────────────────────────────────────────────────────────
@@ -206,7 +205,7 @@ const StopTimeline: React.FC<{
               )}
             </div>
 
-            {/* Stop Information (NO LATITUDE/LONGITUDE) */}
+            {/* Stop Information (Clean Human Text) */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
                 <div className="flex items-center gap-2">
@@ -225,18 +224,17 @@ const StopTimeline: React.FC<{
                 </span>
               </div>
 
-              {/* Clean Human Subtitle — Latitude & Longitude Removed */}
-              <span className="text-xs text-slate-500 block">
+              <span className="text-xs text-slate-500 block font-medium">
                 Stop #{idx + 1}
               </span>
 
               {isNearest && (
-                <div className="mt-2.5 p-3 rounded-2xl bg-amber-50/60 border border-amber-200/80 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                <div className="mt-2.5 p-3 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
                     <Zap className="w-4 h-4 text-[#f7a501]" />
                     <span>Live vehicle approaching stop</span>
                   </div>
-                  <button className="text-[#f7a501] text-xs font-extrabold hover:underline shrink-0">
+                  <button className="text-[#b17816] text-xs font-black hover:underline shrink-0">
                     View Timetable
                   </button>
                 </div>
@@ -337,7 +335,13 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
             </span>
           </div>
 
-          <div className="max-h-[500px] overflow-y-auto pr-1">
+          <div
+            className="max-h-[500px] overflow-y-auto pr-2 space-y-1"
+            style={{
+              scrollbarWidth: "thin",
+              scrollbarColor: "#cbd5e1 transparent",
+            }}
+          >
             <StopTimeline
               stops={stops}
               inboundSec={T_inbound_sec}
