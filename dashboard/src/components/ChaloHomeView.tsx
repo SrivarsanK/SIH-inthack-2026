@@ -3,6 +3,7 @@ import {
   AlertCircle,
   Bell,
   Bus,
+  ChevronLeft,
   ChevronRight,
   Clock,
   ExternalLink,
@@ -163,6 +164,8 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     return () => clearInterval(id);
   }, []);
 
+  const timelineRef = useRef<HTMLDivElement>(null);
+
   const route = selectedAgency.routes[0];
   const stops = route?.coords ?? [];
   const { T_total_sec, T_outbound_sec, T_inbound_sec, occupancy_band } = data.inbound;
@@ -189,6 +192,8 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9F6]">
+      {/* ... header code ... */}
+      {/* (rest of the component rendered below) */}
 
       {/* MOBILE STATUS BAR (Old Chalo UI for Mobile) */}
       <div className="md:hidden flex items-center justify-between px-5 pt-3 pb-1 bg-white border-b border-slate-100">
@@ -423,12 +428,38 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                     <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
                       Stop Sequence Timeline
                     </span>
-                    <span className="text-[11px] font-bold text-slate-500">
-                      {stops.length} stops on route
-                    </span>
+                    
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold text-slate-500">
+                        {stops.length} stops on route
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => timelineRef.current?.scrollBy({ left: -160, behavior: "smooth" })}
+                          className="w-6 h-6 rounded-full bg-slate-100 hover:bg-amber-100 hover:text-[#b17816] flex items-center justify-center text-slate-600 transition-colors shadow-2xs"
+                          title="Scroll Left"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => timelineRef.current?.scrollBy({ left: 160, behavior: "smooth" })}
+                          className="w-6 h-6 rounded-full bg-slate-100 hover:bg-amber-100 hover:text-[#b17816] flex items-center justify-center text-slate-600 transition-colors shadow-2xs"
+                          title="Scroll Right"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-start overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
+                  <div
+                    ref={timelineRef}
+                    className="flex items-start overflow-x-auto pb-3 scroll-smooth touch-pan-x"
+                    style={{
+                      scrollbarWidth: "thin",
+                      scrollbarColor: "#cbd5e1 transparent",
+                    }}
+                  >
                     {stops.map((stop, idx) => {
                       const isFirst = idx === 0;
                       return (
