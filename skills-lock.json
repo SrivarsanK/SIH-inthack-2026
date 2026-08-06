@@ -1,6 +1,46 @@
 {
   "version": 1,
   "skills": {
+    "claimable-postgres": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "148a9b4c5d9c86250f221cb172f131b4103c7e13f4d6046dedc015ab477fe2c7"
+    },
+    "neon": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "90370978156046ffe1ef631426bb61a77fe6bf50b633e445061c2821a4bc6419"
+    },
+    "neon-ai-gateway": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "1b1067dadb50ea799376a2b879e8143ea1603195469971679a1d2c328ef2ecae"
+    },
+    "neon-functions": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "c723e5514695d105062912addccf006c58c8e9aa5de9ddb81a0219f9946a340f"
+    },
+    "neon-object-storage": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "9ae40db365404e5673923a3b48a7fdf79e9ca83ff3e7a26f60e208fd0d4c86ac"
+    },
+    "neon-postgres": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "fbad97d1eb04c4cc04876852ad71698927902d1a16ebdf45a857e3632508e138"
+    },
+    "neon-postgres-branches": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "7ae31e07a297a347c97c8ae0eee36341eb5afdd485c24162bc2b024cbf67be2f"
+    },
+    "neon-postgres-egress-optimizer": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "bfd115c8abb55afc59aa93bbf68527fb0175d31d397c765efc1ad475dce44f1f"
+    },
     "pdf": {
       "source": "anthropics/skills",
       "sourceType": "github",

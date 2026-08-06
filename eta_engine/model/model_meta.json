@@ -1,0 +1,20 @@
+{
+  "mae_sec": 472.35,
+  "r2": 0.6741,
+  "training_rows": 240000,
+  "test_rows": 60000,
+  "total_trips": 47539,
+  "training_time_sec": 7.1,
+  "features": [
+    "progress",
+    "hour_sin",
+    "hour_cos",
+    "direction_id"
+  ],
+  "model_class": "GradientBoostingRegressor",
+  "n_estimators": 100,
+  "max_depth": 4,
+  "subsample": 0.5,
+  "data_source": "C:\\Users\\abhyu\\OneDrive\\Desktop\\SIH-inthack-2026\\eta_engine\\Data_train_test\\data",
+  "model_path": "C:\\Users\\abhyu\\OneDrive\\Desktop\\SIH-inthack-2026\\eta_engine\\model\\eta_model.pkl"
+}
