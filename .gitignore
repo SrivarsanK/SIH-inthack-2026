@@ -78,3 +78,7 @@ eta_engine/model/*.joblib
 
 # Generated output/debug files
 eta_engine/sample_output.json
+
+# --- Agent / AI Tooling ---
+# Skills are local AI agent extensions, not project source code
+.agents/skills/
