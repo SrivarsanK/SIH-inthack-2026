@@ -1,0 +1,18 @@
+---
+import { KioskPageApp } from '../components/KioskPageApp';
+import '../styles/global.css';
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="generator" content={Astro.generator} />
+		<title>TransitSense — Live Stop Kiosk Display</title>
+		<meta name="description" content="Public Transit Intelligence Kiosk Display with live bus countdowns, occupancy band, and departure board." />
+	</head>
+	<body class="min-h-screen bg-slate-950 text-white antialiased">
+		<KioskPageApp client:only="react" />
+	</body>
+</html>

@@ -32,7 +32,6 @@ interface ChaloHomeViewProps {
   isConnected: boolean;
   selectedAgency: TransitAgency;
   onSelectAgency: (agency: TransitAgency) => void;
-  onSwitchToKiosk?: () => void;
 }
 
 function formatMin(sec: number): string {
@@ -153,7 +152,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   isConnected,
   selectedAgency,
   onSelectAgency,
-  onSwitchToKiosk,
 }) => {
   const [activeNav, setActiveNav] = useState<"home" | "track" | "routes" | "search">("home");
   const [timeStr, setTimeStr] = useState("");
@@ -304,16 +302,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 onClose={() => setIsAgencyDropdownOpen(false)}
               />
             </div>
-
-            {onSwitchToKiosk && (
-              <button
-                onClick={onSwitchToKiosk}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                <Tv className="w-3.5 h-3.5 text-slate-500" />
-                Kiosk
-              </button>
-            )}
           </div>
         </div>
       </header>
