@@ -154,6 +154,14 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   onSwitchToKiosk,
 }) => {
   const [activeNav, setActiveNav] = useState<"home" | "track" | "routes" | "search">("home");
+  const [timeStr, setTimeStr] = useState("");
+
+  useEffect(() => {
+    const tick = () => setTimeStr(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const route = selectedAgency.routes[0];
   const stops = route?.coords ?? [];
@@ -164,18 +172,64 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     Math.round((T_total_sec * (i / Math.max(stops.length - 1, 1))) / 60)
   );
 
-  const NAV_ITEMS = [
+  const TOP_NAV_ITEMS = [
     { id: "home" as const, icon: Home, label: "Home" },
     { id: "track" as const, icon: Bus, label: "Track Bus" },
     { id: "routes" as const, icon: Star, label: "Routes" },
     { id: "search" as const, icon: Search, label: "Search" },
   ];
 
+  const MOBILE_NAV_ITEMS = [
+    { id: "home" as const, icon: Home, label: "Home" },
+    { id: "track" as const, icon: Bus, label: "Track" },
+    { id: "search" as const, icon: Search, label: "Search" },
+    { id: "routes" as const, icon: Star, label: "Routes" },
+    { id: "profile" as const, icon: User, label: "Profile" },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF9F6]">
 
-      {/* TOP HEADER NAVIGATION ("Usual Navigation") */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+      {/* MOBILE STATUS BAR (Old Chalo UI for Mobile) */}
+      <div className="md:hidden flex items-center justify-between px-5 pt-3 pb-1 bg-white border-b border-slate-100">
+        <span className="text-[13px] font-bold text-slate-800">{timeStr || "10:27"}</span>
+        <div className="flex items-center gap-1.5">
+          <Radio className="w-3.5 h-3.5 text-slate-600" />
+          <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500" : "bg-amber-400"}`} />
+        </div>
+      </div>
+
+      {/* MOBILE APP HEADER (Old Chalo UI for Mobile) */}
+      <div className="md:hidden flex items-center justify-between px-4 py-2 bg-white border-b border-slate-200">
+        <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
+          <Menu className="w-5 h-5 text-slate-700" />
+        </button>
+
+        <div className="flex items-center gap-2 select-none">
+          <div className="w-8 h-8 rounded-full bg-[#f7a501] flex items-center justify-center shadow-sm">
+            <Bus className="w-[18px] h-[18px] text-white" strokeWidth={2.5} />
+          </div>
+          <span className="text-lg font-black tracking-tight text-slate-900">TransitSense</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenAgencySelector}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors"
+          >
+            <MapPin className="w-3 h-3 text-[#f7a501]" />
+            <span>{selectedAgency.city}</span>
+            <ChevronRight className="w-3 h-3 text-slate-400 rotate-90" />
+          </button>
+          <button className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">
+            <Bell className="w-[18px] h-[18px] text-slate-600" />
+            {isConnected && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#f7a501] border border-white" />}
+          </button>
+        </div>
+      </div>
+
+      {/* DESKTOP HEADER NAVIGATION (Web Layout for Desktop) */}
+      <header className="hidden md:block bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           
           {/* Logo & Main Nav Links */}
@@ -190,9 +244,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               <span className="text-xl font-black tracking-tight text-slate-900">TransitSense</span>
             </button>
 
-            {/* Usual Top Navigation Bar for Web */}
-            <nav className="hidden md:flex items-center gap-1">
-              {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
+            {/* Desktop Nav Links */}
+            <nav className="flex items-center gap-1">
+              {TOP_NAV_ITEMS.map(({ id, icon: Icon, label }) => {
                 const active = activeNav === id;
                 return (
                   <button
@@ -211,10 +265,13 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               })}
               <a
                 href="/admin"
-                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-extrabold bg-slate-900 text-white hover:bg-slate-800 transition-all ml-2 shadow-sm"
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-slate-900 text-white hover:bg-slate-800 transition-all ml-2 shadow-sm group"
               >
-                <Settings className="w-3.5 h-3.5 text-[#f7a501]" />
-                Judge Admin Panel ↗
+                <div className="w-6 h-6 rounded-full bg-[#f7a501] flex items-center justify-center shrink-0 shadow-xs">
+                  <Settings className="w-3.5 h-3.5 text-slate-950" />
+                </div>
+                <span>Judge Admin Panel</span>
+                <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
               </a>
             </nav>
           </div>
@@ -233,7 +290,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
             {onSwitchToKiosk && (
               <button
                 onClick={onSwitchToKiosk}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 <Tv className="w-3.5 h-3.5 text-slate-500" />
                 Kiosk
@@ -242,34 +299,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="hidden sm:inline">Live Stream</span>
+              <span>Live Stream</span>
             </div>
           </div>
-        </div>
-
-        {/* Mobile Header Nav Strip */}
-        <div className="md:hidden flex items-center gap-1.5 px-4 py-2 bg-slate-50 border-t border-slate-100 overflow-x-auto">
-          {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
-            const active = activeNav === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveNav(id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shrink-0 transition-all ${
-                  active ? "bg-[#f7a501] text-slate-950 shadow-xs" : "text-slate-600 hover:bg-slate-200/60"
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span>{label}</span>
-              </button>
-            );
-          })}
-          <a
-            href="/admin"
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-extrabold bg-slate-900 text-white shrink-0"
-          >
-            Admin ↗
-          </a>
         </div>
       </header>
 
@@ -302,18 +334,18 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
       {/* HOME DASHBOARD VIEW */}
       {activeNav === "home" && (
-        <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+        <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 space-y-5 sm:space-y-6">
           
           {/* Quick Route Selector Bar */}
           <div className="flex items-center gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-            <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+            <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider shrink-0 mr-1 hidden sm:inline">
               Active Routes:
             </span>
             {selectedAgency.routes.map((r, idx) => (
               <div
                 key={r.id}
                 onClick={() => setActiveNav("track")}
-                className="shrink-0 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-[#f7a501] hover:bg-amber-50/30 transition-all group"
+                className="shrink-0 flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-[#f7a501] hover:bg-amber-50/30 transition-all group min-w-[150px]"
               >
                 <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-[#f7a501]/10">
                   <Bus className="w-4 h-4 text-slate-600 group-hover:text-[#b17816]" />
@@ -327,7 +359,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-slate-500 block truncate max-w-[140px]">
+                  <span className="text-[11px] text-slate-500 block truncate max-w-[120px]">
                     To {r.destination}
                   </span>
                 </div>
@@ -335,18 +367,18 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
             ))}
           </div>
 
-          {/* Responsive Desktop Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Responsive Layout Grid: 1 col on mobile, 12 cols on desktop */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
             
             {/* Left Column: Live Map & Bus Details (7 cols) */}
-            <div className="lg:col-span-7 space-y-6">
+            <div className="lg:col-span-7 space-y-5 sm:space-y-6">
               
               {/* Live Map Card */}
               <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <h2 className="font-black text-slate-900 text-lg">Track Live Bus</h2>
+                    <h2 className="font-black text-slate-900 text-base sm:text-lg">Track Live Bus</h2>
                   </div>
                   <button
                     onClick={() => setActiveNav("track")}
@@ -356,22 +388,22 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   </button>
                 </div>
 
-                <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-200" style={{ height: 320 }}>
+                <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-200" style={{ height: 280 }}>
                   <ChaloMap data={data} selectedAgency={selectedAgency} />
 
-                  <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-sm rounded-2xl p-3 shadow-lg border border-slate-200 flex items-start gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-                      <Bus className="w-5 h-5 text-blue-700" />
+                  <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 shadow-lg border border-slate-200 flex items-start gap-2.5">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                      <Bus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700" />
                     </div>
                     <div>
-                      <span className="font-black text-slate-900 text-sm block">
+                      <span className="font-black text-slate-900 text-xs sm:text-sm block">
                         {selectedAgency.shortName}-{route?.code}
                       </span>
-                      <span className="text-xs text-slate-600 block">
+                      <span className="text-[11px] text-slate-600 block">
                         {stops[0]?.name?.split(" ").slice(0, 2).join(" ") ?? "Terminal"}
                       </span>
-                      <div className="flex items-center gap-1 mt-1">
-                        <Zap className="w-3.5 h-3.5 text-[#f7a501]" />
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <Zap className="w-3 h-3 text-[#f7a501]" />
                         <span className="text-xs font-bold text-[#f7a501]">
                           In {formatMin(T_inbound_sec)}
                         </span>
@@ -434,7 +466,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               </div>
 
               {/* Nearest Bus Stop Card */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-slate-900 text-base">Nearest Bus Stop</h3>
                   <span className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
@@ -559,6 +591,27 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
           </div>
         </main>
       )}
+
+      {/* MOBILE BOTTOM NAVIGATION BAR (Old Chalo UI for Mobile Viewports < 768px) */}
+      <nav className="md:hidden sticky bottom-0 bg-white border-t border-slate-200 shadow-lg px-2 py-2 z-40">
+        <div className="grid grid-cols-5 gap-1">
+          {MOBILE_NAV_ITEMS.map(({ id, icon: Icon, label }) => {
+            const active = activeNav === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveNav(id as any)}
+                className="flex flex-col items-center gap-1 py-1.5 rounded-xl transition-colors"
+              >
+                <Icon className={`w-5 h-5 ${active ? "text-[#f7a501]" : "text-slate-400"}`} />
+                <span className={`text-[10px] font-bold ${active ? "text-[#f7a501]" : "text-slate-400"}`}>
+                  {label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
     </div>
   );
