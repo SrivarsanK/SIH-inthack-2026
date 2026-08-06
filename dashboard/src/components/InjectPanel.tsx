@@ -1,9 +1,13 @@
 import React, { useState } from "react";
-import { AlertCircle, WifiOff, Users, RotateCcw, Zap } from "lucide-react";
+import { AlertCircle, WifiOff, Users, RotateCcw, Zap, Server } from "lucide-react";
 
 const SIM_API = "http://localhost:8001";
 
-export const InjectPanel: React.FC = () => {
+interface InjectPanelProps {
+  onOpenApiInspector?: () => void;
+}
+
+export const InjectPanel: React.FC<InjectPanelProps> = ({ onOpenApiInspector }) => {
   const [loading, setLoading] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -26,17 +30,26 @@ export const InjectPanel: React.FC = () => {
   };
 
   return (
-    <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md shadow-2xl">
-      <div className="flex items-center justify-between mb-4">
+    <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md shadow-2xl space-y-4">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
           <Zap className="w-4 h-4 text-amber-400" />
           <span>INTERACTIVE JUDGE INJECT CONTROLS</span>
         </div>
-        <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">REST :8001</span>
+
+        {onOpenApiInspector && (
+          <button
+            onClick={onOpenApiInspector}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600/15 hover:bg-blue-600/30 border border-blue-500/30 text-[11px] font-bold text-blue-300 transition-all shadow-sm group"
+          >
+            <Server className="w-3 h-3 text-blue-400 group-hover:scale-110 transition-transform" />
+            <span>🔌 View APIs</span>
+          </button>
+        )}
       </div>
 
       {feedback && (
-        <div className="mb-4 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-medium animate-fadeIn">
+        <div className="px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-medium animate-fadeIn">
           {feedback}
         </div>
       )}

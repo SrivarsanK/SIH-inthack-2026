@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "maplibre-gl/dist/maplibre-gl.css";
+@import "leaflet/dist/leaflet.css";
 
 @layer utilities {
   .custom-scrollbar::-webkit-scrollbar {
@@ -16,8 +18,21 @@
   }
 }
 
-.leaflet-container {
+.maplibregl-map {
+  width: 100% !important;
+  height: 100% !important;
   font-family: inherit !important;
+}
+
+.leaflet-container {
+  width: 100% !important;
+  height: 100% !important;
+  font-family: inherit !important;
+}
+
+.custom-vehicle-marker {
+  background: transparent !important;
+  border: none !important;
 }
 
 .custom-bus-icon {
