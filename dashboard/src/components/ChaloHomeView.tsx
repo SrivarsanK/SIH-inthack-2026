@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
 import type { TransitAgency } from "../lib/agencies";
+import { SearchView } from "./SearchView";
+import { RouteDetailView } from "./RouteDetailView";
+import { RoutesListView } from "./RoutesListView";
 
 interface ChaloHomeViewProps {
   data: TransitSnapshot;
@@ -120,9 +123,8 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   isConnected,
   selectedAgency,
   onOpenAgencySelector,
-  onOpenApiInspector,
 }) => {
-  const [activeNav, setActiveNav] = useState<"home"|"track"|"search"|"fav"|"profile">("home");
+  const [activeNav, setActiveNav] = useState<"home"|"track"|"search"|"routes"|"fav"|"profile">("home");
   const [timeStr, setTimeStr] = useState("");
 
   useEffect(() => {
@@ -145,9 +147,45 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     { id: "home" as const, icon: Home, label: "Home" },
     { id: "track" as const, icon: Bus, label: "Track" },
     { id: "search" as const, icon: Search, label: "Search" },
-    { id: "fav" as const, icon: Star, label: "Favourites" },
+    { id: "routes" as const, icon: Star, label: "Routes" },
     { id: "profile" as const, icon: User, label: "Profile" },
   ];
+
+  // ── Non-home views ─────────────────────────────────────────────────────────
+  if (activeNav === "search") {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#FAF9F6" }}>
+        <SearchView selectedAgency={selectedAgency} />
+        <BottomNav items={NAV_ITEMS} active={activeNav} onSelect={setActiveNav} />
+      </div>
+    );
+  }
+
+  if (activeNav === "track") {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#FAF9F6" }}>
+        <RouteDetailView
+          data={data}
+          selectedAgency={selectedAgency}
+          onBack={() => setActiveNav("home")}
+        />
+        <BottomNav items={NAV_ITEMS} active={activeNav} onSelect={setActiveNav} />
+      </div>
+    );
+  }
+
+  if (activeNav === "routes") {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: "#FAF9F6" }}>
+        <RoutesListView
+          selectedAgency={selectedAgency}
+          onSelectRoute={() => setActiveNav("track")}
+          onBack={() => setActiveNav("home")}
+        />
+        <BottomNav items={NAV_ITEMS} active={activeNav} onSelect={setActiveNav} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#FAF9F6" }}>
@@ -411,14 +449,15 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       <div className="px-4 py-3">
         <div className="grid grid-cols-4 gap-3">
           {[
-            { Icon: Bus, label: "Routes", sub: "Browse all routes", dot: false },
-            { Icon: Clock, label: "Timetable", sub: "View bus timings", dot: false },
-            { Icon: Search, label: "Search", sub: "Find stops & places", dot: false },
-            { Icon: Bell, label: "Alerts", sub: "Service updates", dot: true },
-          ].map(({ Icon, label, sub, dot }) => (
+            { Icon: Bus, label: "Routes", sub: "Browse all routes", dot: false, nav: "routes" as const },
+            { Icon: Clock, label: "Timetable", sub: "View bus timings", dot: false, nav: "track" as const },
+            { Icon: Search, label: "Search", sub: "Find stops & places", dot: false, nav: "search" as const },
+            { Icon: Bell, label: "Alerts", sub: "Service updates", dot: true, nav: null },
+          ].map(({ Icon, label, sub, dot, nav }) => (
             <button
               key={label}
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-[#f7a501] hover:bg-amber-50/40 transition-all"
+              onClick={() => nav && setActiveNav(nav)}
+              className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-slate-200 shadow-sm hover:border-[#f7a501] hover:bg-amber-50/40 transition-all active:scale-95"
             >
               <div className="relative">
                 <Icon className="w-5 h-5 text-slate-600" />
@@ -434,25 +473,33 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       </div>
 
       {/* BOTTOM NAV */}
-      <nav className="sticky bottom-0 bg-white border-t border-slate-200 shadow-lg px-2 py-2 z-20">
-        <div className="grid grid-cols-5 gap-1">
-          {NAV_ITEMS.map(({ id, icon: Icon, label }) => {
-            const active = activeNav === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveNav(id)}
-                className="flex flex-col items-center gap-1 py-2 rounded-xl transition-colors"
-              >
-                <Icon className={`w-5 h-5 ${active ? "text-[#f7a501]" : "text-slate-400"}`} />
-                <span className={`text-[10px] font-bold ${active ? "text-[#f7a501]" : "text-slate-400"}`}>
-                  {label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      <BottomNav items={NAV_ITEMS} active={activeNav} onSelect={setActiveNav} />
     </div>
   );
 };
+
+// ─── Shared Bottom Nav ────────────────────────────────────────────────────────
+type NavId = "home" | "track" | "search" | "routes" | "fav" | "profile";
+
+const BottomNav: React.FC<{
+  items: { id: NavId; icon: React.FC<{ className?: string }>; label: string }[];
+  active: NavId;
+  onSelect: (id: NavId) => void;
+}> = ({ items, active, onSelect }) => (
+  <nav className="sticky bottom-0 bg-white border-t border-slate-200 shadow-lg px-2 py-2 z-20">
+    <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${items.length}, 1fr)` }}>
+      {items.map(({ id, icon: Icon, label }) => (
+        <button
+          key={id}
+          onClick={() => onSelect(id)}
+          className="flex flex-col items-center gap-1 py-2 rounded-xl transition-colors"
+        >
+          <Icon className={`w-5 h-5 ${active === id ? "text-[#f7a501]" : "text-slate-400"}`} />
+          <span className={`text-[10px] font-bold ${active === id ? "text-[#f7a501]" : "text-slate-400"}`}>
+            {label}
+          </span>
+        </button>
+      ))}
+    </div>
+  </nav>
+);
