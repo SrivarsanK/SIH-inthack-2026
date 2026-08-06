@@ -81,6 +81,12 @@ From any injected event (delay/dropout/crowd) to visible UI change in CH-4. Opti
 ### 9. Do not invent demo data
 The simulator (CH-1) is the single source of truth for all test data. Do not hardcode fake ETAs or occupancy values in CH-3 or CH-4.
 
+### 10. Always auto-organize and sort code files
+- **Sort imports automatically**: Group imports cleanly: (1) Standard library, (2) Third-party packages, (3) Local project modules — all sorted alphabetically within groups.
+- **File layout order**: Place constants/types at top, helper classes/functions in middle, main loops/API endpoints at bottom.
+- **Module organization**: Keep code organized in dedicated modules; split functions over 40 lines into separate helper files (`utils.py`, `types.ts`, `helpers.py`).
+- **Clean workspace**: Auto-clean temporary scratch files, unused assets, or debug prints before committing.
+
 ---
 
 ## Shared Setup (run once, first)
