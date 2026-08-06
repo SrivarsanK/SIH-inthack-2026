@@ -1,0 +1,4 @@
+route_id,agency_id,route_short_name,route_long_name,route_type
+CMRL_1,CMRL,Blue Line,Blue Line — Wimco Nagar Depot ↔ Airport,1
+CMRL_2,CMRL,Green Line,Green Line — MGR Central ↔ St. Thomas Mount,1
+CMRL_3,CMRL,Inter-Corridor,Inter-Corridor — MGR Central ↔ Airport,1

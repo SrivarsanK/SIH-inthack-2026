@@ -6,7 +6,7 @@ from threading import Lock
 from typing import Any, Dict, List, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from shared.constants import BLOCK_ID
+from shared.constants import BLOCK_ID, INBOUND_TOTAL_SEC, OUTBOUND_TOTAL_SEC
 
 
 @dataclass
@@ -26,6 +26,9 @@ class TransitState:
     mac_deltas: List[Tuple[float, int]] = field(default_factory=list)
     event_log: List[Dict[str, Any]] = field(default_factory=list)
     last_T_total_sec: int = 0
+    # GTFS-derived leg durations (overridden at startup from real schedule data)
+    outbound_duration_sec: int = OUTBOUND_TOTAL_SEC
+    inbound_duration_sec: int = INBOUND_TOTAL_SEC
     lock: Lock = field(default_factory=Lock)
 
     def update_fused_telemetry(self, payload: Dict[str, Any]) -> None:

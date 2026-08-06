@@ -1,7 +1,7 @@
 import datetime
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from shared.constants import (
@@ -14,12 +14,24 @@ from shared.constants import (
 
 
 def calculate_eta_components(
-    leg: str, progress: float, delay_accumulated_sec: float
+    leg: str,
+    progress: float,
+    delay_accumulated_sec: float,
+    outbound_total_sec: Optional[int] = None,
+    inbound_total_sec: Optional[int] = None,
 ) -> Tuple[int, int, int, int]:
-    """Calculate (T_outbound_sec, T_dwell_sec, T_inbound_sec, T_total_sec)."""
+    """
+    Calculate (T_outbound_sec, T_dwell_sec, T_inbound_sec, T_total_sec).
+
+    outbound_total_sec / inbound_total_sec: override with GTFS-derived duration.
+    If None, falls back to shared/constants.py values.
+    """
+    eff_out = outbound_total_sec if outbound_total_sec is not None else OUTBOUND_TOTAL_SEC
+    eff_in = inbound_total_sec if inbound_total_sec is not None else INBOUND_TOTAL_SEC
+
     if leg == "outbound":
         rem_out = max(0.0, 1.0 - progress)
-        t_outbound = rem_out * OUTBOUND_TOTAL_SEC + delay_accumulated_sec
+        t_outbound = rem_out * eff_out + delay_accumulated_sec
     else:
         t_outbound = 0.0
 
@@ -39,7 +51,7 @@ def calculate_eta_components(
         rem_in = max(0.0, 1.0 - progress)
     else:
         rem_in = 1.0
-    t_inbound = rem_in * INBOUND_TOTAL_SEC
+    t_inbound = rem_in * eff_in
 
     t_total = t_outbound + t_dwell + t_inbound
     return round(t_outbound), round(t_dwell), round(t_inbound), round(t_total)
