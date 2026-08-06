@@ -224,10 +224,6 @@ const StopTimeline: React.FC<{
                 </span>
               </div>
 
-              <span className="text-xs text-slate-500 block font-medium">
-                Stop #{idx + 1}
-              </span>
-
               {isNearest && (
                 <div className="mt-2.5 p-3 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-center justify-between gap-3 shadow-2xs">
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
