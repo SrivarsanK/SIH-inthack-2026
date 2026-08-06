@@ -12,7 +12,11 @@ Copy and paste this prompt directly into your AI Coding Agent to start working i
 ```text
 Start task in channel <CH-1|CH-2|CH-3|CH-4>. My name is <YourName>.
 ```
-*Example:* `Start task in channel CH-1. My name is Alex.`
+
+**Ready-to-copy example:**
+```text
+Start task in channel CH-1. My name is Alex.
+```
 
 **What your AI Agent will automatically do:**
 1. **Identify Name & Task**: Asks for your name if missing.

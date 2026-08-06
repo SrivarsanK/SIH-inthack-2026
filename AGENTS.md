@@ -178,7 +178,9 @@ cd dashboard && npm run dev
 
 Any teammate can start their AI agent with a single prompt:
 
-> **"Start task in channel <CH-1|CH-2|CH-3|CH-4>. My name is <YourName>."**
+```text
+Start task in channel <CH-1|CH-2|CH-3|CH-4>. My name is <YourName>.
+```
 
 ### Automatic Bootstrap Protocol for AI Agents:
 When an agent receives this prompt (or any channel assignment request):
