@@ -1,6 +1,7 @@
 import React from "react";
 import { Clock, Bus, Radio, Monitor, Tv, Navigation, LayoutGrid, MapPin, Terminal, ChevronDown } from "lucide-react";
 import type { TransitAgency } from "../lib/agencies";
+import { SearchAutocomplete } from "./SearchAutocomplete";
 
 interface KioskHeaderProps {
   isConnected: boolean;
@@ -10,6 +11,7 @@ interface KioskHeaderProps {
   setActiveTab?: (tab: string) => void;
   selectedAgency: TransitAgency;
   onOpenAgencySelector: () => void;
+  onSelectLocation?: (location: { name: string; lat: number; lon: number }) => void;
 }
 
 export const KioskHeader: React.FC<KioskHeaderProps> = ({
@@ -19,7 +21,8 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
   activeTab = "radar",
   setActiveTab,
   selectedAgency,
-  onOpenAgencySelector
+  onOpenAgencySelector,
+  onSelectLocation
 }) => {
   const [timeStr, setTimeStr] = React.useState<string>("");
 
@@ -61,6 +64,13 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
           <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
         </button>
       </div>
+
+      {/* Photon Autocomplete Search Input */}
+      {onSelectLocation && (
+        <div className="w-full md:w-auto flex-1 max-w-sm">
+          <SearchAutocomplete onSelectLocation={onSelectLocation} />
+        </div>
+      )}
 
       {/* Center Navigation Tabs (Intuitive & Simple) */}
       <nav className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800/80 shadow-inner">

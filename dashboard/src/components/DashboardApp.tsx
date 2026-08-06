@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTransitStream } from "../lib/useTransitStream";
 import { KioskHeader } from "./KioskHeader";
-import { LiveMap } from "./LiveMap";
+import { MapLibreMap } from "./MapLibreMap";
 import { ETACountdown } from "./ETACountdown";
 import { OccupancyBadge } from "./OccupancyBadge";
 import { InjectPanel } from "./InjectPanel";
@@ -18,6 +18,7 @@ export const DashboardApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>("radar");
   const [selectedAgency, setSelectedAgency] = useState<TransitAgency>(AGENCY_PRESETS[0]);
   const [isAgencyModalOpen, setIsAgencyModalOpen] = useState<boolean>(false);
+  const [searchedLocation, setSearchedLocation] = useState<{ name: string; lat: number; lon: number } | null>(null);
 
   if (viewMode === "kiosk") {
     return <KioskDisplayView data={data} onExit={() => setViewMode("command")} />;
@@ -33,6 +34,7 @@ export const DashboardApp: React.FC = () => {
         setActiveTab={setActiveTab}
         selectedAgency={selectedAgency}
         onOpenAgencySelector={() => setIsAgencyModalOpen(true)}
+        onSelectLocation={setSearchedLocation}
       />
 
       <AgencySelector
@@ -43,19 +45,19 @@ export const DashboardApp: React.FC = () => {
       />
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1700px] w-full mx-auto">
-        {/* Left Column: Map or Timeline based on tab (7 cols) */}
+        {/* Left Column: MapLibre Map or Timeline based on tab (7 cols) */}
         <section className="lg:col-span-7 flex flex-col gap-6">
           {activeTab === "route" ? (
             <div className="space-y-6">
               <TripTimeline data={data} />
               <div className="h-[400px]">
-                <LiveMap data={data} selectedAgency={selectedAgency} />
+                <MapLibreMap data={data} selectedAgency={selectedAgency} searchedLocation={searchedLocation} />
               </div>
             </div>
           ) : (
             <div className="space-y-6 flex-1 flex flex-col">
               <div className="h-[520px] min-h-[420px] flex-1">
-                <LiveMap data={data} selectedAgency={selectedAgency} />
+                <MapLibreMap data={data} selectedAgency={selectedAgency} searchedLocation={searchedLocation} />
               </div>
               <TripTimeline data={data} />
             </div>
