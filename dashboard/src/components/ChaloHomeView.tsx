@@ -28,6 +28,7 @@ import { SearchView } from "./SearchView";
 import { RouteDetailView } from "./RouteDetailView";
 import { RoutesListView } from "./RoutesListView";
 import { AgencySelector } from "./AgencySelector";
+import { LiveSignalIcon } from "./LiveSignalIcon";
 
 interface ChaloHomeViewProps {
   data: TransitSnapshot;
@@ -415,7 +416,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                         To {route?.destination}
                       </span>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <Wifi className="w-3.5 h-3.5 text-blue-600" />
+                        <LiveSignalIcon className="w-3.5 h-3.5 text-blue-500" />
                         <span className="text-xs font-extrabold text-blue-600">
                           In {formatMin(T_inbound_sec)}
                         </span>
@@ -493,7 +494,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                           <div className="mt-1">
                             {isFirst ? (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold border border-blue-200">
-                                <Wifi className="w-2.5 h-2.5 text-blue-600" />
+                                <LiveSignalIcon className="w-3 h-3 text-blue-500" />
                                 In {formatMin(T_inbound_sec)}
                               </span>
                             ) : (
@@ -580,7 +581,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 font-bold text-sm text-blue-600">
-                          <Wifi className="w-4 h-4 text-blue-600" />
+                          <LiveSignalIcon className="w-4 h-4 text-blue-500" />
                           <span>{etaMin} min away</span>
                         </div>
                       </div>

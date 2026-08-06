@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
 import type { TransitAgency } from "../lib/agencies";
+import { LiveSignalIcon } from "./LiveSignalIcon";
 
 interface RouteDetailViewProps {
   data: TransitSnapshot;
@@ -141,7 +142,7 @@ const DetailMap: React.FC<{
       <div ref={containerRef} className="w-full h-full" />
       {/* Clean HTML overlay badge for status */}
       <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl px-3 py-1.5 shadow-md border border-slate-200/80 flex items-center gap-2">
-        <Wifi className="w-3.5 h-3.5 text-blue-600" />
+        <LiveSignalIcon className="w-4 h-4 text-blue-500" />
         <span className="text-xs font-extrabold text-slate-800">Updated 1 min ago</span>
       </div>
     </div>
