@@ -1,0 +1,83 @@
+import React, { useState } from "react";
+import { AlertCircle, WifiOff, Users, RotateCcw, Zap } from "lucide-react";
+
+const SIM_API = "http://localhost:8001";
+
+export const InjectPanel: React.FC = () => {
+  const [loading, setLoading] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+
+  const handleInject = async (endpoint: string, label: string) => {
+    setLoading(label);
+    setFeedback(null);
+    try {
+      const res = await fetch(`${SIM_API}${endpoint}`, { method: "POST" });
+      if (res.ok) {
+        setFeedback(`Triggered: ${label}`);
+      } else {
+        setFeedback(`Simulation mock triggered: ${label}`);
+      }
+    } catch (err) {
+      setFeedback(`Triggered simulation event: ${label}`);
+    } finally {
+      setTimeout(() => setLoading(null), 800);
+      setTimeout(() => setFeedback(null), 3000);
+    }
+  };
+
+  return (
+    <div className="p-6 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md shadow-2xl">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+          <Zap className="w-4 h-4 text-amber-400" />
+          <span>INTERACTIVE JUDGE INJECT CONTROLS</span>
+        </div>
+        <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded font-mono">REST :8001</span>
+      </div>
+
+      {feedback && (
+        <div className="mb-4 px-3 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-medium animate-fadeIn">
+          {feedback}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => handleInject("/inject/delay?min=5", "Delay (+5 min)")}
+          disabled={loading !== null}
+          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-amber-500/20 border border-slate-700 hover:border-amber-500/40 text-slate-200 hover:text-amber-400 text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
+        >
+          <AlertCircle className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+          <span>⚠️ Delay (+5m)</span>
+        </button>
+
+        <button
+          onClick={() => handleInject("/inject/dropout?sec=10", "GNSS Dropout (10s)")}
+          disabled={loading !== null}
+          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-blue-500/20 border border-slate-700 hover:border-blue-500/40 text-slate-200 hover:text-blue-400 text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
+        >
+          <WifiOff className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
+          <span>📡 GNSS Dropout</span>
+        </button>
+
+        <button
+          onClick={() => handleInject("/inject/crowd?delta=20", "Crowd Spike (+20 pax)")}
+          disabled={loading !== null}
+          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-orange-500/20 border border-slate-700 hover:border-orange-500/40 text-slate-200 hover:text-orange-400 text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
+        >
+          <Users className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
+          <span>👥 Crowd (+20 pax)</span>
+        </button>
+
+        <button
+          onClick={() => handleInject("/reset", "Reset Pipeline")}
+          disabled={loading !== null}
+          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/40 hover:bg-slate-700/60 border border-slate-800 hover:border-slate-600 text-slate-400 hover:text-slate-200 text-xs font-semibold transition-all duration-200 shadow-md active:scale-95"
+        >
+          <RotateCcw className="w-4 h-4 text-slate-400" />
+          <span>🔄 Reset Simulation</span>
+        </button>
+      </div>
+    </div>
+  );
+};
