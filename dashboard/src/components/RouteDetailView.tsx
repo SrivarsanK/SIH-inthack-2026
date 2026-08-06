@@ -334,8 +334,8 @@ const StopTimeline: React.FC<{
                 </span>
               </div>
 
-              {/* Action Card for Selected or Nearest Stop */}
-              {(isSelected || isNearest) && (
+              {/* Action Card ONLY for Currently Selected Stop */}
+              {isSelected && (
                 <div className="mt-2.5 p-3 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-center justify-between gap-3 shadow-2xs">
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
                     <Zap className="w-4 h-4 text-[#f7a501]" />
