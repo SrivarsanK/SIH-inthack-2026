@@ -3,7 +3,6 @@ import { useTransitStream } from "../lib/useTransitStream";
 import { ChaloHomeView } from "./ChaloHomeView";
 import { KioskDisplayView } from "./KioskDisplayView";
 import { AgencySelector } from "./AgencySelector";
-import { ApiInspectorModal } from "./ApiInspectorModal";
 import { AGENCY_PRESETS } from "../lib/agencies";
 import type { TransitAgency } from "../lib/agencies";
 
@@ -12,7 +11,6 @@ export const DashboardApp: React.FC = () => {
   const [viewMode, setViewMode] = useState<"home" | "kiosk">("home");
   const [selectedAgency, setSelectedAgency] = useState<TransitAgency>(AGENCY_PRESETS[0]);
   const [isAgencyModalOpen, setIsAgencyModalOpen] = useState<boolean>(false);
-  const [isApiInspectorOpen, setIsApiInspectorOpen] = useState<boolean>(false);
 
   if (viewMode === "kiosk") {
     return (
@@ -33,17 +31,11 @@ export const DashboardApp: React.FC = () => {
         onClose={() => setIsAgencyModalOpen(false)}
       />
 
-      <ApiInspectorModal
-        isOpen={isApiInspectorOpen}
-        onClose={() => setIsApiInspectorOpen(false)}
-      />
-
       <ChaloHomeView
         data={data}
         isConnected={isConnected}
         selectedAgency={selectedAgency}
         onOpenAgencySelector={() => setIsAgencyModalOpen(true)}
-        onOpenApiInspector={() => setIsApiInspectorOpen(true)}
       />
     </>
   );

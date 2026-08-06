@@ -5,18 +5,17 @@ import {
   Bus,
   ChevronRight,
   Clock,
+  ExternalLink,
   Home,
   MapPin,
   Menu,
   Mic,
-  Navigation,
   Radio,
-  RotateCcw,
   Search,
+  Settings,
   Star,
   User,
   Users,
-  WifiOff,
   Zap,
 } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
@@ -27,7 +26,6 @@ interface ChaloHomeViewProps {
   isConnected: boolean;
   selectedAgency: TransitAgency;
   onOpenAgencySelector: () => void;
-  onOpenApiInspector?: () => void;
 }
 
 function formatMin(sec: number): string {
@@ -125,8 +123,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   onOpenApiInspector,
 }) => {
   const [activeNav, setActiveNav] = useState<"home"|"track"|"search"|"fav"|"profile">("home");
-  const [injecting, setInjecting] = useState<string | null>(null);
-  const [injectFeedback, setInjectFeedback] = useState<string | null>(null);
   const [timeStr, setTimeStr] = useState("");
 
   useEffect(() => {
@@ -135,20 +131,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
-
-  const handleInject = async (endpoint: string, label: string) => {
-    setInjecting(label);
-    setInjectFeedback(null);
-    try {
-      await fetch(`${SIM_API}${endpoint}`, { method: "POST" });
-      setInjectFeedback(`Triggered: ${label}`);
-    } catch {
-      setInjectFeedback(`Simulated: ${label}`);
-    } finally {
-      setTimeout(() => setInjecting(null), 800);
-      setTimeout(() => setInjectFeedback(null), 3000);
-    }
-  };
 
   const route = selectedAgency.routes[0];
   const stops = route?.coords ?? [];
@@ -165,13 +147,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     { id: "search" as const, icon: Search, label: "Search" },
     { id: "fav" as const, icon: Star, label: "Favourites" },
     { id: "profile" as const, icon: User, label: "Profile" },
-  ];
-
-  const INJECT_ACTIONS = [
-    { endpoint: "/inject/delay?min=5", label: "Delay (+5m)", Icon: AlertCircle, color: "text-amber-600", hoverBg: "hover:bg-amber-500 hover:text-white hover:border-amber-500" },
-    { endpoint: "/inject/dropout?sec=10", label: "GNSS Dropout", Icon: WifiOff, color: "text-blue-500", hoverBg: "hover:bg-blue-600 hover:text-white hover:border-blue-600" },
-    { endpoint: "/inject/crowd?delta=20", label: "Crowd (+20)", Icon: Users, color: "text-orange-500", hoverBg: "hover:bg-orange-500 hover:text-white hover:border-orange-500" },
-    { endpoint: "/reset", label: "Reset", Icon: RotateCcw, color: "text-slate-500", hoverBg: "hover:bg-slate-200" },
   ];
 
   return (
@@ -411,71 +386,26 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
         </div>
       </div>
 
-      {/* JUDGE INJECT CONTROLS */}
+      {/* ADMIN PANEL LINK */}
       <div className="px-4 py-2">
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[#f7a501]" />
-              <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wide">Judge Inject Controls</span>
+        <a
+          href="/admin"
+          className="flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-slate-700 shadow-sm hover:bg-slate-800 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#f7a501] flex items-center justify-center shrink-0 shadow-sm">
+              <Settings className="w-5 h-5 text-slate-950" />
             </div>
-            {onOpenApiInspector && (
-              <button
-                onClick={onOpenApiInspector}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs font-bold text-[#b17816] hover:bg-amber-100 transition-colors"
-              >
-                <Navigation className="w-3.5 h-3.5" />
-                View APIs
-              </button>
-            )}
-          </div>
-
-          {injectFeedback && (
-            <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
-              {injectFeedback}
+            <div>
+              <span className="font-black text-white block">Judge Admin Panel</span>
+              <span className="text-xs text-slate-400 font-medium">
+                Inject controls · API architecture · Event log
+              </span>
             </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-2.5">
-            {INJECT_ACTIONS.map(({ endpoint, label, Icon, color, hoverBg }) => (
-              <button
-                key={label}
-                onClick={() => handleInject(endpoint, label)}
-                disabled={injecting !== null}
-                className={`flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all duration-150 active:scale-95 ${hoverBg}`}
-              >
-                <Icon className={`w-4 h-4 ${color}`} />
-                <span>{label}</span>
-              </button>
-            ))}
           </div>
-        </div>
+          <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-white transition-colors shrink-0" />
+        </a>
       </div>
-
-      {/* EVENT LOG */}
-      {data.event_log.length > 0 && (
-        <div className="px-4 py-2">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="w-4 h-4 text-slate-500" />
-              <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wide">Pipeline Event Log</span>
-            </div>
-            <div className="space-y-1.5 max-h-36 overflow-y-auto">
-              {data.event_log.slice().reverse().map((e, i) => (
-                <div key={i} className="flex items-center justify-between gap-2 py-1.5 px-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs font-mono">
-                  <span className="text-slate-400 shrink-0">{e.ts}</span>
-                  <span className="text-slate-700 truncate flex-1">{e.event}</span>
-                  {e.delta_sec !== 0 && (
-                    <span className={`shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold ${e.delta_sec < 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
-                      {e.delta_sec < 0 ? "" : "+"}{Math.round(e.delta_sec / 60)}m
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* QUICK ACTIONS */}
       <div className="px-4 py-3">
