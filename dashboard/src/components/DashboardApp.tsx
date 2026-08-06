@@ -49,13 +49,13 @@ export const DashboardApp: React.FC = () => {
             <div className="space-y-6">
               <TripTimeline data={data} />
               <div className="h-[400px]">
-                <LiveMap data={data} />
+                <LiveMap data={data} selectedAgency={selectedAgency} />
               </div>
             </div>
           ) : (
             <div className="space-y-6 flex-1 flex flex-col">
               <div className="h-[520px] min-h-[420px] flex-1">
-                <LiveMap data={data} />
+                <LiveMap data={data} selectedAgency={selectedAgency} />
               </div>
               <TripTimeline data={data} />
             </div>
