@@ -184,18 +184,40 @@ Each channel folder has its own `AGENTS.md` with detailed per-channel rules. Rea
 
 ---
 
-## Git Workflow
+## Strict Git Branching & Pull Request Workflow
 
+### 1. Automatic Branch Creation
+Every teammate's agent MUST automatically create and switch to a dedicated feature branch before making any edits:
 ```bash
-# Each teammate works on their own branch
-git checkout -b ch1-simulator   # or ch2-kalman, ch3-eta, ch4-dashboard
-
-# Commit often
-git add simulator/
-git commit -m "feat(ch1): add route geometry interpolator"
-git push origin ch1-simulator
+git checkout -b <teammate-name>/<task-name>
+# Example: git checkout -b alex/ch1-simulator-engine
 ```
 
-- **Never push directly to `main`**
-- PRs require review from at least one other teammate
-- Commit messages: `feat(chN): description` or `fix(chN): description`
+### 2. Direct Pushes to `main` are Strictly Forbidden
+- **`main` is a protected branch.** Never run `git push origin main`.
+- All work MUST happen inside your feature branch.
+
+### 3. Open Pull Request (PR) / Merge Request
+Once your atomic commits pass local verification:
+```bash
+git push -u origin <teammate-name>/<task-name>
+```
+Create a Pull Request on GitHub targeting `main`.
+
+### 4. Owner Approval Gate (Srivarsan Only)
+- **Only the repository owner (Srivarsan) has authority to merge PRs into `main`.**
+- Collaborators DO NOT have merge privileges. Do not attempt to self-merge or force-merge.
+
+### 5. Post-Merge Branch Cleanup & New Task Setup
+Once Srivarsan approves and merges your PR into `main`:
+1. Delete the merged branch locally and remotely:
+   ```bash
+   git checkout main
+   git pull origin main
+   git branch -d <old-branch-name>
+   git push origin --delete <old-branch-name>
+   ```
+2. Create a fresh branch for your next task:
+   ```bash
+   git checkout -b <teammate-name>/<next-task-name>
+   ```
