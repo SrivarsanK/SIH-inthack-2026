@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useTransitStream } from "../lib/useTransitStream";
 import { KioskHeader } from "./KioskHeader";
-import { MapLibreMap } from "./MapLibreMap";
+import { LiveMap } from "./LiveMap";
 import { ETACountdown } from "./ETACountdown";
 import { OccupancyBadge } from "./OccupancyBadge";
 import { InjectPanel } from "./InjectPanel";
@@ -58,13 +58,13 @@ export const DashboardApp: React.FC = () => {
             <div className="space-y-6">
               <TripTimeline data={data} />
               <div className="h-[400px]">
-                <MapLibreMap data={data} selectedAgency={selectedAgency} searchedLocation={searchedLocation} />
+                <LiveMap data={data} selectedAgency={selectedAgency} searchedLocation={searchedLocation} />
               </div>
             </div>
           ) : (
             <div className="space-y-6 flex-1 flex flex-col">
               <div className="h-[520px] min-h-[420px] flex-1">
-                <MapLibreMap data={data} selectedAgency={selectedAgency} searchedLocation={searchedLocation} />
+                <LiveMap data={data} selectedAgency={selectedAgency} searchedLocation={searchedLocation} />
               </div>
               <TripTimeline data={data} />
             </div>

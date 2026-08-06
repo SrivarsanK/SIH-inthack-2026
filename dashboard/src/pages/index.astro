@@ -11,6 +11,8 @@ import '../styles/global.css';
 		<meta name="generator" content={Astro.generator} />
 		<title>TransitSense — Live Continuous Public Transit Intelligence</title>
 		<meta name="description" content="Smart India Hackathon 2026 Public Transit Intelligence Platform delivering continuous bus ETAs, occupancy density, and sensor fusion." />
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+		<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
 	</head>
 	<body class="bg-slate-950 text-slate-100 min-h-screen antialiased">
 		<DashboardApp client:only="react" />
