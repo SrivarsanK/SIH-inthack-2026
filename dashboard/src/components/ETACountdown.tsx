@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Clock, AlertTriangle, ShieldCheck, Zap } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
-import { Clock, TrendingDown, ArrowRight, ShieldCheck } from "lucide-react";
 
 interface ETACountdownProps {
   data: TransitSnapshot;
@@ -14,77 +14,70 @@ function formatMMSS(sec: number): string {
 }
 
 export const ETACountdown: React.FC<ETACountdownProps> = ({ data }) => {
-  const { T_total_sec, T_outbound_sec, T_dwell_sec, T_inbound_sec } = data.inbound;
-  const [flashColor, setFlashColor] = useState<"normal" | "red" | "green">("normal");
-  const [prevTotal, setPrevTotal] = useState<number>(T_total_sec);
-
-  useEffect(() => {
-    if (T_total_sec !== prevTotal) {
-      if (T_total_sec > prevTotal) {
-        setFlashColor("red");
-      } else if (T_total_sec < prevTotal) {
-        setFlashColor("green");
-      }
-      setPrevTotal(T_total_sec);
-      const timer = setTimeout(() => setFlashColor("normal"), 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [T_total_sec, prevTotal]);
-
-  const flashBgClass = flashColor === "red" 
-    ? "bg-rose-500/10 border-rose-500/40 shadow-rose-500/10" 
-    : flashColor === "green" 
-    ? "bg-emerald-500/10 border-emerald-500/40 shadow-emerald-500/10"
-    : "bg-slate-900/90 border-slate-800 shadow-2xl";
+  const { T_outbound_sec, T_dwell_sec, T_inbound_sec, T_total_sec, is_delayed, delay_min } = data.inbound;
 
   return (
-    <div className={`p-6 rounded-2xl border backdrop-blur-md transition-colors duration-500 ${flashBgClass}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
-          <Clock className="w-4 h-4 text-blue-400" />
-          <span>PREDICTIVE INBOUND ETA</span>
+    <div className={`p-6 rounded-2xl border transition-all duration-300 backdrop-blur-md shadow-2xl space-y-5 ${
+      is_delayed 
+        ? "bg-rose-950/40 border-rose-600/60 ring-2 ring-rose-500/30" 
+        : "bg-slate-900/90 border-slate-800"
+    }`}>
+      {/* Top Bar: Header & Data Contract Badge */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-[#f7a501]" />
+          <h2 className="text-xs font-bold tracking-wider text-slate-300 uppercase">
+            PREDICTIVE INBOUND ETA
+          </h2>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20 text-xs font-semibold">
-          <ShieldCheck className="w-3.5 h-3.5" />
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-[11px] font-mono font-bold text-slate-200">
+          <ShieldCheck className="w-3.5 h-3.5 text-[#f7a501]" />
           <span>GTFS-RT Block Chained</span>
         </div>
       </div>
 
-      <div className="text-center py-4 my-2 rounded-xl bg-slate-950/60 border border-slate-800/80">
-        <span className="text-xs text-slate-400 uppercase tracking-wider font-medium">Bus Arrives In</span>
-        <div className="text-5xl font-extrabold text-white tracking-tight font-mono mt-1 mb-2">
+      {/* Main Countdown Display */}
+      <div className="text-center py-2 relative">
+        <span className="text-[11px] font-bold text-slate-400 tracking-widest uppercase block mb-1">
+          BUS ARRIVES IN
+        </span>
+        <div className={`text-6xl sm:text-7xl font-black font-mono tracking-tight drop-shadow-lg transition-colors ${
+          is_delayed ? "text-rose-400" : "text-white"
+        }`}>
           {formatMMSS(T_total_sec)}
         </div>
-        <div className="flex items-center justify-center gap-1 text-xs text-slate-400 font-medium">
-          <TrendingDown className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Live compounding calculation</span>
-        </div>
+        
+        {is_delayed ? (
+          <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-extrabold text-rose-400 bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/30 w-fit mx-auto animate-pulse">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>DELAYED (+{delay_min} min) — Compounding Catch-up Active</span>
+          </div>
+        ) : (
+          <div className="mt-2 flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-400">
+            <Zap className="w-3.5 h-3.5 text-[#f7a501]" />
+            <span>Live compounding calculation</span>
+          </div>
+        )}
       </div>
 
-      {/* Sub-component Breakdown */}
-      <div className="mt-4 grid grid-cols-3 gap-2">
-        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-center">
-          <span className="text-[11px] text-slate-400 block font-medium">Prior Leg</span>
-          <span className="text-sm font-bold text-slate-200 font-mono mt-0.5 block">
-            {formatMMSS(T_outbound_sec)}
-          </span>
-          <span className="text-[10px] text-slate-400 block mt-0.5">T_outbound</span>
+      {/* Sub-component Breakdown Breakdown Grid */}
+      <div className="grid grid-cols-3 gap-2.5 pt-2 border-t border-slate-800/80 text-center">
+        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase block">Prior Leg</span>
+          <span className="text-sm font-bold font-mono text-slate-200 block my-0.5">{formatMMSS(T_outbound_sec)}</span>
+          <span className="text-[9px] text-slate-500 font-mono">T_outbound</span>
         </div>
 
-        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-center">
-          <span className="text-[11px] text-slate-400 block font-medium">Terminal Halt</span>
-          <span className="text-sm font-bold text-amber-400 font-mono mt-0.5 block">
-            {formatMMSS(T_dwell_sec)}
-          </span>
-          <span className="text-[10px] text-slate-400 block mt-0.5">T_dwell (Recovery)</span>
+        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase block">Terminal Halt</span>
+          <span className="text-sm font-bold font-mono text-[#f7a501] block my-0.5">{formatMMSS(T_dwell_sec)}</span>
+          <span className="text-[9px] text-slate-500 font-mono">T_dwell (Recovery)</span>
         </div>
 
-        <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-center">
-          <span className="text-[11px] text-slate-400 block font-medium">To Stop</span>
-          <span className="text-sm font-bold text-blue-400 font-mono mt-0.5 block">
-            {formatMMSS(T_inbound_sec)}
-          </span>
-          <span className="text-[10px] text-slate-400 block mt-0.5">T_inbound</span>
+        <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase block">To Stop</span>
+          <span className="text-sm font-bold font-mono text-slate-200 block my-0.5">{formatMMSS(T_inbound_sec)}</span>
+          <span className="text-[9px] text-slate-500 font-mono">T_inbound</span>
         </div>
       </div>
     </div>
