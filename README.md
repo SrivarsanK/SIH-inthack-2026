@@ -18,70 +18,41 @@ Existing public transport apps treat bus trips in isolated silos: when a bus is 
 ## 🏗️ Pipeline Architecture
 
 ```mermaid
-flowchart TB
-    subgraph JUDGES["🎮 Judge Controls"]
-        DELAY["⚠️ Inject Delay"]
-        DROP["📡 GNSS Dropout"]
-        CROWD["👥 Crowd Spike"]
+flowchart LR
+    subgraph Judges["🎮 Judge Controls"]
+        direction TB
+        J1["⚠️ Delay"] ~~~ J2["📡 Dropout"] ~~~ J3["👥 Crowd"]
     end
 
-    subgraph CH1["🟠 CH-1: Simulator Engine"]
-        SIM["simulator.py — 1Hz MQTT Publisher"]
-        API["control_api.py — REST :8001"]
+    subgraph Pipeline["Data Pipeline"]
+        direction LR
+        SIM["🟠 CH-1\nSimulator\n:8001"]
+        KAL["🟡 CH-2\nKalman\nFusion"]
+        ETA["🔵 CH-3\nETA Engine\n:8002"]
     end
 
-    subgraph CH2["🟡 CH-2: Kalman Fusion"]
-        KAL["kalman.py — Prediction + Update"]
-    end
+    DASH["🟢 CH-4\nDashboard\nUI"]
 
-    subgraph CH3["🔵 CH-3: ETA + Density Engine"]
-        STATE["state_machine.py — Block Tracking"]
-        DENSE["density.py — MAC Rolling Window"]
-        SSE["api.py — SSE Stream :8002"]
-    end
-
-    subgraph CH4["🟢 CH-4: Dashboard"]
-        MAP["LiveMap.tsx — Leaflet"]
-        COUNTDOWN["ETACountdown.tsx"]
-        BADGE["OccupancyBadge.tsx"]
-        LOG["EventLog.tsx"]
-    end
-
-    JUDGES -->|"POST /inject/*"| API
-    API --> SIM
-    SIM -->|"MQTT: fleet/bus_1/telemetry"| KAL
-    SIM -->|"MQTT: mac_count_delta"| DENSE
-    KAL -->|"MQTT: fleet/bus_1/fused"| STATE
-    STATE --> SSE
-    DENSE --> SSE
-    SSE -->|"SSE: 1Hz JSON"| MAP
-    SSE --> COUNTDOWN
-    SSE --> BADGE
-    SSE --> LOG
+    Judges -- "POST /inject/*" --> SIM
+    SIM -- "MQTT · telemetry · 1 Hz" --> KAL
+    SIM -- "MQTT · mac_count" --> ETA
+    KAL -- "MQTT · fused position" --> ETA
+    ETA -- "SSE · JSON stream · 1 Hz" --> DASH
+    DASH -. "inject buttons" .-> SIM
 ```
 
-### Bus State Machine
+### Bus Lifecycle State Machine
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Outbound : Start block_001
-    Outbound --> Dwell : progress reaches 1.0
-    Dwell --> Inbound : dwell timer expires
-    Inbound --> Outbound : progress reaches 1.0 (loop)
+    [*] --> Outbound
+    Outbound --> Dwell : progress = 1.0
+    Dwell --> Inbound : halt timer expires
+    Inbound --> Outbound : loop for demo
 
-    state Outbound {
-        [*] --> Moving
-        Moving --> Delayed : inject delay
-        Moving --> Dropout : inject dropout
-        Delayed --> Moving : resumes
-        Dropout --> Moving : GNSS restores
-    }
-
-    state Dwell {
-        [*] --> Halted
-        Halted --> Recovery : accumulated delay > 0
-        note right of Recovery : T_dwell shrinks by 30% of delay
-    }
+    note right of Outbound : Desaturated icon on map
+    note right of Dwell : T_dwell shrinks if delay accumulated
+    note right of Inbound : Highlighted icon + live ETA
 ```
 
 ---

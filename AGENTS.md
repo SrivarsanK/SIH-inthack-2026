@@ -19,24 +19,16 @@ The hackathon build is a **simulated-but-real pipeline**: synthetic GPS/sensor d
 
 ```mermaid
 flowchart LR
-    subgraph CH1["🟠 CH-1: Simulator"]
-        SIM["simulator.py\ncontrol_api.py"]
-    end
-    subgraph CH2["🟡 CH-2: Kalman Fusion"]
-        KAL["kalman.py\nsubscriber.py"]
-    end
-    subgraph CH3["🔵 CH-3: ETA Engine"]
-        ETA["state_machine + density\napi.py (SSE)"]
-    end
-    subgraph CH4["🟢 CH-4: Dashboard"]
-        DASH["Leaflet Map + Countdown\nOccupancy + Inject Panel"]
-    end
+    SIM["🟠 CH-1\nSimulator\n:8001"]
+    KAL["🟡 CH-2\nKalman Fusion"]
+    ETA["🔵 CH-3\nETA + Density\n:8002"]
+    DASH["🟢 CH-4\nDashboard"]
 
-    SIM -->|"MQTT: fleet/bus_1/telemetry (1Hz)"| KAL
-    SIM -->|"MQTT: mac_count_delta"| ETA
-    KAL -->|"MQTT: fleet/bus_1/fused"| ETA
-    ETA -->|"SSE: localhost:8002/stream"| DASH
-    DASH -->|"POST: localhost:8001/inject/*"| SIM
+    SIM -- "MQTT · telemetry · 1 Hz" --> KAL
+    SIM -- "MQTT · mac_count" --> ETA
+    KAL -- "MQTT · fused position" --> ETA
+    ETA -- "SSE · JSON stream" --> DASH
+    DASH -. "POST /inject/*" .-> SIM
 ```
 
 Each channel is a separate folder in this repo. You work in your channel folder only.
