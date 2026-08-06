@@ -8,11 +8,16 @@ import { InjectPanel } from "./InjectPanel";
 import { EventLog } from "./EventLog";
 import { TripTimeline } from "./TripTimeline";
 import { KioskDisplayView } from "./KioskDisplayView";
+import { AgencySelector } from "./AgencySelector";
+import { AGENCY_PRESETS } from "../lib/agencies";
+import type { TransitAgency } from "../lib/agencies";
 
 export const DashboardApp: React.FC = () => {
   const { data, isConnected } = useTransitStream();
   const [viewMode, setViewMode] = useState<"command" | "kiosk">("command");
   const [activeTab, setActiveTab] = useState<string>("radar");
+  const [selectedAgency, setSelectedAgency] = useState<TransitAgency>(AGENCY_PRESETS[0]);
+  const [isAgencyModalOpen, setIsAgencyModalOpen] = useState<boolean>(false);
 
   if (viewMode === "kiosk") {
     return <KioskDisplayView data={data} onExit={() => setViewMode("command")} />;
@@ -26,6 +31,15 @@ export const DashboardApp: React.FC = () => {
         setViewMode={setViewMode}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        selectedAgency={selectedAgency}
+        onOpenAgencySelector={() => setIsAgencyModalOpen(true)}
+      />
+
+      <AgencySelector
+        selectedAgency={selectedAgency}
+        onSelectAgency={setSelectedAgency}
+        isOpen={isAgencyModalOpen}
+        onClose={() => setIsAgencyModalOpen(false)}
       />
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1700px] w-full mx-auto">

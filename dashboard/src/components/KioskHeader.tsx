@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Clock, Bus, Radio, Monitor, Tv, Navigation, LayoutGrid, MapPin, Terminal } from "lucide-react";
+import React from "react";
+import { Clock, Bus, Radio, Monitor, Tv, Navigation, LayoutGrid, MapPin, Terminal, ChevronDown } from "lucide-react";
+import type { TransitAgency } from "../lib/agencies";
 
 interface KioskHeaderProps {
   isConnected: boolean;
@@ -7,6 +8,8 @@ interface KioskHeaderProps {
   setViewMode: (mode: "command" | "kiosk") => void;
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
+  selectedAgency: TransitAgency;
+  onOpenAgencySelector: () => void;
 }
 
 export const KioskHeader: React.FC<KioskHeaderProps> = ({
@@ -14,11 +17,13 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
   viewMode,
   setViewMode,
   activeTab = "radar",
-  setActiveTab
+  setActiveTab,
+  selectedAgency,
+  onOpenAgencySelector
 }) => {
-  const [timeStr, setTimeStr] = useState<string>("");
+  const [timeStr, setTimeStr] = React.useState<string>("");
 
-  useEffect(() => {
+  React.useEffect(() => {
     const updateTime = () => {
       setTimeStr(new Date().toLocaleTimeString("en-US", { hour12: false }));
     };
@@ -29,7 +34,7 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
 
   return (
     <header className="w-full bg-slate-950/95 backdrop-blur-xl border-b border-slate-800/80 px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4 shadow-2xl z-30">
-      {/* Brand Identity & Route Badges */}
+      {/* Brand Identity & Agency Provider Picker */}
       <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 border border-blue-400/40 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
@@ -46,19 +51,15 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
           </div>
         </div>
 
-        {/* Route Pills */}
-        <div className="flex items-center gap-1.5 bg-slate-900/80 px-2 py-1 rounded-lg border border-slate-800">
-          <span className="px-2.5 py-0.5 text-xs font-bold bg-blue-600 text-white rounded-md shadow-sm border border-blue-400 flex items-center gap-1">
-            <Navigation className="w-3 h-3" />
-            101
-          </span>
-          <span className="px-2 py-0.5 text-[11px] font-semibold bg-slate-800 text-slate-400 rounded-md">
-            16C
-          </span>
-          <span className="px-2 py-0.5 text-[11px] font-semibold bg-slate-800 text-slate-400 rounded-md">
-            24E
-          </span>
-        </div>
+        {/* Agency Provider Switcher Button */}
+        <button
+          onClick={onOpenAgencySelector}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-xs font-bold text-slate-200 transition-all shadow-md active:scale-95 group"
+        >
+          <span className="text-base">{selectedAgency.logo}</span>
+          <span className="group-hover:text-blue-300 transition-colors">{selectedAgency.shortName}</span>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+        </button>
       </div>
 
       {/* Center Navigation Tabs (Intuitive & Simple) */}
