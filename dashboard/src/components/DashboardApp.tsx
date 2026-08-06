@@ -23,7 +23,7 @@ export const DashboardApp: React.FC = () => {
   const [searchedLocation, setSearchedLocation] = useState<{ name: string; lat: number; lon: number } | null>(null);
 
   if (viewMode === "kiosk") {
-    return <KioskDisplayView data={data} onExit={() => setViewMode("command")} />;
+    return <KioskDisplayView data={data} onExit={() => setViewMode("command")} selectedAgency={selectedAgency} />;
   }
 
   return (

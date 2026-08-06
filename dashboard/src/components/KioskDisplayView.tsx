@@ -1,10 +1,12 @@
 import React from "react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
-import { Bus, Clock, ShieldCheck, Navigation, Users, ArrowRight } from "lucide-react";
+import type { TransitAgency } from "../lib/agencies";
+import { Bus, Clock, ShieldCheck, Navigation } from "lucide-react";
 
 interface KioskDisplayViewProps {
   data: TransitSnapshot;
   onExit: () => void;
+  selectedAgency?: TransitAgency;
 }
 
 function formatMMSS(sec: number): string {
@@ -14,8 +16,14 @@ function formatMMSS(sec: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit }) => {
+export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit, selectedAgency }) => {
   const { T_total_sec } = data.inbound;
+
+  const activeRoute = selectedAgency?.routes[0];
+  const routeCode = activeRoute?.code || "101";
+  const originName = activeRoute?.origin || "Station A";
+  const destName = activeRoute?.destination || "Station B";
+  const agencyName = selectedAgency?.shortName || "TransitSense";
 
   const bandConfig = {
     SEATS_AVAILABLE: { label: "Seats Available", bg: "bg-emerald-500", text: "text-emerald-950", emoji: "🟢" },
@@ -29,14 +37,14 @@ export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit
       {/* Top Bar */}
       <div className="flex items-center justify-between border-b border-slate-800 pb-6">
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
-            <Bus className="w-8 h-8" />
+          <div className="w-14 h-14 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-xl shadow-blue-500/20 text-2xl">
+            {selectedAgency?.logo || "🚌"}
           </div>
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-extrabold tracking-tight">Station B Bus Stop Display</h1>
+              <h1 className="text-3xl font-extrabold tracking-tight">{destName} Bus Kiosk</h1>
               <span className="px-3 py-1 bg-blue-500/20 text-blue-300 border border-blue-500/40 rounded-lg text-sm font-bold">
-                BUS KIOSK #04
+                {agencyName} KIOSK
               </span>
             </div>
             <p className="text-sm text-slate-400 mt-1">SIH 2026 Continuous Transit Intelligence Network</p>
@@ -57,7 +65,7 @@ export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit
         <div className="lg:col-span-7 bg-slate-900/90 border-2 border-slate-800 rounded-3xl p-10 shadow-2xl flex flex-col items-center text-center">
           <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 text-sm font-bold mb-4">
             <Navigation className="w-4 h-4" />
-            <span>ROUTE 101 — NEXT ARRIVAL</span>
+            <span>ROUTE {routeCode} — NEXT ARRIVAL</span>
           </div>
 
           <span className="text-sm text-slate-400 font-semibold tracking-widest uppercase">ARRIVING IN</span>
@@ -75,15 +83,15 @@ export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit
         <div className="lg:col-span-5 space-y-4">
           <h3 className="text-lg font-bold text-slate-300 flex items-center gap-2">
             <Clock className="w-5 h-5 text-blue-400" />
-            <span>Upcoming Departures (Station B)</span>
+            <span>Upcoming Departures ({destName})</span>
           </h3>
 
           <div className="space-y-3">
             <div className="p-4 rounded-2xl bg-blue-600/20 border-2 border-blue-500/50 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center">101</span>
+                <span className="w-10 h-10 rounded-xl bg-blue-600 text-white font-black text-sm flex items-center justify-center">{routeCode}</span>
                 <div>
-                  <span className="font-bold text-white block text-base">Route 101 to Station A</span>
+                  <span className="font-bold text-white block text-base">Route {routeCode} to {originName}</span>
                   <span className="text-xs text-blue-300">Live Block Chained</span>
                 </div>
               </div>
@@ -94,7 +102,7 @@ export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit
               <div className="flex items-center gap-3">
                 <span className="w-10 h-10 rounded-xl bg-slate-800 text-slate-200 font-bold text-sm flex items-center justify-center">16C</span>
                 <div>
-                  <span className="font-bold text-slate-200 block text-base">Route 16C to Sainikpuri</span>
+                  <span className="font-bold text-slate-200 block text-base">Route 16C Express</span>
                   <span className="text-xs text-slate-400">Scheduled Departure</span>
                 </div>
               </div>
@@ -105,7 +113,7 @@ export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit
               <div className="flex items-center gap-3">
                 <span className="w-10 h-10 rounded-xl bg-slate-800 text-slate-200 font-bold text-sm flex items-center justify-center">24E</span>
                 <div>
-                  <span className="font-bold text-slate-200 block text-base">Route 24E to ECIL</span>
+                  <span className="font-bold text-slate-200 block text-base">Route 24E Feeder</span>
                   <span className="text-xs text-slate-400">Scheduled Departure</span>
                 </div>
               </div>
