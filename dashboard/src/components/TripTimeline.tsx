@@ -1,14 +1,22 @@
 import React from "react";
 import { Navigation, MapPin, Footprints, ArrowRight, IndianRupee, Layers } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
+import type { TransitAgency } from "../lib/agencies";
 
 interface TripTimelineProps {
   data: TransitSnapshot;
+  selectedAgency?: TransitAgency;
 }
 
-export const TripTimeline: React.FC<TripTimelineProps> = ({ data }) => {
-  const { progress, leg } = data.vehicle;
+export const TripTimeline: React.FC<TripTimelineProps> = ({ data, selectedAgency }) => {
+  const { progress } = data.vehicle;
   const progressPercent = Math.round(progress * 100);
+
+  const activeRoute = selectedAgency?.routes[0];
+  const originName = activeRoute?.origin || "Station A";
+  const destName = activeRoute?.destination || "Station B";
+  const routeCode = activeRoute?.code || "101";
+  const fare = activeRoute?.fare || "₹35";
 
   return (
     <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md shadow-2xl space-y-4">
@@ -18,19 +26,19 @@ export const TripTimeline: React.FC<TripTimelineProps> = ({ data }) => {
           <span>ROUTE PROGRESS & MULTIMODAL TIMELINE</span>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs font-bold font-mono">
-          <span>₹35 Fare</span>
+          <span>{fare} Fare</span>
         </div>
       </div>
 
       {/* Progress Bar */}
       <div className="space-y-1.5">
         <div className="flex justify-between text-xs font-medium text-slate-400">
-          <span className="flex items-center gap-1 text-slate-200">
-            <MapPin className="w-3.5 h-3.5 text-blue-400" /> Station A
+          <span className="flex items-center gap-1 text-slate-200 truncate max-w-[40%]">
+            <MapPin className="w-3.5 h-3.5 text-blue-400 shrink-0" /> {originName}
           </span>
           <span className="font-mono text-blue-400 font-bold">{progressPercent}% en route</span>
-          <span className="flex items-center gap-1 text-slate-200">
-            Station B <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="flex items-center gap-1 text-slate-200 truncate max-w-[40%] justify-end">
+            {destName} <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
           </span>
         </div>
         <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden p-0.5 border border-slate-700">
@@ -47,18 +55,18 @@ export const TripTimeline: React.FC<TripTimelineProps> = ({ data }) => {
           <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
             <Footprints className="w-4 h-4" />
           </div>
-          <div>
-            <span className="block font-semibold text-slate-200">Walk to Stop</span>
+          <div className="truncate">
+            <span className="block font-semibold text-slate-200 truncate">Walk to Stop</span>
             <span className="block text-[10px] text-slate-400">0.2 km · 3 min</span>
           </div>
         </div>
 
         <div className="p-2.5 rounded-xl bg-blue-600/10 border border-blue-500/30 flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-            101
+            {routeCode}
           </div>
-          <div>
-            <span className="block font-semibold text-blue-300">Board Bus 101</span>
+          <div className="truncate">
+            <span className="block font-semibold text-blue-300 truncate">Board Bus {routeCode}</span>
             <span className="block text-[10px] text-blue-400">6 Stops · 18 min</span>
           </div>
         </div>
@@ -67,8 +75,8 @@ export const TripTimeline: React.FC<TripTimelineProps> = ({ data }) => {
           <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
             <MapPin className="w-4 h-4" />
           </div>
-          <div>
-            <span className="block font-semibold text-slate-200">Station B</span>
+          <div className="truncate">
+            <span className="block font-semibold text-slate-200 truncate">{destName}</span>
             <span className="block text-[10px] text-slate-400">Destination</span>
           </div>
         </div>
