@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
@@ -20,18 +20,15 @@ interface RouteDetailViewProps {
   onBack: () => void;
 }
 
-function formatMin(sec: number): string {
-  if (sec <= 0) return "0 min";
-  return `${Math.floor(sec / 60)} min`;
-}
-
 // ─── Chalo-style detail map ───────────────────────────────────────────────────
-const DetailMap: React.FC<{ data: TransitSnapshot; selectedAgency: TransitAgency }> = ({
-  data,
-  selectedAgency,
-}) => {
+const DetailMap: React.FC<{
+  data: TransitSnapshot;
+  selectedAgency: TransitAgency;
+  selectedStop?: { lat: number; lon: number; name: string } | null;
+}> = ({ data, selectedAgency, selectedStop }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
+  const activeMarkerRef = useRef<any>(null);
 
   const route = selectedAgency.routes[0];
   const stops = route?.coords ?? [];
@@ -138,6 +135,14 @@ const DetailMap: React.FC<{ data: TransitSnapshot; selectedAgency: TransitAgency
     };
   }, [selectedAgency]);
 
+  // Pan to clicked stop when selectedStop changes
+  useEffect(() => {
+    if (mapRef.current && selectedStop) {
+      const map = mapRef.current;
+      map.flyTo([selectedStop.lat, selectedStop.lon], 14, { animate: true, duration: 0.8 });
+    }
+  }, [selectedStop]);
+
   return <div ref={containerRef} className="w-full h-full" />;
 };
 
@@ -146,28 +151,43 @@ const StopTimeline: React.FC<{
   stops: TransitAgency["routes"][0]["coords"];
   inboundSec: number;
   totalSec: number;
-}> = ({ stops, inboundSec, totalSec }) => {
+  selectedStopId: string | null;
+  onSelectStop: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
+}> = ({ stops, inboundSec, totalSec, selectedStopId, onSelectStop }) => {
   const nearestIdx = 0;
 
+  function formatMin(sec: number): string {
+    if (sec <= 0) return "0 min";
+    return `${Math.floor(sec / 60)} min`;
+  }
+
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-1.5">
       {stops.map((stop, idx) => {
         const isNearest = idx === nearestIdx;
+        const isSelected = selectedStopId === stop.id;
         const isLast = idx === stops.length - 1;
         const arrMin = Math.round((totalSec * (idx / Math.max(stops.length - 1, 1))) / 60);
 
         return (
-          <div key={stop.id} className="flex items-start gap-4 group p-2 rounded-xl hover:bg-slate-50 transition-colors">
-            
+          <div
+            key={stop.id}
+            onClick={() => onSelectStop(stop)}
+            className={`flex items-start gap-4 p-3 rounded-2xl transition-all cursor-pointer select-none ${
+              isSelected
+                ? "bg-amber-50/90 border-2 border-[#f7a501] shadow-xs"
+                : "bg-white hover:bg-slate-50 border-2 border-transparent"
+            }`}
+          >
             {/* Timeline connector dot & line */}
             <div className="flex flex-col items-center shrink-0 pt-1">
               <div
                 className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                  isNearest
+                  isNearest || isSelected
                     ? "bg-[#f7a501] border-[#f7a501] shadow-md ring-4 ring-amber-100"
                     : isLast
                     ? "bg-slate-900 border-slate-900"
-                    : "bg-white border-slate-300 group-hover:border-slate-400"
+                    : "bg-white border-slate-300"
                 }`}
               >
                 {isNearest ? (
@@ -175,22 +195,22 @@ const StopTimeline: React.FC<{
                 ) : isLast ? (
                   <Flag className="w-2.5 h-2.5 text-white" />
                 ) : (
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-400" />
                 )}
               </div>
               {!isLast && (
                 <div
-                  className={`w-0.5 flex-1 mt-1 ${isNearest ? "bg-[#f7a501]" : "bg-slate-200"}`}
-                  style={{ minHeight: 32 }}
+                  className={`w-0.5 flex-1 mt-1 ${isNearest || isSelected ? "bg-[#f7a501]" : "bg-slate-200"}`}
+                  style={{ minHeight: 28 }}
                 />
               )}
             </div>
 
-            {/* Stop Information */}
-            <div className="flex-1 min-w-0 pb-3">
+            {/* Stop Information (NO LATITUDE/LONGITUDE) */}
+            <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
                 <div className="flex items-center gap-2">
-                  <span className={`font-extrabold text-sm ${isNearest ? "text-slate-900" : "text-slate-700"}`}>
+                  <span className={`font-extrabold text-sm ${isSelected || isNearest ? "text-slate-900" : "text-slate-700"}`}>
                     {stop.name}
                   </span>
                   {isNearest && (
@@ -200,13 +220,14 @@ const StopTimeline: React.FC<{
                   )}
                 </div>
 
-                <span className={`text-xs font-bold shrink-0 ${isNearest ? "text-[#f7a501]" : "text-slate-400"}`}>
+                <span className={`text-xs font-bold shrink-0 ${isNearest || isSelected ? "text-[#f7a501]" : "text-slate-400"}`}>
                   {isNearest ? `In ${formatMin(inboundSec)}` : `${arrMin} min`}
                 </span>
               </div>
 
+              {/* Clean Human Subtitle — Latitude & Longitude Removed */}
               <span className="text-xs text-slate-500 block">
-                Stop #{idx + 1} · {stop.lat.toFixed(4)}, {stop.lon.toFixed(4)}
+                Stop #{idx + 1}
               </span>
 
               {isNearest && (
@@ -237,6 +258,8 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
   const route = selectedAgency.routes[0];
   const stops = route?.coords ?? [];
   const { T_total_sec, T_inbound_sec } = data.inbound;
+
+  const [selectedStop, setSelectedStop] = useState<typeof stops[0] | null>(stops[0] ?? null);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
@@ -273,7 +296,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
         {/* Left Column: Leaflet Map & Route Overview Card (6 cols) */}
         <div className="lg:col-span-6 space-y-5">
           <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 380 }}>
-            <DetailMap data={data} selectedAgency={selectedAgency} />
+            <DetailMap data={data} selectedAgency={selectedAgency} selectedStop={selectedStop} />
           </div>
 
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
@@ -302,12 +325,12 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Full Vertical Stop Timeline (6 cols) */}
+        {/* Right Column: Interactive Vertical Stop Timeline (6 cols) */}
         <div className="lg:col-span-6 space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-slate-600" />
-              <h2 className="font-black text-slate-900 text-base">Full Route Stop Timeline</h2>
+              <h2 className="font-black text-slate-900 text-base">Click Stop to Center Map</h2>
             </div>
             <span className="text-xs font-bold text-slate-500">
               {stops.length} Stops Total
@@ -319,6 +342,8 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
               stops={stops}
               inboundSec={T_inbound_sec}
               totalSec={T_total_sec}
+              selectedStopId={selectedStop?.id ?? null}
+              onSelectStop={(stop) => setSelectedStop(stop)}
             />
           </div>
         </div>
