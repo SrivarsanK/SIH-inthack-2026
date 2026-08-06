@@ -37,7 +37,8 @@ export const MapLibreMap: React.FC<MapLibreMapProps> = ({ data, selectedAgency, 
     let maplibregl: any = null;
 
     const initMap = async () => {
-      maplibregl = (await import("maplibre-gl")).default;
+      const mod = await import("maplibre-gl");
+      maplibregl = mod.default || mod;
       await import("maplibre-gl/dist/maplibre-gl.css");
 
       if (mapRef.current) return;
