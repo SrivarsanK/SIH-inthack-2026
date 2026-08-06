@@ -374,37 +374,40 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
             <div className="lg:col-span-7 space-y-5 sm:space-y-6">
               
               {/* Live Map Card */}
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-3">
+              <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                     <h2 className="font-black text-slate-900 text-base sm:text-lg">Track Live Bus</h2>
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-mono font-bold">
+                      Route {route?.code}
+                    </span>
                   </div>
                   <button
                     onClick={() => setActiveNav("track")}
-                    className="text-xs font-extrabold text-[#f7a501] hover:underline flex items-center gap-1"
+                    className="text-xs font-extrabold text-[#f7a501] hover:text-amber-600 transition-colors flex items-center gap-1"
                   >
-                    Full Route Details <ChevronRight className="w-3.5 h-3.5" />
+                    Full Route Details <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-200" style={{ height: 280 }}>
+                <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 300 }}>
                   <ChaloMap data={data} selectedAgency={selectedAgency} />
 
-                  <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-sm rounded-2xl p-2.5 sm:p-3 shadow-lg border border-slate-200 flex items-start gap-2.5">
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-                      <Bus className="w-4 h-4 sm:w-5 sm:h-5 text-blue-700" />
+                  <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-md border border-slate-200/80 flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center shrink-0">
+                      <Bus className="w-5 h-5 text-blue-700" />
                     </div>
                     <div>
                       <span className="font-black text-slate-900 text-xs sm:text-sm block">
                         {selectedAgency.shortName}-{route?.code}
                       </span>
-                      <span className="text-[11px] text-slate-600 block">
-                        {stops[0]?.name?.split(" ").slice(0, 2).join(" ") ?? "Terminal"}
+                      <span className="text-[11px] text-slate-500 block">
+                        To {route?.destination}
                       </span>
-                      <div className="flex items-center gap-1 mt-0.5">
+                      <div className="flex items-center gap-1 mt-1">
                         <Zap className="w-3 h-3 text-[#f7a501]" />
-                        <span className="text-xs font-bold text-[#f7a501]">
+                        <span className="text-xs font-extrabold text-[#f7a501]">
                           In {formatMin(T_inbound_sec)}
                         </span>
                       </div>
@@ -420,28 +423,50 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 </div>
 
                 {/* Horizontal Timeline Strip */}
-                <div className="pt-2">
-                  <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">
-                    Stop Sequence Timeline
-                  </span>
-                  <div className="flex items-start overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                <div className="pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                      Stop Sequence Timeline
+                    </span>
+                    <span className="text-[11px] font-bold text-slate-500">
+                      {stops.length} stops on route
+                    </span>
+                  </div>
+
+                  <div className="flex items-start overflow-x-auto pb-2" style={{ scrollbarWidth: "none" }}>
                     {stops.map((stop, idx) => {
                       const isFirst = idx === 0;
                       return (
-                        <div key={stop.id} className="flex flex-col items-center shrink-0 min-w-[90px]">
-                          <div className="flex items-center w-full">
-                            {idx > 0 && <div className="h-0.5 flex-1 bg-slate-200" />}
-                            <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 ${isFirst ? "bg-blue-600 border-blue-600" : "bg-white border-slate-300"}`}>
-                              <Bus className={`w-3.5 h-3.5 ${isFirst ? "text-white" : "text-slate-400"}`} />
+                        <div key={stop.id} className="flex flex-col items-center shrink-0 min-w-[110px] max-w-[125px] px-1">
+                          <div className="flex items-center w-full relative">
+                            {idx > 0 && <div className={`h-0.5 flex-1 ${idx <= 1 ? "bg-[#f7a501]" : "bg-slate-200"}`} />}
+                            <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 z-10 transition-all ${
+                              isFirst
+                                ? "bg-[#f7a501] border-[#f7a501] shadow-md ring-4 ring-amber-100"
+                                : "bg-white border-slate-300"
+                            }`}>
+                              <Bus className={`w-3.5 h-3.5 ${isFirst ? "text-slate-950 font-black" : "text-slate-400"}`} />
                             </div>
-                            {idx < stops.length - 1 && <div className="h-0.5 flex-1 bg-slate-200" />}
+                            {idx < stops.length - 1 && <div className={`h-0.5 flex-1 ${isFirst ? "bg-[#f7a501]" : "bg-slate-200"}`} />}
                           </div>
-                          <span className="text-[10px] font-bold text-slate-800 text-center mt-1.5 px-1 truncate max-w-[85px]">
+                          <span
+                            title={stop.name}
+                            className="text-[11px] font-bold text-slate-800 text-center mt-2 px-1 leading-snug line-clamp-2 h-7 flex items-center justify-center"
+                          >
                             {stop.name}
                           </span>
-                          <span className={`text-[10px] font-bold mt-0.5 ${isFirst ? "text-[#f7a501]" : "text-slate-400"}`}>
-                            {isFirst ? `In ${formatMin(T_inbound_sec)}` : `${stopTimes[idx]}m`}
-                          </span>
+                          <div className="mt-1">
+                            {isFirst ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-[#b17816] text-[10px] font-extrabold border border-amber-200">
+                                <Zap className="w-2.5 h-2.5 text-[#f7a501]" />
+                                In {formatMin(T_inbound_sec)}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-bold text-slate-400">
+                                {stopTimes[idx]} min
+                              </span>
+                            )}
+                          </div>
                         </div>
                       );
                     })}
