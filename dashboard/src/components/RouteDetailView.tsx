@@ -289,12 +289,14 @@ const StopTimeline: React.FC<{
               onClick={() => onSelectStop(stop)}
               className="relative z-10 flex items-start gap-3 cursor-pointer select-none group"
             >
-              {/* Chalo App Timeline Circle Nodes */}
+              {/* Chalo App Timeline Circle Nodes with Live Bus Position Badge */}
               <div className="w-[28px] shrink-0 flex items-center justify-center pt-1">
                 {isNearest ? (
-                  /* Nearest/Live Stop Node: Solid Amber/Black filled circle */
-                  <div className="w-4 h-4 rounded-full bg-slate-900 border-2 border-slate-900 shadow-xs z-10 flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                  /* Live Bus Status Icon: Blue circular bus badge sitting directly on the line (Chalo Style) */
+                  <div className="relative z-20 flex items-center justify-center">
+                    <div className="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-md ring-4 ring-blue-100 flex items-center justify-center text-white shrink-0 animate-pulse">
+                      <Bus className="w-3.5 h-3.5 text-white font-black" />
+                    </div>
                   </div>
                 ) : isFirst ? (
                   /* First Stop: Solid black filled circle */
