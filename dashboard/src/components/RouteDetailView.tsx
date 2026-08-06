@@ -257,13 +257,20 @@ const StopTimetableModal: React.FC<{
 // ─── Chalo App Style Stop Timeline ───────────────────────────────────────────
 const StopTimeline: React.FC<{
   stops: TransitAgency["routes"][0]["coords"];
+  vehiclePos: { lat: number; lon: number };
   inboundSec: number;
   totalSec: number;
   selectedStopId: string | null;
   onSelectStop: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
   onOpenTimetable: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
-}> = ({ stops, inboundSec, totalSec, selectedStopId, onSelectStop, onOpenTimetable }) => {
-  const nearestIdx = 0;
+}> = ({ stops, vehiclePos, inboundSec, totalSec, selectedStopId, onSelectStop, onOpenTimetable }) => {
+  // Dynamically calculate which stop is closest to current vehicle position on map
+  const activeBusIdx = stops.reduce((closestIdx, currStop, i) => {
+    const closestStop = stops[closestIdx];
+    const distCurr = Math.hypot(currStop.lat - vehiclePos.lat, currStop.lon - vehiclePos.lon);
+    const distClosest = Math.hypot(closestStop.lat - vehiclePos.lat, closestStop.lon - vehiclePos.lon);
+    return distCurr < distClosest ? i : closestIdx;
+  }, 0);
 
   function formatMin(sec: number): string {
     if (sec <= 0) return "0 min";
@@ -277,7 +284,7 @@ const StopTimeline: React.FC<{
 
       <div className="space-y-4">
         {stops.map((stop, idx) => {
-          const isNearest = idx === nearestIdx;
+          const isNearest = idx === activeBusIdx;
           const isSelected = selectedStopId === stop.id;
           const isLast = idx === stops.length - 1;
           const isFirst = idx === 0;
@@ -471,6 +478,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
           >
             <StopTimeline
               stops={stops}
+              vehiclePos={{ lat: data.vehicle.lat, lon: data.vehicle.lon }}
               inboundSec={T_inbound_sec}
               totalSec={T_total_sec}
               selectedStopId={selectedStop?.id ?? null}
