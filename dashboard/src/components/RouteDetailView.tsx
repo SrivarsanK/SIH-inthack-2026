@@ -3,12 +3,14 @@ import {
   AlertCircle,
   ArrowLeft,
   Bus,
+  Calendar,
   ChevronRight,
   Clock,
   Flag,
   MapPin,
   MoreVertical,
   ShieldCheck,
+  X,
   Zap,
 } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
@@ -145,6 +147,113 @@ const DetailMap: React.FC<{
   );
 };
 
+// ─── Stop Timetable Modal Component ──────────────────────────────────────────
+const StopTimetableModal: React.FC<{
+  stop: { id: string; name: string; lat: number; lon: number } | null;
+  routeCode: string;
+  inboundSec: number;
+  onClose: () => void;
+}> = ({ stop, routeCode, inboundSec, onClose }) => {
+  if (!stop) return null;
+
+  const SCHEDULE_TIMES = [
+    { time: "06:30 AM", status: "completed" },
+    { time: "07:15 AM", status: "completed" },
+    { time: "08:00 AM", status: "live", liveEta: Math.max(1, Math.round(inboundSec / 60)) },
+    { time: "08:15 AM", status: "scheduled" },
+    { time: "08:30 AM", status: "scheduled" },
+    { time: "08:45 AM", status: "scheduled" },
+    { time: "09:00 AM", status: "scheduled" },
+    { time: "09:30 AM", status: "scheduled" },
+    { time: "10:00 AM", status: "scheduled" },
+    { time: "10:30 AM", status: "scheduled" },
+    { time: "11:00 AM", status: "scheduled" },
+    { time: "11:30 AM", status: "scheduled" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-5 sm:p-6 space-y-5 animate-in zoom-in-95 duration-200">
+        {/* Modal Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+              <Calendar className="w-5 h-5 text-[#f7a501]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-slate-900 text-white text-[10px] font-extrabold">
+                  Route {routeCode}
+                </span>
+                <span className="text-xs text-slate-500 font-bold">Daily Schedule</span>
+              </div>
+              <h2 className="text-lg font-black text-slate-900 leading-snug mt-0.5">
+                {stop.name}
+              </h2>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Schedule Frequency Badge */}
+        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+          <span className="font-extrabold text-slate-700">Frequency Info:</span>
+          <span className="font-bold text-[#b17816]">Peak: 15 mins · Off-Peak: 30 mins</span>
+        </div>
+
+        {/* Departure Timetable Grid */}
+        <div className="space-y-2">
+          <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
+            Scheduled Bus Departures
+          </span>
+
+          <div className="max-h-60 overflow-y-auto pr-1 grid grid-cols-2 gap-2" style={{ scrollbarWidth: "thin" }}>
+            {SCHEDULE_TIMES.map((item, i) => (
+              <div
+                key={i}
+                className={`p-2.5 rounded-2xl border flex items-center justify-between text-xs transition-all ${
+                  item.status === "live"
+                    ? "bg-amber-50 border-[#f7a501] ring-2 ring-amber-100 font-extrabold"
+                    : item.status === "completed"
+                    ? "bg-slate-50 border-slate-200 text-slate-400 opacity-60"
+                    : "bg-white border-slate-200 font-bold text-slate-800"
+                }`}
+              >
+                <span>{item.time}</span>
+                {item.status === "live" ? (
+                  <span className="px-2 py-0.5 rounded-full bg-[#f7a501] text-slate-950 text-[10px] font-black animate-pulse">
+                    ETA {item.liveEta} min
+                  </span>
+                ) : item.status === "completed" ? (
+                  <span className="text-[10px] text-slate-400">Passed</span>
+                ) : (
+                  <span className="text-[10px] text-slate-400 font-normal">Scheduled</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="pt-2 flex items-center justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-2xl bg-slate-900 text-white font-extrabold text-xs hover:bg-slate-800 transition-colors text-center"
+          >
+            Close Timetable
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Stop Timeline ────────────────────────────────────────────────────────────
 const StopTimeline: React.FC<{
   stops: TransitAgency["routes"][0]["coords"];
@@ -152,7 +261,8 @@ const StopTimeline: React.FC<{
   totalSec: number;
   selectedStopId: string | null;
   onSelectStop: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
-}> = ({ stops, inboundSec, totalSec, selectedStopId, onSelectStop }) => {
+  onOpenTimetable: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
+}> = ({ stops, inboundSec, totalSec, selectedStopId, onSelectStop, onOpenTimetable }) => {
   const nearestIdx = 0;
 
   function formatMin(sec: number): string {
@@ -205,7 +315,7 @@ const StopTimeline: React.FC<{
               )}
             </div>
 
-            {/* Stop Information (Clean Human Text) */}
+            {/* Stop Information */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-0.5">
                 <div className="flex items-center gap-2">
@@ -224,14 +334,22 @@ const StopTimeline: React.FC<{
                 </span>
               </div>
 
-              {isNearest && (
+              {/* Action Card for Selected or Nearest Stop */}
+              {(isSelected || isNearest) && (
                 <div className="mt-2.5 p-3 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-center justify-between gap-3 shadow-2xs">
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
                     <Zap className="w-4 h-4 text-[#f7a501]" />
-                    <span>Live vehicle approaching stop</span>
+                    <span>{isNearest ? "Live vehicle approaching stop" : `Next arrival in ${arrMin} min`}</span>
                   </div>
-                  <button className="text-[#b17816] text-xs font-black hover:underline shrink-0">
-                    View Timetable
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenTimetable(stop);
+                    }}
+                    className="text-[#b17816] text-xs font-black hover:underline shrink-0 flex items-center gap-1"
+                  >
+                    <span>View Timetable</span>
+                    <ChevronRight className="w-3 h-3" />
                   </button>
                 </div>
               )}
@@ -254,6 +372,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
   const { T_total_sec, T_inbound_sec } = data.inbound;
 
   const [selectedStop, setSelectedStop] = useState<typeof stops[0] | null>(stops[0] ?? null);
+  const [timetableStop, setTimetableStop] = useState<typeof stops[0] | null>(null);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
@@ -289,7 +408,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
         
         {/* Left Column: Leaflet Map & Route Overview Card (6 cols) */}
         <div className="lg:col-span-6 space-y-5">
-          <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 380 }}>
+          <div className="relative z-0 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 380 }}>
             <DetailMap data={data} selectedAgency={selectedAgency} selectedStop={selectedStop} />
           </div>
 
@@ -344,11 +463,22 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
               totalSec={T_total_sec}
               selectedStopId={selectedStop?.id ?? null}
               onSelectStop={(stop) => setSelectedStop(stop)}
+              onOpenTimetable={(stop) => setTimetableStop(stop)}
             />
           </div>
         </div>
 
       </div>
+
+      {/* Stop Timetable Modal */}
+      {timetableStop && (
+        <StopTimetableModal
+          stop={timetableStop}
+          routeCode={route?.code ?? "101"}
+          inboundSec={T_inbound_sec}
+          onClose={() => setTimetableStop(null)}
+        />
+      )}
 
     </div>
   );
