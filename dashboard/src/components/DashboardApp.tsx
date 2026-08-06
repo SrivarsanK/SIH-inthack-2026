@@ -11,7 +11,7 @@ export const DashboardApp: React.FC = () => {
   const { data, isConnected } = useTransitStream();
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-blue-500 selection:text-white">
+    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col selection:bg-blue-600 selection:text-white">
       <KioskHeader isConnected={isConnected} />
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1700px] w-full mx-auto">

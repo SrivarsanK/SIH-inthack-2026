@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-06T19:59:45Z",
+  "title": "Design System: TransitSense UI System",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Sky Signal Blue", "canonical": "#0284c7" },
+      "accent-amber": { "role": "secondary", "displayName": "Amber Halt", "canonical": "#f59e0b" },
+      "accent-emerald": { "role": "tertiary", "displayName": "Emerald Flow", "canonical": "#22c55e" },
+      "neutral-bg": { "role": "neutral", "displayName": "Slate Canvas", "canonical": "#020617" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Hero countdown timer (MM:SS) and kiosk headers." },
+      "body": { "displayName": "Body", "purpose": "Descriptive copy, stop names, and event logs." },
+      "mono": { "displayName": "Monospace", "purpose": "Timestamps, vehicle IDs, and block_id tags." }
+    },
+    "shadows": [
+      { "name": "card-glow", "value": "0 25px 50px -12px rgba(0, 0, 0, 0.5)", "purpose": "Deep floating depth for glassmorphism card containers." }
+    ],
+    "motion": [
+      { "name": "pulse-live", "value": "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite", "purpose": "Live connection indicator dot." }
+    ]
+  },
+  "components": [
+    {
+      "name": "ETA Countdown Panel",
+      "kind": "card",
+      "refersTo": "card-eta",
+      "description": "Displays hero MM:SS predictive arrival countdown with sub-component breakdown.",
+      "html": "<div class=\"ds-card-eta\"><div class=\"ds-label\">BUS ARRIVES IN</div><div class=\"ds-time\">12:00</div></div>",
+      "css": ".ds-card-eta { background: rgba(15,23,42,0.9); border: 1px solid #1e293b; border-radius: 16px; padding: 24px; text-align: center; } .ds-label { color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 0.05em; } .ds-time { color: #f8fafc; font-size: 48px; font-family: monospace; font-weight: 800; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The High-Contrast Transit Beacon",
+    "overview": "TransitSense is an edge-first public transit intelligence identity engineered for maximum readability under intense outdoor sunlight, high-movement environments, and quick 10-foot glance scanning.",
+    "keyCharacteristics": [
+      "Outdoor Sunlight Readability (Slate 950 obsidian background + pure crisp white text)",
+      "Glanceable Color Coding (Emerald, Amber, Rose status bands)",
+      "Tactile Route Pill Badges (Bold high-visibility route numbers 101, 16C, 24E)",
+      "Glassmorphism Depth (Semi-transparent slate containers with backdrop-blur-md)"
+    ],
+    "rules": [
+      { "name": "The One Flash Rule", "body": "Color flashes fire only on state changes and return to clean slate within 2 seconds.", "section": "colors" },
+      { "name": "The Monospace Time Rule", "body": "All timestamps, countdown numbers, and trip deltas must use monospace typography.", "section": "typography" },
+      { "name": "The Glass Surface Rule", "body": "All card containers use semi-transparent bg-slate-900/90 with backdrop-blur-md and 1px border.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do maintain high contrast between text (#f8fafc) and dark background (#020617).",
+      "Do use JetBrains Mono for all live numbers, timestamps, and minute deltas.",
+      "Do highlight desaturated prior leg vs active inbound leg on the map."
+    ],
+    "donts": [
+      "Don't use low-contrast grey text directly on bright colored backgrounds.",
+      "Don't hardcode fake values in UI components — always connect to live stream."
+    ]
+  }
+}

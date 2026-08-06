@@ -45,27 +45,27 @@ export const InjectPanel: React.FC = () => {
         <button
           onClick={() => handleInject("/inject/delay?min=5", "Delay (+5 min)")}
           disabled={loading !== null}
-          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-amber-500/20 border border-slate-700 hover:border-amber-500/40 text-slate-200 hover:text-amber-400 text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
+          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-amber-600 border border-slate-700 hover:border-amber-500 text-white text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
         >
-          <AlertCircle className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+          <AlertCircle className="w-4 h-4 text-amber-400 group-hover:text-white group-hover:scale-110 transition-transform" />
           <span>⚠️ Delay (+5m)</span>
         </button>
 
         <button
           onClick={() => handleInject("/inject/dropout?sec=10", "GNSS Dropout (10s)")}
           disabled={loading !== null}
-          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-blue-500/20 border border-slate-700 hover:border-blue-500/40 text-slate-200 hover:text-blue-400 text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
+          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-blue-600 border border-slate-700 hover:border-blue-500 text-white text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
         >
-          <WifiOff className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform" />
+          <WifiOff className="w-4 h-4 text-blue-400 group-hover:text-white group-hover:scale-110 transition-transform" />
           <span>📡 GNSS Dropout</span>
         </button>
 
         <button
           onClick={() => handleInject("/inject/crowd?delta=20", "Crowd Spike (+20 pax)")}
           disabled={loading !== null}
-          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-orange-500/20 border border-slate-700 hover:border-orange-500/40 text-slate-200 hover:text-orange-400 text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
+          className="flex items-center justify-center gap-2 p-3 rounded-xl bg-slate-800/80 hover:bg-orange-600 border border-slate-700 hover:border-orange-500 text-white text-xs font-semibold transition-all duration-200 shadow-md group active:scale-95"
         >
-          <Users className="w-4 h-4 text-orange-400 group-hover:scale-110 transition-transform" />
+          <Users className="w-4 h-4 text-orange-400 group-hover:text-white group-hover:scale-110 transition-transform" />
           <span>👥 Crowd (+20 pax)</span>
         </button>
 

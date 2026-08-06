@@ -55,7 +55,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({ data }) => {
       ROUTE_STOPS.forEach((stop, i) => {
         const isTerminal = i === 0 || i === ROUTE_STOPS.length - 1;
         const iconHtml = `
-          <div class="flex items-center justify-center w-6 h-6 rounded-full ${isTerminal ? 'bg-blue-600 text-white font-bold text-xs ring-4 ring-blue-500/20' : 'bg-slate-800 text-slate-300 border border-slate-600 text-[10px]'} shadow-lg">
+          <div class="flex items-center justify-center w-6 h-6 rounded-full ${isTerminal ? 'bg-blue-600 text-white font-bold text-xs ring-4 ring-blue-500/20' : 'bg-slate-800 text-white font-semibold border border-slate-600 text-[10px]'} shadow-lg">
             ${i + 1}
           </div>
         `;
