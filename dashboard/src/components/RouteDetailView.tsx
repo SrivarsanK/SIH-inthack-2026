@@ -284,7 +284,8 @@ const StopTimeline: React.FC<{
 
       <div className="space-y-4">
         {stops.map((stop, idx) => {
-          const isNearest = idx === activeBusIdx;
+          const isNearestBus = idx === activeBusIdx;
+          const isUserNearestStop = idx === 0;
           const isSelected = selectedStopId === stop.id;
           const isLast = idx === stops.length - 1;
           const isFirst = idx === 0;
@@ -298,7 +299,7 @@ const StopTimeline: React.FC<{
             >
               {/* Chalo App Timeline Circle Nodes with Live Bus Position Badge */}
               <div className="w-[28px] shrink-0 flex items-center justify-center pt-1">
-                {isNearest ? (
+                {isNearestBus ? (
                   /* Live Bus Status Icon: Blue circular bus badge sitting directly on the line (Chalo Style) */
                   <div className="relative z-20 flex items-center justify-center">
                     <div className="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-md ring-4 ring-blue-100 flex items-center justify-center text-white shrink-0">
@@ -324,8 +325,8 @@ const StopTimeline: React.FC<{
               {/* Stop Content & Selected Action Card */}
               <div className="flex-1 min-w-0 pr-1">
                 
-                {/* Green Nearest Bus Stop Pill (Chalo Style) */}
-                {isNearest && (
+                {/* Green Nearest Bus Stop Pill (Chalo Style) — Shown for User's Nearest Stop */}
+                {isUserNearestStop && (
                   <div className="mb-1">
                     <span className="inline-block px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">
                       Nearest bus stop
@@ -352,7 +353,7 @@ const StopTimeline: React.FC<{
                 {isSelected && (
                   <div className="mt-2.5 p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between gap-3">
                     <span className="text-xs font-medium text-slate-500">
-                      {isNearest
+                      {isNearestBus
                         ? `Live vehicle approaching (${formatMin(inboundSec)})`
                         : `Next arrival in ${arrMin} min`}
                     </span>
