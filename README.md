@@ -191,11 +191,22 @@ SIH-inthack-2026/
 
 ## 👥 Git Branching & Contribution Workflow
 
-1. Create a feature branch: `git checkout -b <teammate-name>/<task-name>`
-2. Follow strict atomic commit rules using Conventional Commits (`feat(chN): ...`, `fix(chN): ...`).
-3. Push to origin and open a Pull Request targeting `main`.
-4. **Merge Approval Gate**: Only repository owner (**Srivarsan**) can merge PRs into `main`.
-5. Post-merge: delete merged branch and pull updated `main`.
+### ⚡ One-Command Agent Setup
+Tell your AI coding agent this exact sentence to start working:
+
+> **"Start task in channel <CH-1|CH-2|CH-3|CH-4>. My name is <YourName>."**
+
+Your agent will:
+1. Ask your name if missing.
+2. Automatically create your task branch: `git checkout -b <your-name>/<channel>-<task>`.
+3. Load root `AGENTS.md` and your channel's `AGENTS.md`.
+4. Stay scoped strictly inside your channel directory and begin Phase 1.
+
+### 🔄 PR & Merge Rules
+1. Follow strict atomic commit rules using Conventional Commits (`feat(chN): ...`, `fix(chN): ...`).
+2. Push to origin and open a Pull Request targeting `main`.
+3. **Merge Approval Gate**: Only repository owner (**Srivarsan**) can merge PRs into `main`.
+4. Post-merge: delete merged branch (`git branch -d`, `git push origin --delete`) and pull updated `main`.
 
 ---
 

@@ -174,6 +174,22 @@ cd dashboard && npm run dev
 
 ---
 
+## ⚡ One-Command Agent Bootstrap Directive
+
+Any teammate can start their AI agent with a single prompt:
+
+> **"Start task in channel <CH-1|CH-2|CH-3|CH-4>. My name is <YourName>."**
+
+### Automatic Bootstrap Protocol for AI Agents:
+When an agent receives this prompt (or any channel assignment request):
+1. **Identify Name & Task**: If teammate's name is not provided in the prompt, ask immediately: *"What is your name?"*
+2. **Automatic Branch Creation**: Run `git checkout -b <teammate-name>/<channel-id>-<task-name>` before making any code edits.
+3. **Read Instructions**: Load `AGENTS.md` and `<channel-folder>/AGENTS.md`.
+4. **Scope Lock**: Lock working scope strictly to `<channel-folder>/` and `shared/constants.py`.
+5. **Execute Phase 1**: Inspect the phase checklist in `<channel-folder>/AGENTS.md` and begin Phase 1 implementation.
+
+---
+
 ## Channel-Specific Instructions
 
 Each channel folder has its own `AGENTS.md` with detailed per-channel rules. Read your channel's `AGENTS.md` **in addition to this root file**.
