@@ -1,0 +1,3 @@
+stop_id,stop_name,stop_lat,stop_lon
+stop_A,Chennai Central,13.0827,80.2707
+stop_B,Guindy,12.9815,80.2223
