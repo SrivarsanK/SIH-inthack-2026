@@ -5,6 +5,24 @@
 
 ---
 
+## ⚡ Quick Agent Bootstrap (For Teammates)
+
+Copy and paste this prompt directly into your AI Coding Agent to start working immediately:
+
+```text
+Start task in channel <CH-1|CH-2|CH-3|CH-4>. My name is <YourName>.
+```
+*Example:* `Start task in channel CH-1. My name is Alex.`
+
+**What your AI Agent will automatically do:**
+1. **Identify Name & Task**: Asks for your name if missing.
+2. **Branch Creation**: Runs `git checkout -b <your-name>/<channel>-<task>` before editing any file.
+3. **Load Rules**: Reads `AGENTS.md` and `<channel-folder>/AGENTS.md`.
+4. **Scope Lock**: Scopes work strictly inside `<channel-folder>/` and `shared/constants.py`.
+5. **Begin Work**: Inspects phase checklist in your channel's `AGENTS.md` and starts Phase 1.
+
+---
+
 ## 🎯 Pitch & Vision
 
 > *"Watch this bus disappear from Route A and instantly become a live, shrinking ETA on Route B — before it has even arrived at the terminal."*
