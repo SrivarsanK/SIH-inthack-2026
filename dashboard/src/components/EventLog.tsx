@@ -1,5 +1,5 @@
 import React from "react";
-import { Terminal, ArrowRightLeft } from "lucide-react";
+import { Terminal } from "lucide-react";
 
 interface EventLogProps {
   events: Array<{
@@ -13,10 +13,10 @@ interface EventLogProps {
 
 export const EventLog: React.FC<EventLogProps> = ({ events }) => {
   return (
-    <div className="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 backdrop-blur-md shadow-2xl flex flex-col h-full">
+    <div className="p-5 rounded-2xl bg-white border border-slate-300 shadow-sm flex flex-col h-full">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-          <Terminal className="w-4 h-4 text-emerald-400" />
+        <div className="flex items-center gap-2 text-xs font-bold text-slate-800">
+          <Terminal className="w-4 h-4 text-emerald-600" />
           <span>CONNECTED PIPELINE EVENT LOG</span>
         </div>
         <span className="text-[10px] text-slate-500 font-mono">Cause & Effect Stream</span>
@@ -35,19 +35,19 @@ export const EventLog: React.FC<EventLogProps> = ({ events }) => {
             return (
               <div
                 key={i}
-                className="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs font-mono transition-all hover:border-slate-700"
+                className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs font-mono transition-all hover:border-slate-300"
               >
                 <div className="flex items-center gap-2 overflow-hidden">
                   <span className="text-slate-500 shrink-0">{e.ts}</span>
-                  <span className="text-slate-300 truncate">{e.event}</span>
+                  <span className="text-slate-800 truncate font-semibold">{e.event}</span>
                 </div>
 
                 {e.delta_sec !== 0 && (
                   <span
                     className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
                       isNegative
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        : "bg-rose-500/10 text-rose-400 border border-rose-500/20"
+                        ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                        : "bg-rose-100 text-rose-800 border border-rose-300"
                     }`}
                   >
                     {isNegative ? "" : "+"}{deltaMinutes}m

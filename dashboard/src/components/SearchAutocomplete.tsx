@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, MapPin, X, Navigation, Loader2 } from "lucide-react";
+import { Search, MapPin, X, Loader2 } from "lucide-react";
 
 interface SearchResult {
   name: string;
@@ -71,24 +71,24 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({ onSelect
   return (
     <div ref={wrapperRef} className="relative w-full max-w-md">
       <div className="relative flex items-center">
-        <Search className="absolute left-3.5 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3.5 w-4 h-4 text-slate-500" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setIsOpen(true)}
           placeholder="Search destination, stop, or landmark..."
-          className="w-full bg-slate-900/90 backdrop-blur-md border border-slate-800 focus:border-blue-500/80 rounded-xl pl-10 pr-9 py-2 text-xs font-semibold text-white placeholder-slate-400 outline-none transition-all shadow-xl"
+          className="w-full bg-white border border-slate-300 focus:border-[#f7a501] focus:ring-2 focus:ring-[#f7a501]/30 rounded-xl pl-10 pr-9 py-2 text-xs font-semibold text-slate-900 placeholder-slate-500 outline-none transition-all shadow-sm"
         />
         {isLoading ? (
-          <Loader2 className="absolute right-3 w-4 h-4 text-blue-400 animate-spin" />
+          <Loader2 className="absolute right-3 w-4 h-4 text-[#b17816] animate-spin" />
         ) : query ? (
           <button
             onClick={() => {
               setQuery("");
               setResults([]);
             }}
-            className="absolute right-3 text-slate-400 hover:text-white"
+            className="absolute right-3 text-slate-400 hover:text-slate-700"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -97,7 +97,7 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({ onSelect
 
       {/* Autocomplete Results Dropdown */}
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-slate-900/95 backdrop-blur-xl border border-slate-800 rounded-2xl p-2 shadow-2xl z-50 animate-fadeIn space-y-1">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-300 rounded-2xl p-2 shadow-xl z-50 animate-fadeIn space-y-1">
           {results.map((res, i) => (
             <button
               key={i}
@@ -106,22 +106,22 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({ onSelect
                 setQuery(res.name);
                 setIsOpen(false);
               }}
-              className="w-full p-2.5 rounded-xl hover:bg-blue-600/20 hover:border-blue-500/30 border border-transparent text-left flex items-center justify-between transition-all group"
+              className="w-full p-2.5 rounded-xl hover:bg-slate-100 border border-transparent text-left flex items-center justify-between transition-all group"
             >
               <div className="flex items-center gap-3 overflow-hidden">
-                <div className="w-7 h-7 rounded-lg bg-slate-800 text-blue-400 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 group-hover:bg-[#f7a501] group-hover:text-slate-950 transition-colors">
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div className="truncate">
-                  <span className="font-bold text-white text-xs block truncate group-hover:text-blue-300 transition-colors">
+                  <span className="font-bold text-slate-900 text-xs block truncate group-hover:text-slate-950 transition-colors">
                     {res.name}
                   </span>
-                  <span className="text-[10px] text-slate-400 truncate block">
+                  <span className="text-[10px] text-slate-500 truncate block">
                     {res.city ? `${res.city}, ${res.country || ''}` : res.country}
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] font-mono text-slate-500 shrink-0">
+              <span className="text-[10px] font-mono text-slate-400 shrink-0">
                 {Math.round(res.lat * 100) / 100}, {Math.round(res.lon * 100) / 100}
               </span>
             </button>

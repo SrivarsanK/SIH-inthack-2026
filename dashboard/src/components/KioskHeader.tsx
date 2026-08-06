@@ -36,32 +36,32 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
   }, []);
 
   return (
-    <header className="w-full bg-slate-950/95 backdrop-blur-xl border-b border-slate-800/90 px-4 sm:px-6 py-3 flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-4 shadow-2xl z-30">
+    <header className="w-full bg-white/90 backdrop-blur-xl border-b border-slate-300/80 px-4 sm:px-6 py-3 flex flex-col lg:flex-row items-center justify-between gap-3 sm:gap-4 shadow-sm z-30">
       {/* Brand Identity & Agency Provider Picker */}
       <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#f7a501] border border-amber-300/40 flex items-center justify-center text-slate-950 font-black shadow-lg shadow-amber-500/20 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-[#f7a501] border border-amber-400/60 flex items-center justify-center text-slate-950 font-black shadow-md shrink-0">
             <Bus className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-black text-white tracking-tight">TransitSense</h1>
-              <span className="px-2 py-0.5 text-[10px] font-extrabold bg-[#f7a501]/20 text-[#f7a501] border border-[#f7a501]/40 rounded-md">
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">TransitSense</h1>
+              <span className="px-2 py-0.5 text-[10px] font-extrabold bg-[#f7a501]/20 text-[#b17816] border border-[#f7a501]/50 rounded-md">
                 SIH 2026
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-medium hidden sm:block">Predictive Transit Engine</p>
+            <p className="text-[11px] text-slate-500 font-medium hidden sm:block">Predictive Transit Engine</p>
           </div>
         </div>
 
-        {/* PostHog Style Agency Switcher Button */}
+        {/* PostHog Style Light Agency Switcher Button */}
         <button
           onClick={onOpenAgencySelector}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 transition-all shadow-md active:scale-95 min-h-[44px] group shrink-0"
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-bold text-slate-800 transition-all shadow-sm active:scale-95 min-h-[44px] group shrink-0"
         >
           <span className="text-base">{selectedAgency.logo}</span>
-          <span className="group-hover:text-[#f7a501] transition-colors">{selectedAgency.shortName}</span>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+          <span className="group-hover:text-[#b17816] transition-colors">{selectedAgency.shortName}</span>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
         </button>
       </div>
 
@@ -72,15 +72,15 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
         </div>
       )}
 
-      {/* Center Navigation Tabs (PostHog Style Saturated Action Pills) */}
+      {/* Center Navigation Tabs */}
       <div className="w-full lg:w-auto flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar">
-        <nav className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800/80 shadow-inner max-w-full overflow-x-auto">
+        <nav className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-300/80 shadow-inner max-w-full overflow-x-auto">
           <button
             onClick={() => setActiveTab && setActiveTab("radar")}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all min-h-[40px] whitespace-nowrap ${
               activeTab === "radar"
-                ? "bg-[#f7a501] text-slate-950 font-black shadow-lg"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-[#f7a501] text-slate-950 font-black shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <LayoutGrid className="w-3.5 h-3.5" />
@@ -91,8 +91,8 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
             onClick={() => setActiveTab && setActiveTab("route")}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all min-h-[40px] whitespace-nowrap ${
               activeTab === "route"
-                ? "bg-[#f7a501] text-slate-950 font-black shadow-lg"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-[#f7a501] text-slate-950 font-black shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <MapPin className="w-3.5 h-3.5" />
@@ -103,8 +103,8 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
             onClick={() => setActiveTab && setActiveTab("controls")}
             className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-bold transition-all min-h-[40px] whitespace-nowrap ${
               activeTab === "controls"
-                ? "bg-[#f7a501] text-slate-950 font-black shadow-lg"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-[#f7a501] text-slate-950 font-black shadow-sm"
+                : "text-slate-600 hover:text-slate-900"
             }`}
           >
             <Terminal className="w-3.5 h-3.5" />
@@ -114,13 +114,13 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
 
         {/* Right Controls: View Mode & Time */}
         <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-300">
             <button
               onClick={() => setViewMode("command")}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs transition-all min-h-[40px] ${
                 viewMode === "command"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               <Monitor className="w-3.5 h-3.5" />
@@ -130,8 +130,8 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
               onClick={() => setViewMode("kiosk")}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-bold text-xs transition-all min-h-[40px] ${
                 viewMode === "kiosk"
-                  ? "bg-amber-600 text-white shadow-md"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-amber-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               <Tv className="w-3.5 h-3.5" />
@@ -139,17 +139,17 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
             </button>
           </div>
 
-          <div className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900/80 border border-slate-800 text-slate-300 text-xs">
-            <Clock className="w-3.5 h-3.5 text-[#f7a501]" />
-            <span className="font-mono text-slate-200 font-bold">{timeStr || "19:40:00"}</span>
+          <div className="hidden xl:flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-300 text-slate-700 text-xs shadow-sm">
+            <Clock className="w-3.5 h-3.5 text-[#b17816]" />
+            <span className="font-mono text-slate-900 font-bold">{timeStr || "19:40:00"}</span>
           </div>
 
           <div className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border font-bold text-[11px] transition-all duration-300 min-h-[40px] ${
             isConnected 
-              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" 
-              : "bg-[#f7a501]/10 text-[#f7a501] border-[#f7a501]/30"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-300" 
+              : "bg-amber-50 text-amber-800 border-amber-300"
           }`}>
-            <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-400 animate-ping" : "bg-[#f7a501]"}`} />
+            <span className={`w-2 h-2 rounded-full ${isConnected ? "bg-emerald-500 animate-ping" : "bg-amber-500"}`} />
             <span>{isConnected ? "LIVE" : "SIM"}</span>
           </div>
         </div>

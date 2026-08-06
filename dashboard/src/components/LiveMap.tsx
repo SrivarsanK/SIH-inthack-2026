@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
 import type { TransitAgency } from "../lib/agencies";
-import { Gauge, ShieldCheck, Plus, Minus, RefreshCw } from "lucide-react";
+import { ShieldCheck, Plus, Minus, RefreshCw } from "lucide-react";
 
 interface LiveMapProps {
   data: TransitSnapshot;
@@ -39,7 +39,6 @@ export const LiveMap: React.FC<LiveMapProps> = ({ data, selectedAgency, searched
     const initMap = async () => {
       const leafletMod = await import("leaflet");
       L = leafletMod.default || leafletMod;
-      await import("leaflet/dist/leaflet.css");
 
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
@@ -54,93 +53,101 @@ export const LiveMap: React.FC<LiveMapProps> = ({ data, selectedAgency, searched
         attributionControl: false
       });
 
-      // Ultra-reliable CartoDB Dark Matter tile layer
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      // CartoDB Voyager Light tile layer
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
         maxZoom: 19,
         subdomains: "abcd"
       }).addTo(map);
 
-      // Route Polyline Coordinates
-      const polylineCoords = stops.map(s => [s.lat, s.lon]);
-
-      // Outer Glow Polyline
-      const outerGlow = L.polyline(polylineCoords, {
-        color: selectedAgency?.accentColor || "#0284c7",
+      // Route Path Polylines (High-contrast blue/gold glow for light mode)
+      const latLons = stops.map(s => [s.lat, s.lon]);
+      
+      polylineGlowRef.current = L.polyline(latLons, {
+        color: "#f7a501",
         weight: 10,
-        opacity: 0.35,
+        opacity: 0.4,
         lineCap: "round"
       }).addTo(map);
-      polylineGlowRef.current = outerGlow;
 
-      // Main Polyline
-      const mainLine = L.polyline(polylineCoords, {
-        color: "#38bdf8",
+      polylineMainRef.current = L.polyline(latLons, {
+        color: "#0284c7",
         weight: 5,
         opacity: 0.95,
-        lineCap: "round",
-        dashArray: "8, 10"
+        dashArray: "1, 0",
+        lineCap: "round"
       }).addTo(map);
-      polylineMainRef.current = mainLine;
 
-      // Render Stop Markers
-      stopMarkersRef.current = stops.map((stop, i) => {
-        const isTerminal = i === 0 || i === stops.length - 1;
-        const iconHtml = `
-          <div class="flex items-center justify-center w-7 h-7 rounded-full ${
-            isTerminal
-              ? 'bg-blue-600 text-white font-black text-xs ring-4 ring-blue-500/40 shadow-xl'
-              : 'bg-slate-900 text-white border-2 border-blue-400 font-bold text-[11px] shadow-md'
-          }">
-            ${i + 1}
-          </div>
-        `;
-        const customIcon = L.divIcon({
-          html: iconHtml,
+      // Stop Markers
+      stopMarkersRef.current = stops.map((s, idx) => {
+        const stopIcon = L.divIcon({
           className: "custom-stop-icon",
-          iconSize: [28, 28],
-          iconAnchor: [14, 14]
+          html: `
+            <div style="
+              width: 26px;
+              height: 26px;
+              background: ${idx === 0 || idx === stops.length - 1 ? '#0284c7' : '#ffffff'};
+              border: 2px solid #0284c7;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: ${idx === 0 || idx === stops.length - 1 ? '#ffffff' : '#0284c7'};
+              font-weight: 800;
+              font-size: 11px;
+              box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            ">
+              ${idx + 1}
+            </div>
+          `,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
         });
 
-        return L.marker([stop.lat, stop.lon], { icon: customIcon })
-          .addTo(map)
-          .bindPopup(`
-            <div class="p-2 bg-slate-950 text-white rounded-lg border border-slate-800 text-xs font-sans">
-              <strong class="text-blue-400 block mb-1">Stop ${i + 1}: ${stop.name}</strong>
-              <span class="text-slate-400 text-[11px]">${selectedAgency?.shortName || 'Transit'} Network</span>
-            </div>
-          `);
+        return L.marker([s.lat, s.lon], { icon: stopIcon }).addTo(map);
       });
 
-      // Animated Bus Marker
-      const busIconHtml = `
-        <div class="relative flex items-center justify-center">
-          <div class="absolute -inset-3 rounded-full bg-blue-500/40 animate-ping"></div>
-          <div class="relative w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 border-2 border-white text-white flex items-center justify-center shadow-2xl">
-            <span class="text-lg">🚌</span>
-          </div>
-        </div>
-      `;
+      // Live Bus Vehicle Marker with Pulsing Halo
       const busIcon = L.divIcon({
-        html: busIconHtml,
         className: "custom-bus-icon",
+        html: `
+          <div style="position: relative; width: 44px; height: 44px;">
+            <div style="
+              position: absolute;
+              inset: 0;
+              border-radius: 50%;
+              background: rgba(247, 165, 1, 0.3);
+              animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            "></div>
+            <div style="
+              position: relative;
+              width: 44px;
+              height: 44px;
+              border-radius: 50%;
+              background: linear-gradient(135deg, #f7a501 0%, #ea580c 100%);
+              border: 3px solid #ffffff;
+              box-shadow: 0 10px 20px rgba(247,165,1,0.4);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: #0f172a;
+              font-size: 20px;
+            ">
+              🚌
+            </div>
+          </div>
+        `,
         iconSize: [44, 44],
         iconAnchor: [22, 22]
       });
 
-      const vehicleLat = selectedAgency ? stops[0].lat : data.vehicle.lat;
-      const vehicleLon = selectedAgency ? stops[0].lon : data.vehicle.lon;
+      markerRef.current = L.marker([data.vehicle.lat, data.vehicle.lon], { icon: busIcon }).addTo(map);
 
-      const marker = L.marker([vehicleLat, vehicleLon], { icon: busIcon }).addTo(map);
-      markerRef.current = marker;
+      // Fit bounds to route
+      if (latLons.length > 0) {
+        map.fitBounds(L.latLngBounds(latLons), { padding: [50, 50] });
+      }
+
       mapInstanceRef.current = map;
-
-      // Auto-fit map bounds to show full route
-      map.fitBounds(L.polyline(polylineCoords).getBounds(), { padding: [40, 40] });
-      setTimeout(() => {
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.invalidateSize();
-        }
-      }, 200);
     };
 
     initMap();
@@ -151,19 +158,22 @@ export const LiveMap: React.FC<LiveMapProps> = ({ data, selectedAgency, searched
         mapInstanceRef.current = null;
       }
     };
-  }, [selectedAgency?.id]);
+  }, [selectedAgency]);
 
-  // Sync bus position
+  // Update Live Bus Marker Position
   useEffect(() => {
-    if (markerRef.current && !selectedAgency && data.vehicle.lat && data.vehicle.lon) {
-      markerRef.current.setLatLng([data.vehicle.lat, data.vehicle.lon]);
+    if (markerRef.current && mapInstanceRef.current) {
+      const newPos: [number, number] = [data.vehicle.lat, data.vehicle.lon];
+      markerRef.current.setLatLng(newPos);
     }
-  }, [data.vehicle.lat, data.vehicle.lon, selectedAgency]);
+  }, [data.vehicle.lat, data.vehicle.lon]);
 
-  // Handle searched location pan
+  // Handle Searched Location Camera Pan
   useEffect(() => {
     if (searchedLocation && mapInstanceRef.current) {
-      mapInstanceRef.current.panTo([searchedLocation.lat, searchedLocation.lon]);
+      mapInstanceRef.current.flyTo([searchedLocation.lat, searchedLocation.lon], 15, {
+        duration: 1.5
+      });
     }
   }, [searchedLocation]);
 
@@ -172,58 +182,50 @@ export const LiveMap: React.FC<LiveMapProps> = ({ data, selectedAgency, searched
     if (type === "in") mapInstanceRef.current.zoomIn();
     if (type === "out") mapInstanceRef.current.zoomOut();
     if (type === "reset") {
-      const polylineCoords = stops.map(s => [s.lat, s.lon]);
-      mapInstanceRef.current.fitBounds(polylineCoords, { padding: [40, 40] });
+      const latLons = stops.map(s => [s.lat, s.lon]);
+      mapInstanceRef.current.flyToBounds(latLons, { padding: [50, 50] });
     }
   };
 
-  const legLabel = data.vehicle.leg === "outbound"
-    ? "OUTBOUND — Completing Prior Route"
-    : data.vehicle.leg === "dwell"
-    ? "TERMINAL HALT — Schedule Recovery"
-    : "INBOUND — Active En Route";
-
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl flex flex-col group z-0">
-      {/* Top Left Overlay: Vehicle Status */}
-      <div className="absolute top-4 left-4 z-10 flex flex-col gap-2 pointer-events-none">
-        <div className="bg-slate-900/90 backdrop-blur-md px-4 py-2.5 rounded-xl border border-slate-800 text-xs font-bold text-white flex items-center gap-2.5 shadow-2xl pointer-events-auto">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse shadow-sm shadow-blue-400" />
-          <span>{selectedAgency ? `${selectedAgency.shortName} · ${activeRoute?.code}` : legLabel}</span>
+    <div className="relative w-full h-full min-h-[480px] rounded-2xl overflow-hidden border border-slate-300 shadow-md">
+      {/* Top Left Overlay: Route Pill */}
+      <div className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-md p-3 rounded-xl border border-slate-300 shadow-md space-y-1">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-[#f7a501] animate-ping" />
+          <span className="text-xs font-black text-slate-900 uppercase tracking-wide">
+            {selectedAgency?.shortName || "BMTC"} - {activeRoute?.code || "101"}
+          </span>
         </div>
-
-        <div className="bg-slate-900/80 backdrop-blur-md px-3.5 py-1.5 rounded-lg border border-slate-800/80 text-[11px] text-slate-300 flex items-center gap-3 shadow-lg pointer-events-auto">
-          <div className="flex items-center gap-1.5">
-            <Gauge className="w-3.5 h-3.5 text-blue-400" />
-            <span className="font-mono font-bold">{selectedAgency ? `${activeRoute?.origin} ➔ ${activeRoute?.destination}` : `${Math.round(data.vehicle.lat * 1000) / 1000}, ${Math.round(data.vehicle.lon * 1000) / 1000}`}</span>
-          </div>
-          <span className="text-slate-600">|</span>
+        <div className="text-[11px] text-slate-600 font-bold flex items-center gap-2">
+          <span>{activeRoute?.origin || "Majestic BS"} → {activeRoute?.destination || "Indiranagar Depot"}</span>
+          <span className="text-slate-400">|</span>
           <div className="flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-semibold">{selectedAgency?.providerType || data.vehicle.source.toUpperCase()}</span>
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="font-bold text-slate-800">{selectedAgency?.providerType || data.vehicle.source.toUpperCase()}</span>
           </div>
         </div>
       </div>
 
       {/* Top Right Overlay: Map Control Buttons */}
-      <div className="absolute top-4 right-4 z-10 flex flex-col gap-1.5 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-800 shadow-2xl">
+      <div className="absolute top-4 right-4 z-10 flex flex-col gap-1.5 bg-white/95 backdrop-blur-md p-1.5 rounded-xl border border-slate-300 shadow-md">
         <button
           onClick={() => handleZoom("in")}
-          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white flex items-center justify-center transition-all shadow-md active:scale-95"
+          className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-[#f7a501] text-slate-700 hover:text-slate-950 flex items-center justify-center transition-all shadow-sm active:scale-95"
           title="Zoom In"
         >
           <Plus className="w-4 h-4" />
         </button>
         <button
           onClick={() => handleZoom("out")}
-          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white flex items-center justify-center transition-all shadow-md active:scale-95"
+          className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-[#f7a501] text-slate-700 hover:text-slate-950 flex items-center justify-center transition-all shadow-sm active:scale-95"
           title="Zoom Out"
         >
           <Minus className="w-4 h-4" />
         </button>
         <button
           onClick={() => handleZoom("reset")}
-          className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-blue-600 text-slate-200 hover:text-white flex items-center justify-center transition-all shadow-md active:scale-95"
+          className="w-8 h-8 rounded-lg bg-slate-100 hover:bg-[#f7a501] text-slate-700 hover:text-slate-950 flex items-center justify-center transition-all shadow-sm active:scale-95"
           title="Reset Map View"
         >
           <RefreshCw className="w-3.5 h-3.5" />
@@ -231,7 +233,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({ data, selectedAgency, searched
       </div>
 
       {/* Bottom Overlay: Stop Selector Ribbon */}
-      <div className="absolute bottom-4 left-4 right-4 z-10 bg-slate-900/90 backdrop-blur-md p-3 rounded-xl border border-slate-800 shadow-2xl flex items-center justify-between overflow-x-auto gap-2 custom-scrollbar">
+      <div className="absolute bottom-4 left-4 right-4 z-10 bg-white/95 backdrop-blur-md p-3 rounded-xl border border-slate-300 shadow-md flex items-center justify-between overflow-x-auto gap-2 custom-scrollbar">
         {stops.map((stop, i) => (
           <button
             key={stop.id}
@@ -241,13 +243,13 @@ export const LiveMap: React.FC<LiveMapProps> = ({ data, selectedAgency, searched
                 mapInstanceRef.current.panTo([stop.lat, stop.lon]);
               }
             }}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-bold whitespace-nowrap transition-all ${
               activeStopIndex === i
-                ? "bg-blue-600 text-white border-blue-400 shadow-md"
-                : "bg-slate-950/60 text-slate-300 border-slate-800 hover:bg-slate-800"
+                ? "bg-[#f7a501] text-slate-950 border-[#b17816] shadow-sm"
+                : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200"
             }`}
           >
-            <span className="w-4 h-4 rounded-full bg-slate-800 text-slate-300 font-mono text-[10px] flex items-center justify-center">
+            <span className="w-4 h-4 rounded-full bg-slate-200 text-slate-800 font-mono text-[10px] flex items-center justify-center">
               {i + 1}
             </span>
             <span>{stop.name}</span>
@@ -255,7 +257,7 @@ export const LiveMap: React.FC<LiveMapProps> = ({ data, selectedAgency, searched
         ))}
       </div>
 
-      <div ref={mapContainerRef} className="w-full h-full min-h-[480px] bg-slate-950 z-0" style={{ height: "100%", minHeight: "480px" }} />
+      <div ref={mapContainerRef} className="w-full h-full min-h-[480px] bg-slate-200 z-0" style={{ height: "100%", minHeight: "480px" }} />
     </div>
   );
 };

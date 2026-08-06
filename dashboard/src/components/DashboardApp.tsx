@@ -27,7 +27,7 @@ export const DashboardApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[#eeefe9] text-slate-900 font-sans flex flex-col selection:bg-[#f7a501] selection:text-slate-950">
       <KioskHeader
         isConnected={isConnected}
         viewMode={viewMode}
