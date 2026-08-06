@@ -443,7 +443,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-slate-600" />
-              <h2 className="font-black text-slate-900 text-base">Click Stop to Center Map</h2>
+              <h2 className="font-black text-slate-900 text-base">Full Route Stop Timeline</h2>
             </div>
             <span className="text-xs font-bold text-slate-500">
               {stops.length} Stops Total
