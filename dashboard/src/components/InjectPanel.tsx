@@ -43,7 +43,7 @@ export const InjectPanel: React.FC<InjectPanelProps> = ({ onOpenApiInspector }) 
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs font-bold text-[#b17816] transition-all shadow-sm group min-h-[36px]"
           >
             <Server className="w-3.5 h-3.5 text-[#b17816] group-hover:scale-110 transition-transform" />
-            <span>🔌 View APIs</span>
+            <span>View APIs</span>
           </button>
         )}
       </div>
@@ -61,7 +61,7 @@ export const InjectPanel: React.FC<InjectPanelProps> = ({ onOpenApiInspector }) 
           className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-slate-100 hover:bg-amber-500 hover:text-slate-950 border border-slate-300 text-slate-800 text-xs font-bold transition-all duration-200 shadow-sm group active:scale-95 min-h-[48px]"
         >
           <AlertCircle className="w-4 h-4 text-amber-600 group-hover:text-slate-950 group-hover:scale-110 transition-transform" />
-          <span>⚠️ Delay (+5m)</span>
+          <span>Delay (+5m)</span>
         </button>
 
         <button
@@ -70,7 +70,7 @@ export const InjectPanel: React.FC<InjectPanelProps> = ({ onOpenApiInspector }) 
           className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-slate-100 hover:bg-blue-600 hover:text-white border border-slate-300 text-slate-800 text-xs font-bold transition-all duration-200 shadow-sm group active:scale-95 min-h-[48px]"
         >
           <WifiOff className="w-4 h-4 text-blue-600 group-hover:text-white group-hover:scale-110 transition-transform" />
-          <span>📡 GNSS Dropout</span>
+          <span>GNSS Dropout</span>
         </button>
 
         <button
@@ -79,7 +79,7 @@ export const InjectPanel: React.FC<InjectPanelProps> = ({ onOpenApiInspector }) 
           className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-slate-100 hover:bg-orange-500 hover:text-slate-950 border border-slate-300 text-slate-800 text-xs font-bold transition-all duration-200 shadow-sm group active:scale-95 min-h-[48px]"
         >
           <Users className="w-4 h-4 text-orange-600 group-hover:text-slate-950 group-hover:scale-110 transition-transform" />
-          <span>👥 Crowd (+20 pax)</span>
+          <span>Crowd (+20 pax)</span>
         </button>
 
         <button
@@ -88,7 +88,7 @@ export const InjectPanel: React.FC<InjectPanelProps> = ({ onOpenApiInspector }) 
           className="flex items-center justify-center gap-2 p-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-bold transition-all duration-200 shadow-sm active:scale-95 min-h-[48px]"
         >
           <RotateCcw className="w-4 h-4 text-slate-500" />
-          <span>🔄 Reset Simulation</span>
+          <span>Reset Simulation</span>
         </button>
       </div>
     </div>

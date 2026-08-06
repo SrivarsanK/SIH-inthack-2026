@@ -11,29 +11,25 @@ const BAND_CONFIG = {
     subtext: "Plenty of room onboard (<40 pax)",
     badgeColor: "bg-emerald-50 text-emerald-800 border-emerald-300",
     dotColor: "bg-emerald-500",
-    emoji: "🟢"
   },
   MODERATE: {
     label: "Moderate Crowd",
     subtext: "Seating mostly filled (40–48 pax)",
     badgeColor: "bg-amber-50 text-amber-800 border-amber-300",
     dotColor: "bg-amber-500",
-    emoji: "🟡"
   },
   STANDING_ROOM: {
     label: "Standing Room Only",
     subtext: "Seats filled, standing area active (48–55 pax)",
     badgeColor: "bg-orange-50 text-orange-800 border-orange-300",
     dotColor: "bg-orange-500",
-    emoji: "🟠"
   },
   VERY_CROWDED: {
     label: "Very Crowded",
     subtext: "Near maximum capacity (>55 pax)",
     badgeColor: "bg-rose-50 text-rose-800 border-rose-300",
     dotColor: "bg-rose-500",
-    emoji: "🔴"
-  }
+  },
 };
 
 export const OccupancyBadge: React.FC<OccupancyBadgeProps> = ({ band }) => {
@@ -53,7 +49,7 @@ export const OccupancyBadge: React.FC<OccupancyBadgeProps> = ({ band }) => {
 
       <div className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 font-bold text-xs shadow-sm ${config.badgeColor}`}>
         <span className={`w-2 h-2 rounded-full ${config.dotColor} animate-pulse`} />
-        <span>{config.emoji} {config.label}</span>
+        <span>{config.label}</span>
       </div>
     </div>
   );
