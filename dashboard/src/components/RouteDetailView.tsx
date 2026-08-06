@@ -294,7 +294,7 @@ const StopTimeline: React.FC<{
                 {isNearest ? (
                   /* Live Bus Status Icon: Blue circular bus badge sitting directly on the line (Chalo Style) */
                   <div className="relative z-20 flex items-center justify-center">
-                    <div className="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-md ring-4 ring-blue-100 flex items-center justify-center text-white shrink-0 animate-pulse">
+                    <div className="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-md ring-4 ring-blue-100 flex items-center justify-center text-white shrink-0">
                       <Bus className="w-3.5 h-3.5 text-white font-black" />
                     </div>
                   </div>
