@@ -25,12 +25,13 @@ import type { TransitAgency } from "../lib/agencies";
 import { SearchView } from "./SearchView";
 import { RouteDetailView } from "./RouteDetailView";
 import { RoutesListView } from "./RoutesListView";
+import { AgencySelector } from "./AgencySelector";
 
 interface ChaloHomeViewProps {
   data: TransitSnapshot;
   isConnected: boolean;
   selectedAgency: TransitAgency;
-  onOpenAgencySelector: () => void;
+  onSelectAgency: (agency: TransitAgency) => void;
   onSwitchToKiosk?: () => void;
 }
 
@@ -151,11 +152,12 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   data,
   isConnected,
   selectedAgency,
-  onOpenAgencySelector,
+  onSelectAgency,
   onSwitchToKiosk,
 }) => {
   const [activeNav, setActiveNav] = useState<"home" | "track" | "routes" | "search">("home");
   const [timeStr, setTimeStr] = useState("");
+  const [isAgencyDropdownOpen, setIsAgencyDropdownOpen] = useState(false);
 
   useEffect(() => {
     const tick = () => setTimeStr(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }));
@@ -218,14 +220,16 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={onOpenAgencySelector}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors"
-          >
-            <MapPin className="w-3 h-3 text-[#f7a501]" />
-            <span>{selectedAgency.city}</span>
-            <ChevronRight className="w-3 h-3 text-slate-400 rotate-90" />
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsAgencyDropdownOpen(!isAgencyDropdownOpen)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-800 shadow-sm hover:bg-slate-50 transition-colors"
+            >
+              <MapPin className="w-3 h-3 text-[#f7a501]" />
+              <span>{selectedAgency.city}</span>
+              <ChevronRight className={`w-3 h-3 text-slate-400 transition-transform ${isAgencyDropdownOpen ? "-rotate-90" : "rotate-90"}`} />
+            </button>
+          </div>
           <button className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 shadow-sm hover:bg-slate-50 transition-colors">
             <Bell className="w-[18px] h-[18px] text-slate-600" />
             {isConnected && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#f7a501] border border-white" />}
@@ -283,14 +287,23 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
           {/* Right Header Actions */}
           <div className="flex items-center gap-2.5">
-            <button
-              onClick={onOpenAgencySelector}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors shadow-xs"
-            >
-              <MapPin className="w-3.5 h-3.5 text-[#f7a501]" />
-              <span>{selectedAgency.city}</span>
-              <ChevronRight className="w-3 h-3 text-slate-400 rotate-90" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setIsAgencyDropdownOpen(!isAgencyDropdownOpen)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors shadow-xs"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#f7a501]" />
+                <span>{selectedAgency.city}</span>
+                <ChevronRight className={`w-3 h-3 text-slate-400 transition-transform ${isAgencyDropdownOpen ? "-rotate-90" : "rotate-90"}`} />
+              </button>
+
+              <AgencySelector
+                selectedAgency={selectedAgency}
+                onSelectAgency={onSelectAgency}
+                isOpen={isAgencyDropdownOpen}
+                onClose={() => setIsAgencyDropdownOpen(false)}
+              />
+            </div>
 
             {onSwitchToKiosk && (
               <button
