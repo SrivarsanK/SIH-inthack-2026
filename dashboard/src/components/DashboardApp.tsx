@@ -12,6 +12,7 @@ import { KioskDisplayView } from "./KioskDisplayView";
 export const DashboardApp: React.FC = () => {
   const { data, isConnected } = useTransitStream();
   const [viewMode, setViewMode] = useState<"command" | "kiosk">("command");
+  const [activeTab, setActiveTab] = useState<string>("radar");
 
   if (viewMode === "kiosk") {
     return <KioskDisplayView data={data} onExit={() => setViewMode("command")} />;
@@ -23,18 +24,31 @@ export const DashboardApp: React.FC = () => {
         isConnected={isConnected}
         viewMode={viewMode}
         setViewMode={setViewMode}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
       />
 
       <main className="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1700px] w-full mx-auto">
-        {/* Left Column: Interactive Map & Multimodal Timeline (7 cols) */}
+        {/* Left Column: Map or Timeline based on tab (7 cols) */}
         <section className="lg:col-span-7 flex flex-col gap-6">
-          <div className="h-[480px] min-h-[400px]">
-            <LiveMap data={data} />
-          </div>
-          <TripTimeline data={data} />
+          {activeTab === "route" ? (
+            <div className="space-y-6">
+              <TripTimeline data={data} />
+              <div className="h-[400px]">
+                <LiveMap data={data} />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-6 flex-1 flex flex-col">
+              <div className="h-[520px] min-h-[420px] flex-1">
+                <LiveMap data={data} />
+              </div>
+              <TripTimeline data={data} />
+            </div>
+          )}
         </section>
 
-        {/* Right Column: Information & Controls (5 cols) */}
+        {/* Right Column: Key Stats & Interactive Controls (5 cols) */}
         <section className="lg:col-span-5 flex flex-col gap-5 justify-between">
           <ETACountdown data={data} />
           <OccupancyBadge band={data.inbound.occupancy_band} />
