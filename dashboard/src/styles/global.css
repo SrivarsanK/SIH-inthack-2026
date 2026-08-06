@@ -21,7 +21,7 @@ body::before {
   background-repeat: repeat;
   background-position: top left;
   background-size: 380px auto;
-  opacity: 0.20;
+  opacity: 0.55;
   pointer-events: none;
 }
 
