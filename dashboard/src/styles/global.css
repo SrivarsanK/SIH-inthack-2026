@@ -3,7 +3,12 @@
 @import "leaflet/dist/leaflet.css";
 
 html, body {
-  background-color: #eeefe9;
+  background-color: #f6f4eb;
+  background-image: url('/transit-bg-pattern.jpg');
+  background-repeat: repeat;
+  background-position: top left;
+  background-size: 380px auto;
+  background-attachment: fixed;
   color: #1e293b;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }

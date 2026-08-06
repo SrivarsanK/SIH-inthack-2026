@@ -195,7 +195,7 @@ export const AdminPanel: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: "#FAF9F6", fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div className="min-h-screen bg-transparent" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
       {/* ── TOP NAV ── */}
       <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-30">

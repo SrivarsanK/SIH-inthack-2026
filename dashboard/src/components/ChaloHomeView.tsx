@@ -193,7 +193,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF9F6]">
+    <div className="min-h-screen flex flex-col bg-transparent">
       {/* ... header code ... */}
       {/* (rest of the component rendered below) */}
 

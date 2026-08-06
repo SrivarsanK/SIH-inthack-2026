@@ -22,7 +22,7 @@ export const DashboardApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] font-sans antialiased text-slate-900">
+    <div className="min-h-screen bg-transparent font-sans antialiased text-slate-900">
       <ChaloHomeView
         data={data}
         isConnected={isConnected}
