@@ -286,16 +286,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   </button>
                 );
               })}
-              <a
-                href="/admin"
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-slate-900 text-white hover:bg-slate-800 transition-all ml-2 shadow-sm group"
-              >
-                <div className="w-6 h-6 rounded-full bg-[#f7a501] flex items-center justify-center shrink-0 shadow-xs">
-                  <Settings className="w-3.5 h-3.5 text-slate-950" />
-                </div>
-                <span>Judge Admin Panel</span>
-                <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-white transition-colors" />
-              </a>
             </nav>
           </div>
 
