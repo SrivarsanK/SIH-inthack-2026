@@ -216,19 +216,13 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       {/* ... header code ... */}
       {/* (rest of the component rendered below) */}
 
-      {/* MOBILE APP HEADER (Chalo Mobile/Tablet UI for < 1024px) */}
+      {/* MOBILE APP HEADER (Mobile/Tablet UI for < 1024px) */}
       <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
-        <div className="flex items-center gap-3">
-          <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-slate-100 transition-colors">
-            <Menu className="w-6 h-6 text-slate-800" />
-          </button>
-
-          <div className="flex items-center gap-2 select-none">
-            <div className="w-8 h-8 rounded-full bg-[#f7a501] flex items-center justify-center shadow-xs">
-              <Bus className="w-[18px] h-[18px] text-white" strokeWidth={2.5} />
-            </div>
-            <span className="text-xl font-black tracking-tight text-slate-900 uppercase">CHALO</span>
+        <div className="flex items-center gap-2 select-none">
+          <div className="w-8 h-8 rounded-full bg-[#f7a501] flex items-center justify-center shadow-xs">
+            <Bus className="w-[18px] h-[18px] text-white" strokeWidth={2.5} />
           </div>
+          <span className="text-xl font-black tracking-tight text-slate-900">TransitSense</span>
         </div>
 
         <div className="flex items-center gap-2">
