@@ -87,6 +87,11 @@ The simulator (CH-1) is the single source of truth for all test data. Do not har
 - **Module organization**: Keep code organized in dedicated modules; split functions over 40 lines into separate helper files (`utils.py`, `types.ts`, `helpers.py`).
 - **Clean workspace**: Auto-clean temporary scratch files, unused assets, or debug prints before committing.
 
+### 11. Make atomic commits
+- **Single logical change per commit**: Each commit must contain changes for exactly one task, feature, or fix.
+- **Never bundle unrelated work**: Do not combine refactoring, styling, and feature logic into a single commit.
+- **Clean commit scope & message**: Use Conventional Commits (`feat(chN): ...`, `fix(chN): ...`, `refactor(chN): ...`). Ensure project builds and tests pass cleanly at every commit checkpoint.
+
 ---
 
 ## Shared Setup (run once, first)
