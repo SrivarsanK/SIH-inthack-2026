@@ -17,28 +17,71 @@ Existing public transport apps treat bus trips in isolated silos: when a bus is 
 
 ## 🏗️ Pipeline Architecture
 
+```mermaid
+flowchart TB
+    subgraph JUDGES["🎮 Judge Controls"]
+        DELAY["⚠️ Inject Delay"]
+        DROP["📡 GNSS Dropout"]
+        CROWD["👥 Crowd Spike"]
+    end
+
+    subgraph CH1["🟠 CH-1: Simulator Engine"]
+        SIM["simulator.py — 1Hz MQTT Publisher"]
+        API["control_api.py — REST :8001"]
+    end
+
+    subgraph CH2["🟡 CH-2: Kalman Fusion"]
+        KAL["kalman.py — Prediction + Update"]
+    end
+
+    subgraph CH3["🔵 CH-3: ETA + Density Engine"]
+        STATE["state_machine.py — Block Tracking"]
+        DENSE["density.py — MAC Rolling Window"]
+        SSE["api.py — SSE Stream :8002"]
+    end
+
+    subgraph CH4["🟢 CH-4: Dashboard"]
+        MAP["LiveMap.tsx — Leaflet"]
+        COUNTDOWN["ETACountdown.tsx"]
+        BADGE["OccupancyBadge.tsx"]
+        LOG["EventLog.tsx"]
+    end
+
+    JUDGES -->|"POST /inject/*"| API
+    API --> SIM
+    SIM -->|"MQTT: fleet/bus_1/telemetry"| KAL
+    SIM -->|"MQTT: mac_count_delta"| DENSE
+    KAL -->|"MQTT: fleet/bus_1/fused"| STATE
+    STATE --> SSE
+    DENSE --> SSE
+    SSE -->|"SSE: 1Hz JSON"| MAP
+    SSE --> COUNTDOWN
+    SSE --> BADGE
+    SSE --> LOG
 ```
-                                [INJECT CONTROLS (Judges)]
-                                            │
-                                            ▼
-[CH-1: Simulator] ──(MQTT: 1Hz)──► [CH-2: Kalman Fusion]
-  - GTFS static routes              - GPS vs Fallback smoothing
-  - Telemetry + Noise               - Zero teleportation during dropout
-  - Control REST API (8001)                 │
-                                            ▼ (MQTT: fused)
-[CH-3: ETA Engine & Density] ◄──────────────┘
-  - Block state machine
-  - Compounding ETA calculation (T_out + T_dwell + T_in)
-  - MAC probe rolling window ──► Occupancy Bands
-  - GTFS-RT-shaped JSON SSE stream (8002)
-            │
-            ▼ (SSE: 1Hz)
-[CH-4: Kiosk & Mobile Dashboard]
-  - Real-time Leaflet map (Desaturated outbound vs Active inbound)
-  - Live MM:SS countdown & sub-component breakdown
-  - Color-coded occupancy badges (Seats / Moderate / Standing / Crowded)
-  - Interactive judge inject panel (Delay, Dropout, Crowd)
-  - Real-time cause-and-effect pipeline event log
+
+### Bus State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Outbound : Start block_001
+    Outbound --> Dwell : progress reaches 1.0
+    Dwell --> Inbound : dwell timer expires
+    Inbound --> Outbound : progress reaches 1.0 (loop)
+
+    state Outbound {
+        [*] --> Moving
+        Moving --> Delayed : inject delay
+        Moving --> Dropout : inject dropout
+        Delayed --> Moving : resumes
+        Dropout --> Moving : GNSS restores
+    }
+
+    state Dwell {
+        [*] --> Halted
+        Halted --> Recovery : accumulated delay > 0
+        note right of Recovery : T_dwell shrinks by 30% of delay
+    }
 ```
 
 ---

@@ -17,10 +17,26 @@ The hackathon build is a **simulated-but-real pipeline**: synthetic GPS/sensor d
 
 ## Architecture Overview
 
-```
-[CH-1: Simulator] → MQTT → [CH-2: Kalman Fusion] → MQTT → [CH-3: ETA Engine] → SSE → [CH-4: Dashboard]
-                                                              ↑
-                                              [CH-3: Density Aggregator] ← MQTT (raw telemetry)
+```mermaid
+flowchart LR
+    subgraph CH1["🟠 CH-1: Simulator"]
+        SIM["simulator.py\ncontrol_api.py"]
+    end
+    subgraph CH2["🟡 CH-2: Kalman Fusion"]
+        KAL["kalman.py\nsubscriber.py"]
+    end
+    subgraph CH3["🔵 CH-3: ETA Engine"]
+        ETA["state_machine + density\napi.py (SSE)"]
+    end
+    subgraph CH4["🟢 CH-4: Dashboard"]
+        DASH["Leaflet Map + Countdown\nOccupancy + Inject Panel"]
+    end
+
+    SIM -->|"MQTT: fleet/bus_1/telemetry (1Hz)"| KAL
+    SIM -->|"MQTT: mac_count_delta"| ETA
+    KAL -->|"MQTT: fleet/bus_1/fused"| ETA
+    ETA -->|"SSE: localhost:8002/stream"| DASH
+    DASH -->|"POST: localhost:8001/inject/*"| SIM
 ```
 
 Each channel is a separate folder in this repo. You work in your channel folder only.
@@ -95,6 +111,13 @@ The simulator (CH-1) is the single source of truth for all test data. Do not har
 ### 12. Leverage project & global skills
 - **Check available skills**: Before starting UI design, PDF processing, research, or complex tasks, inspect `.agents/skills/` or global skills available in your workspace.
 - **Follow skill workflows**: When a task matches a skill (e.g. `impeccable` for frontend UI/UX, `pdf` for PDF processing, `gemini-deep-research` for research), read its `SKILL.md` first and adhere strictly to its workflow and quality bar.
+
+### 13. Use Mermaid for all flowcharts and diagrams
+- **Never use ASCII art** for architecture diagrams, flowcharts, or state machines.
+- **Always use Mermaid** (` ```mermaid `) blocks inside Markdown files.
+- Supported diagram types: `flowchart`, `sequenceDiagram`, `stateDiagram-v2`, `classDiagram`, `gantt`.
+- Quote node labels containing special characters (e.g. `id["Label (Extra)"]`).
+- Keep diagrams readable: max 15 nodes per diagram; split larger systems into sub-diagrams.
 
 ---
 
