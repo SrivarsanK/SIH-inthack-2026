@@ -1,9 +1,20 @@
+"""
+eta_engine/eta.py
+==================
+ETA component calculator.
+
+T_outbound and T_inbound use the ML predictor (GradientBoostingRegressor
+trained on real Chennai MTC GTFS data). T_dwell remains formula-based
+(no GTFS signal for dwell variance). delay_accumulated_sec is added on
+top of the ML prediction — injected at runtime, not in training data.
+"""
 import datetime
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from eta_engine import eta_predictor
 from shared.constants import (
     DWELL_BASELINE_SEC,
     DWELL_MINIMUM_SEC,
@@ -17,24 +28,30 @@ def calculate_eta_components(
     leg: str,
     progress: float,
     delay_accumulated_sec: float,
-    outbound_total_sec: Optional[int] = None,
-    inbound_total_sec: Optional[int] = None,
+    hour_of_day: int = 0,
+    outbound_total_sec: int = OUTBOUND_TOTAL_SEC,
+    inbound_total_sec: int = INBOUND_TOTAL_SEC,
 ) -> Tuple[int, int, int, int]:
     """
     Calculate (T_outbound_sec, T_dwell_sec, T_inbound_sec, T_total_sec).
 
-    outbound_total_sec / inbound_total_sec: override with GTFS-derived duration.
-    If None, falls back to shared/constants.py values.
+    T_outbound / T_inbound: ML-predicted remaining time (data-driven, non-linear).
+    T_dwell: formula-based with dynamic delay-recovery shrinkage.
+    delay_accumulated_sec: added post-prediction (runtime injected, not in training).
     """
-    eff_out = outbound_total_sec if outbound_total_sec is not None else OUTBOUND_TOTAL_SEC
-    eff_in = inbound_total_sec if inbound_total_sec is not None else INBOUND_TOTAL_SEC
-
+    # ---- T_outbound ----
     if leg == "outbound":
-        rem_out = max(0.0, 1.0 - progress)
-        t_outbound = rem_out * eff_out + delay_accumulated_sec
+        ml_remaining = eta_predictor.predict_remaining_sec(
+            progress=progress,
+            hour_of_day=hour_of_day,
+            direction_id=0,
+            fallback_total_sec=outbound_total_sec,
+        )
+        t_outbound = float(ml_remaining) + delay_accumulated_sec
     else:
         t_outbound = 0.0
 
+    # ---- T_dwell (formula — no GTFS dwell data) ----
     dwell_duration = max(
         float(DWELL_MINIMUM_SEC),
         float(DWELL_BASELINE_SEC) - (delay_accumulated_sec * DWELL_RECOVERY_FACTOR),
@@ -47,11 +64,25 @@ def calculate_eta_components(
     else:
         t_dwell = 0.0
 
+    # ---- T_inbound ----
     if leg == "inbound":
-        rem_in = max(0.0, 1.0 - progress)
+        ml_remaining_in = eta_predictor.predict_remaining_sec(
+            progress=progress,
+            hour_of_day=hour_of_day,
+            direction_id=1,
+            fallback_total_sec=inbound_total_sec,
+        )
+        t_inbound = float(ml_remaining_in)
     else:
-        rem_in = 1.0
-    t_inbound = rem_in * eff_in
+        # Full inbound trip remaining (bus hasn't started inbound yet)
+        t_inbound = float(
+            eta_predictor.predict_remaining_sec(
+                progress=0.0,
+                hour_of_day=hour_of_day,
+                direction_id=1,
+                fallback_total_sec=inbound_total_sec,
+            )
+        )
 
     t_total = t_outbound + t_dwell + t_inbound
     return round(t_outbound), round(t_dwell), round(t_inbound), round(t_total)
