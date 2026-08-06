@@ -296,11 +296,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 Kiosk
               </button>
             )}
-
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Live Stream</span>
-            </div>
           </div>
         </div>
       </header>
