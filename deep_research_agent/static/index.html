@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini Deep Research Agent Workbench</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-icon">✨</div>
+        <div class="brand-text">
+          <h1>Gemini Deep Research</h1>
+          <span class="badge preview-badge">Preview 04-2026</span>
+        </div>
+      </div>
+      <div class="header-controls">
+        <div class="model-selector">
+          <label for="agentSelect">Agent Model:</label>
+          <select id="agentSelect" class="styled-select">
+            <option value="standard">Deep Research (Fast & Efficient)</option>
+            <option value="max">Deep Research Max (Comprehensive)</option>
+          </select>
+        </div>
+        <div class="status-pill" id="statusPill">
+          <span class="dot"></span>
+          <span id="statusText">Ready</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <div class="panel-section">
+          <h3>🧠 Agent Capabilities</h3>
+          
+          <div class="toggle-option">
+            <label class="switch">
+              <input type="checkbox" id="collabPlanToggle">
+              <span class="slider"></span>
+            </label>
+            <div class="toggle-label">
+              <strong>Collaborative Planning</strong>
+              <small>Review & refine research plan before execution</small>
+            </div>
+          </div>
+
+          <div class="toggle-option">
+            <label class="switch">
+              <input type="checkbox" id="visualizationToggle" checked>
+              <span class="slider"></span>
+            </label>
+            <div class="toggle-label">
+              <strong>Visualizations</strong>
+              <small>Generate charts, graphs & graphic comparisons</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>🛠️ Active Tools</h3>
+          <div class="checkbox-group">
+            <label class="checkbox-item">
+              <input type="checkbox" id="toolSearch" checked>
+              <span>Google Search</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="toolUrl" checked>
+              <span>URL Context</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox" id="toolCode" checked>
+              <span>Code Execution</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>🔗 MCP & Store Extensions</h3>
+          <div class="input-field-group">
+            <label for="fileStoreInput">File Search Stores:</label>
+            <input type="text" id="fileStoreInput" placeholder="fileSearchStores/my-store" class="styled-input">
+          </div>
+          <div class="input-field-group">
+            <label for="mcpUrlInput">Remote MCP Server URL:</label>
+            <input type="text" id="mcpUrlInput" placeholder="https://mcp.example.com/mcp" class="styled-input">
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3>📎 Multimodal Upload</h3>
+          <div class="upload-dropzone" id="dropzone">
+            <span class="drop-icon">📁</span>
+            <span>Drop images or PDFs here</span>
+            <input type="file" id="fileInput" accept="image/*,application/pdf" multiple style="display:none">
+          </div>
+          <div class="attachment-list" id="attachmentList"></div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <section class="prompt-card glass-card">
+          <div class="templates-bar">
+            <span class="chip-label">Quick Prompts:</span>
+            <button class="prompt-chip" data-prompt="Research the history of Google TPUs and compare v1 through v6 features.">Google TPUs</button>
+            <button class="prompt-chip" data-prompt="Analyze global semiconductor market trends. Include graphics showing market share changes.">Semiconductor Market</button>
+            <button class="prompt-chip" data-prompt="Research the competitive landscape of EV batteries. Include capacity tables.">EV Batteries</button>
+          </div>
+
+          <div class="input-wrapper">
+            <textarea id="promptInput" placeholder="Describe your deep research objective in detail..." rows="4"></textarea>
+            <div class="action-bar">
+              <button id="startStreamBtn" class="btn btn-secondary">⚡ Stream Live</button>
+              <button id="startResearchBtn" class="btn btn-primary">🚀 Start Research Task</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="planningSection" class="glass-card planning-card" style="display: none;">
+          <div class="card-header">
+            <h3>📝 Collaborative Research Plan Review</h3>
+            <span class="badge plan-badge" id="planBadge">Awaiting Approval</span>
+          </div>
+          <div class="plan-content" id="planTextContent"></div>
+          
+          <div class="plan-actions">
+            <input type="text" id="refinementInput" placeholder="Request changes to the plan..." class="styled-input">
+            <div class="btn-group">
+              <button id="refinePlanBtn" class="btn btn-secondary">Refine Plan</button>
+              <button id="approvePlanBtn" class="btn btn-success">✅ Approve & Execute Plan</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="streamSection" class="glass-card stream-card" style="display: none;">
+          <div class="card-header">
+            <h3>💭 Real-time Reasoning & Progress Stream</h3>
+            <span id="interactionIdBadge" class="mono-badge"></span>
+          </div>
+          <div class="stream-log" id="streamLog"></div>
+        </section>
+
+        <section id="reportSection" class="glass-card report-card" style="display: none;">
+          <div class="card-header">
+            <h3>📊 Deep Research Report Output</h3>
+            <button id="copyReportBtn" class="btn btn-sm">📋 Copy Markdown</button>
+          </div>
+
+          <div class="gallery-container" id="visualGallery" style="display: none;">
+            <h4>🖼️ Agent Generated Visualizations</h4>
+            <div class="gallery-grid" id="galleryGrid"></div>
+          </div>
+
+          <div class="report-body" id="reportText"></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

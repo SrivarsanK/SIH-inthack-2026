@@ -1,0 +1,69 @@
+# ============================================================
+# TransitSense — .gitignore
+# ============================================================
+
+# --- Secrets & Credentials (NEVER commit) ---
+.env
+*.env
+.env.*
+!.env.example
+deep_research_agent/.env
+
+# --- Research Outputs (generated, not source) ---
+uploads/
+visualizations/
+deep_research_agent/uploads/
+deep_research_agent/visualizations/
+docs/deep_research_report.md
+test_report.md
+report.md
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pdb
+.pytest_cache/
+.mypy_cache/
+venv/
+.venv/
+env/
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# --- Node / Astro ---
+node_modules/
+.next/
+dist/
+.astro/
+.vercel/
+.netlify/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- IDE / Editor ---
+.vscode/
+.idea/
+*.suo
+*.user
+*.swp
+*.swo
+
+# --- Logs ---
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Misc ---
+*.tmp
+*.temp
+.cache/
