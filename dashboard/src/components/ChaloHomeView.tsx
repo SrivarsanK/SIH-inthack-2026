@@ -147,13 +147,18 @@ const ChaloMap: React.FC<{
         : [defaultUserLat, defaultUserLon];
 
       const isMobileDevice = typeof window !== "undefined" && window.innerWidth < 768;
+      const disableInteraction = mode === "nearby" && isMobileDevice;
       const map = L.map(containerRef.current!, {
         center,
         zoom: mode === "nearby" ? 16 : 13,
         zoomControl: false,
         attributionControl: false,
-        dragging: mode === "nearby" ? !isMobileDevice : true,
+        dragging: !disableInteraction,
+        touchZoom: !disableInteraction,
+        scrollWheelZoom: false,
+        doubleClickZoom: !disableInteraction,
         tap: false,
+        keyboard: false,
       });
 
       // High-performance OpenStreetMap / CartoDB voyager tiles
@@ -388,7 +393,19 @@ const ChaloMap: React.FC<{
     }
   }, [data.vehicle.lat, data.vehicle.lon]);
 
-  return <div ref={containerRef} className="w-full h-full touch-pan-y" style={{ touchAction: "pan-y" }} />;
+  return (
+    <div className="w-full h-full relative">
+      <div ref={containerRef} className="w-full h-full" />
+      {/* Transparent scroll-passthrough overlay for mobile home map */}
+      {mode === "nearby" && (
+        <div
+          className="absolute inset-0 z-[9999] md:hidden"
+          style={{ touchAction: "pan-y", pointerEvents: "auto", background: "transparent" }}
+          onTouchStart={(e) => e.currentTarget.style.display = "none"}
+        />
+      )}
+    </div>
+  );
 };
 
 // --- Main View ----------------------------------------------------------------
