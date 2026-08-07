@@ -116,9 +116,10 @@ const ChaloMap: React.FC<{
         attributionControl: false,
       });
 
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
+      // High-performance OpenStreetMap / CartoDB voyager tiles
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        subdomains: "abcd",
+        subdomains: ["a", "b", "c"],
       }).addTo(map);
 
       // Invalidate size after layout completes
@@ -911,7 +912,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                     </button>
                   </div>
 
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 340 }}>
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-inner" style={{ height: 440 }}>
                     <ChaloMap
                       data={data}
                       selectedAgency={selectedAgency}
@@ -920,35 +921,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       nearbyStops={neonRoutes?.nearbyStops || []}
                       mode="nearby"
                     />
-
-                    {/* Nearest stop badge — bottom-left overlay */}
-                    {(neonRoutes?.nearbyStops || []).length > 0 && (() => {
-                      const ns = neonRoutes.nearbyStops[0];
-                      const firstBus = (ns.buses || [])[0];
-                      return (
-                        <div className="absolute bottom-3 left-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-md border border-slate-200/80 max-w-[220px]">
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-                              <MapPin className="w-3.5 h-3.5 text-slate-700" />
-                            </div>
-                            <div className="min-w-0">
-                              <span className="font-extrabold text-slate-900 text-xs block truncate">{ns.stop_name}</span>
-                              <span className="text-[10px] text-slate-500">{ns.walk_min} min walk</span>
-                            </div>
-                          </div>
-                          {firstBus && (
-                            <div className="flex items-center gap-2 pt-1.5 border-t border-slate-100">
-                              <div className="w-6 h-6 rounded-md bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
-                                <Bus className="w-3 h-3 text-amber-700" />
-                              </div>
-                              <span className="font-black text-slate-900 text-xs">{firstBus.code}</span>
-                              <span className="text-[10px] text-slate-500 flex-1 truncate">To {firstBus.destination}</span>
-                              <span className="text-[10px] font-bold text-emerald-600 shrink-0">{firstBus.eta_min}m</span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
 
                     {/* GPS indicator — top-right */}
                     <div className={`absolute top-3 right-3 z-10 px-2.5 py-1.5 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 shadow-sm border ${
