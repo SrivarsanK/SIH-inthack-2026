@@ -111,6 +111,30 @@ export function useNeonRoutes() {
     }
   }, []);
 
+  // Fetch nearby stops based on user's GPS coordinates
+  const [nearbyStops, setNearbyStops] = useState<NeonStop[]>([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+
+  const fetchNearbyStops = useCallback(async (lat: number, lon: number, limit: number = 5) => {
+    setNearbyLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/stops/nearby?lat=${lat}&lon=${lon}&limit=${limit}`);
+      const data = await res.json();
+      const stops: NeonStop[] = (data.stops || []).map((s: any) => ({
+        ...s,
+        distance_km: s.distance_km,
+      }));
+      setNearbyStops(stops);
+      return stops;
+    } catch (err) {
+      console.error("[useNeonRoutes] Nearby stops fetch failed:", err);
+      setNearbyStops([]);
+      return [];
+    } finally {
+      setNearbyLoading(false);
+    }
+  }, []);
+
   // Load initial routes on mount
   useEffect(() => {
     fetchRoutes(1, 50);
@@ -124,9 +148,12 @@ export function useNeonRoutes() {
     isLoading,
     searchResults,
     stopSearchResults,
+    nearbyStops,
+    nearbyLoading,
     fetchRoutes,
     fetchStopsForRoute,
     searchRoutes,
     searchStops,
+    fetchNearbyStops,
   };
 }

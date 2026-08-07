@@ -217,5 +217,17 @@ def api_stops_search(q: str = "", limit: int = 20) -> Dict[str, Any]:
         return {"error": str(err), "stops": []}
 
 
+@app.get("/api/stops/nearby")
+def api_stops_nearby(lat: float = 0.0, lon: float = 0.0, limit: int = 5) -> Dict[str, Any]:
+    """Find nearest bus stops to given GPS coordinates."""
+    if lat == 0.0 and lon == 0.0:
+        return {"error": "lat and lon are required", "stops": []}
+    try:
+        stops = neon_client.query_nearby_stops(lat, lon, limit=limit)
+        return {"stops": stops, "lat": lat, "lon": lon, "total": len(stops)}
+    except Exception as err:
+        return {"error": str(err), "stops": []}
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=ETA_API_PORT)

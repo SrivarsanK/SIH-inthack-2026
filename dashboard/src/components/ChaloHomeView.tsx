@@ -167,6 +167,31 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   const [activeNav, setActiveNav] = useState<"home" | "track" | "routes" | "search">("home");
   const [timeStr, setTimeStr] = useState("");
   const [isAgencyDropdownOpen, setIsAgencyDropdownOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState<{lat: number; lon: number} | null>(null);
+  const [locationStatus, setLocationStatus] = useState<"idle" | "asking" | "granted" | "denied">("idle");
+
+  // Request geolocation on mount and fetch nearest stops
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setLocationStatus("denied");
+      return;
+    }
+    setLocationStatus("asking");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const loc = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+        setUserLocation(loc);
+        setLocationStatus("granted");
+        neonRoutes?.fetchNearbyStops?.(loc.lat, loc.lon, 5);
+      },
+      () => {
+        setLocationStatus("denied");
+        // Fallback: use Chennai center coords to still show some nearby stops
+        neonRoutes?.fetchNearbyStops?.(13.0827, 80.2707, 5);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, []);
 
   useEffect(() => {
     const tick = () => setTimeStr(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }));
@@ -407,68 +432,66 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
             {/* Mobile Nearest Bus Stop Card */}
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-black text-slate-900 text-base">Nearest bus stop</h3>
-                <button
-                  onClick={() => setActiveNav("routes")}
-                  className="text-xs font-extrabold text-[#f7a501] hover:underline flex items-center gap-1 group"
-                >
-                  <span>See all stops</span>
-                  <span className="w-4 h-4 rounded-full bg-[#f7a501] text-white flex items-center justify-center text-[10px]">➔</span>
-                </button>
-              </div>
-
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-                    <MapPin className="w-5 h-5 text-slate-900" />
-                  </div>
-                  <div>
-                    <span className="font-extrabold text-slate-900 text-base block leading-snug">
-                      {stops[0]?.name ?? "Ekkattuthangal Or Ambal Nagar"}
+                <h3 className="font-black text-slate-900 text-base">Nearest bus stops</h3>
+                <div className="flex items-center gap-2">
+                  {locationStatus === "granted" && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold flex items-center gap-1">
+                      <Navigation className="w-3 h-3" /> GPS
                     </span>
-                    <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-                      Nearest stop
+                  )}
+                  {locationStatus === "denied" && (
+                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-extrabold">
+                      Chennai
                     </span>
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-xs text-slate-400 block mb-0.5">No live buses</span>
+                  )}
                   <button
                     onClick={() => setActiveNav("routes")}
-                    className="text-xs font-bold text-[#f7a501] hover:underline"
+                    className="text-xs font-extrabold text-[#f7a501] hover:underline flex items-center gap-1 group"
                   >
-                    View timetable
+                    <span>See all stops</span>
+                    <span className="w-4 h-4 rounded-full bg-[#f7a501] text-white flex items-center justify-center text-[10px]">➔</span>
                   </button>
                 </div>
               </div>
 
-              {/* Upcoming Bus ETA rows */}
-              <div className="bg-slate-50/80 rounded-2xl p-3 space-y-3 border border-slate-100">
-                {selectedAgency.routes.slice(0, 2).map((r, idx) => {
-                  const etaMin = idx === 0
-                    ? Math.floor(T_inbound_sec / 60)
-                    : Math.floor((T_inbound_sec + T_outbound_sec) / 60);
-                  return (
+              {neonRoutes?.nearbyLoading ? (
+                <div className="flex items-center justify-center py-6">
+                  <div className="w-6 h-6 border-2 border-[#f7a501] border-t-transparent rounded-full animate-spin" />
+                  <span className="ml-2 text-sm text-slate-500 font-medium">Finding nearby stops...</span>
+                </div>
+              ) : (neonRoutes?.nearbyStops || []).length > 0 ? (
+                <div className="space-y-2.5">
+                  {(neonRoutes?.nearbyStops || []).map((ns: any, idx: number) => (
                     <div
-                      key={r.id}
-                      onClick={() => setActiveNav("track")}
-                      className="flex items-center justify-between cursor-pointer hover:bg-white p-2 rounded-xl transition-all group"
+                      key={ns.stop_id || idx}
+                      className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white transition-all cursor-pointer group"
                     >
-                      <div className="flex items-center gap-3">
-                        <Bus className="w-5 h-5 text-slate-700" />
-                        <div>
-                          <span className="font-extrabold text-slate-900 text-sm block">{r.code}</span>
-                          <span className="text-xs text-slate-500 block">To {r.destination}</span>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                          idx === 0 ? "bg-emerald-100 border border-emerald-200" : "bg-slate-100 border border-slate-200"
+                        }`}>
+                          <MapPin className={`w-4.5 h-4.5 ${idx === 0 ? "text-emerald-700" : "text-slate-600"}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="font-extrabold text-slate-900 text-sm block truncate">{ns.stop_name}</span>
+                          {idx === 0 && (
+                            <span className="inline-block mt-0.5 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[9px] font-extrabold">
+                              Nearest stop
+                            </span>
+                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5 font-bold text-sm text-blue-600">
-                        <LiveSignalIcon className="w-4 h-4 text-blue-500" />
-                        <span>{etaMin} min away</span>
-                      </div>
+                      <span className="text-xs font-bold text-slate-500 shrink-0 ml-2">
+                        {ns.distance_km} km
+                      </span>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-sm text-slate-400">
+                  {locationStatus === "asking" ? "Requesting location access..." : "No nearby stops found"}
+                </div>
+              )}
             </div>
 
             {/* Mobile Track Your Bus Card */}
@@ -766,65 +789,66 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 {/* Nearest Bus Stop Card */}
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-black text-slate-900 text-base">Nearest bus stop</h3>
-                    <button
-                      onClick={() => setActiveNav("routes")}
-                      className="text-xs font-extrabold text-[#f7a501] hover:underline flex items-center gap-1 group"
-                    >
-                      <span>See all stops</span>
-                      <span className="w-4 h-4 rounded-full bg-[#f7a501] text-white flex items-center justify-center text-[10px]">➔</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-                        <MapPin className="w-5 h-5 text-slate-900" />
-                      </div>
-                      <div>
-                        <span className="font-extrabold text-slate-900 text-base block leading-snug">
-                          {stops[0]?.name ?? "Ekkattuthangal Or Ambal Nagar"}
+                    <h3 className="font-black text-slate-900 text-base">Nearest bus stops</h3>
+                    <div className="flex items-center gap-2">
+                      {locationStatus === "granted" && (
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold flex items-center gap-1">
+                          <Navigation className="w-3 h-3" /> GPS
                         </span>
-                        <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
-                          Nearest stop
+                      )}
+                      {locationStatus === "denied" && (
+                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-extrabold">
+                          Chennai
                         </span>
-                      </div>
+                      )}
+                      <button
+                        onClick={() => setActiveNav("routes")}
+                        className="text-xs font-extrabold text-[#f7a501] hover:underline flex items-center gap-1 group"
+                      >
+                        <span>See all stops</span>
+                        <span className="w-4 h-4 rounded-full bg-[#f7a501] text-white flex items-center justify-center text-[10px]">➔</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setActiveNav("routes")}
-                      className="text-xs font-bold text-[#f7a501] hover:underline shrink-0"
-                    >
-                      View timetable
-                    </button>
                   </div>
 
-                  {/* Upcoming Bus ETA rows in soft rounded box */}
-                  <div className="bg-slate-50/80 rounded-2xl p-3 space-y-3 border border-slate-100">
-                    {selectedAgency.routes.slice(0, 2).map((r, idx) => {
-                      const etaMin = idx === 0
-                        ? Math.floor(T_inbound_sec / 60)
-                        : Math.floor((T_inbound_sec + T_outbound_sec) / 60);
-                      return (
+                  {neonRoutes?.nearbyLoading ? (
+                    <div className="flex items-center justify-center py-6">
+                      <div className="w-6 h-6 border-2 border-[#f7a501] border-t-transparent rounded-full animate-spin" />
+                      <span className="ml-2 text-sm text-slate-500 font-medium">Finding nearby stops...</span>
+                    </div>
+                  ) : (neonRoutes?.nearbyStops || []).length > 0 ? (
+                    <div className="space-y-2">
+                      {(neonRoutes?.nearbyStops || []).map((ns: any, idx: number) => (
                         <div
-                          key={r.id}
-                          onClick={() => setActiveNav("track")}
-                          className="flex items-center justify-between cursor-pointer hover:bg-white p-2 rounded-xl transition-all group"
+                          key={ns.stop_id || idx}
+                          className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white transition-all cursor-pointer group"
                         >
-                          <div className="flex items-center gap-3">
-                            <Bus className="w-5 h-5 text-slate-700" />
-                            <div>
-                              <span className="font-extrabold text-slate-900 text-sm block">{r.code}</span>
-                              <span className="text-xs text-slate-500 block">To {r.destination}</span>
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
+                              idx === 0 ? "bg-emerald-100 border border-emerald-200" : "bg-slate-100 border border-slate-200"
+                            }`}>
+                              <MapPin className={`w-4 h-4 ${idx === 0 ? "text-emerald-700" : "text-slate-600"}`} />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-extrabold text-slate-900 text-sm block truncate">{ns.stop_name}</span>
+                              {idx === 0 && (
+                                <span className="inline-block mt-0.5 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[9px] font-extrabold">
+                                  Nearest stop
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <div className="flex items-center gap-1.5 font-bold text-sm text-blue-600">
-                            <LiveSignalIcon className="w-4 h-4 text-blue-500" />
-                            <span>{etaMin} min away</span>
-                          </div>
+                          <span className="text-xs font-bold text-slate-500 shrink-0 ml-2">
+                            {ns.distance_km} km
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-sm text-slate-400">
+                      {locationStatus === "asking" ? "Requesting location access..." : "No nearby stops found"}
+                    </div>
+                  )}
                 </div>
 
                 {/* Occupancy Card */}
