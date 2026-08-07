@@ -15,6 +15,7 @@ import type { TransitAgency } from "../lib/agencies";
 
 interface SearchViewProps {
   selectedAgency: TransitAgency;
+  neonRoutes?: any;
 }
 
 // ─── Service Badge ────────────────────────────────────────────────────────────
@@ -37,9 +38,35 @@ const ServiceBadge: React.FC<{ type: string }> = ({ type }) => {
   );
 };
 
-export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency }) => {
+export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency, neonRoutes }) => {
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "routes" | "stops">("all");
+  const [neonRouteResults, setNeonRouteResults] = useState<any[]>([]);
+  const [neonStopResults, setNeonStopResults] = useState<any[]>([]);
+  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounced Neon DB search
+  React.useEffect(() => {
+    if (!query.trim() || !neonRoutes) {
+      setNeonRouteResults([]);
+      setNeonStopResults([]);
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      await neonRoutes.searchRoutes(query);
+      await neonRoutes.searchStops(query);
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, neonRoutes]);
+
+  // Sync neon search results
+  React.useEffect(() => {
+    if (neonRoutes?.searchResults) setNeonRouteResults(neonRoutes.searchResults);
+  }, [neonRoutes?.searchResults]);
+  React.useEffect(() => {
+    if (neonRoutes?.stopSearchResults) setNeonStopResults(neonRoutes.stopSearchResults);
+  }, [neonRoutes?.stopSearchResults]);
 
   const recentRoutes = selectedAgency.routes.flatMap((r) => [
     { type: "route", badge: "Deluxe", code: r.code, path: `${r.origin} → ${r.destination}` },
@@ -57,22 +84,29 @@ export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency }) => {
     { type: "place", name: selectedAgency.routes[0]?.destination ?? "Destination", sub: `${selectedAgency.city} Terminus` },
   ];
 
-  // Filtered live results when user types query
+  // Use Neon DB results when available, otherwise fall back to local filter
   const routeResults = query
-    ? selectedAgency.routes.flatMap((r) => [
-        { code: r.code, badge: "Deluxe", path: `${r.origin} → ${r.destination}` },
-        { code: r.code, badge: "AC", path: `${r.origin} → ${r.destination}` },
-      ]).filter(
-        (r) =>
-          r.code.toLowerCase().includes(query.toLowerCase()) ||
-          r.path.toLowerCase().includes(query.toLowerCase())
-      )
+    ? (neonRouteResults.length > 0
+      ? neonRouteResults.map((r: any) => {
+          const parts = (r.route_long_name || "").split(" TO ");
+          return { code: r.route_short_name, badge: "Deluxe", path: `${parts[0]?.trim() || ""} → ${parts[1]?.trim() || ""}` };
+        })
+      : selectedAgency.routes.flatMap((r) => [
+          { code: r.code, badge: "Deluxe", path: `${r.origin} → ${r.destination}` },
+          { code: r.code, badge: "AC", path: `${r.origin} → ${r.destination}` },
+        ]).filter(
+          (r) =>
+            r.code.toLowerCase().includes(query.toLowerCase()) ||
+            r.path.toLowerCase().includes(query.toLowerCase())
+        ))
     : [];
 
   const stopResults = query
-    ? (selectedAgency.routes[0]?.coords ?? []).filter((s) =>
-        s.name.toLowerCase().includes(query.toLowerCase())
-      )
+    ? (neonStopResults.length > 0
+      ? neonStopResults.map((s: any) => ({ id: s.stop_id, name: s.stop_name, lat: s.stop_lat, lon: s.stop_lon }))
+      : (selectedAgency.routes[0]?.coords ?? []).filter((s) =>
+          s.name.toLowerCase().includes(query.toLowerCase())
+        ))
     : [];
 
   return (

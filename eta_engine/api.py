@@ -3,7 +3,7 @@ import datetime
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional
 
 import uvicorn
 from fastapi import FastAPI
@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from eta_engine import eta_predictor, gtfs_loader
+from eta_engine import eta_predictor, gtfs_loader, neon_client
 from eta_engine.consumers import start_mqtt_consumer
 from eta_engine.density import clean_and_get_mac_count, map_mac_to_band
 from eta_engine.eta import calculate_eta_components, check_and_update_event_log
@@ -153,6 +153,58 @@ async def stream() -> StreamingResponse:
             "Access-Control-Allow-Origin": "*",
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# Neon DB GTFS Route Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/routes")
+def api_routes(page: int = 1, limit: int = 50) -> Dict[str, Any]:
+    """Paginated route list from Neon DB."""
+    offset = (max(1, page) - 1) * limit
+    try:
+        routes = neon_client.query_routes(limit=limit, offset=offset)
+        total = neon_client.count_routes()
+        return {
+            "routes": routes,
+            "total": total,
+            "page": page,
+            "limit": limit,
+            "pages": (total + limit - 1) // limit,
+        }
+    except Exception as err:
+        return {"error": str(err), "routes": [], "total": 0}
+
+
+@app.get("/api/routes/search")
+def api_routes_search(q: str = "", limit: int = 20) -> Dict[str, Any]:
+    """Search routes by short_name or long_name."""
+    try:
+        routes = neon_client.search_routes(q, limit=limit)
+        return {"routes": routes, "query": q}
+    except Exception as err:
+        return {"error": str(err), "routes": []}
+
+
+@app.get("/api/routes/{route_id}/stops")
+def api_route_stops(route_id: str) -> Dict[str, Any]:
+    """Ordered stops for a specific route."""
+    try:
+        stops = neon_client.query_stops_for_route(route_id)
+        return {"route_id": route_id, "stops": stops, "total": len(stops)}
+    except Exception as err:
+        return {"error": str(err), "stops": []}
+
+
+@app.get("/api/stops/search")
+def api_stops_search(q: str = "", limit: int = 20) -> Dict[str, Any]:
+    """Search stops by name."""
+    try:
+        stops = neon_client.search_stops(q, limit=limit)
+        return {"stops": stops, "query": q}
+    except Exception as err:
+        return {"error": str(err), "stops": []}
 
 
 if __name__ == "__main__":

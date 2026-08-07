@@ -36,6 +36,8 @@ interface ChaloHomeViewProps {
   isConnected: boolean;
   selectedAgency: TransitAgency;
   onSelectAgency: (agency: TransitAgency) => void;
+  neonRoutes?: any;
+  onRouteSelect?: (routeCode: string) => void;
 }
 
 function formatMin(sec: number): string {
@@ -156,6 +158,8 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   isConnected,
   selectedAgency,
   onSelectAgency,
+  neonRoutes,
+  onRouteSelect,
 }) => {
   const [activeNav, setActiveNav] = useState<"home" | "track" | "routes" | "search">("home");
   const [timeStr, setTimeStr] = useState("");
@@ -315,7 +319,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       {/* BODY CONTENT AREAS */}
       {activeNav === "search" && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
-          <SearchView selectedAgency={selectedAgency} />
+          <SearchView selectedAgency={selectedAgency} neonRoutes={neonRoutes} />
         </div>
       )}
 
@@ -333,7 +337,10 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
           <RoutesListView
             selectedAgency={selectedAgency}
-            onSelectRoute={() => setActiveNav("track")}
+            onSelectRoute={(code) => {
+              onRouteSelect?.(code);
+              setActiveNav("track");
+            }}
             onBack={() => setActiveNav("home")}
           />
         </div>
