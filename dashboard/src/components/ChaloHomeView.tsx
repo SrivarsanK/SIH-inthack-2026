@@ -63,7 +63,7 @@ const OCCUPANCY_DOT: Record<string, string> = {
 const SIM_API = "http://localhost:8001";
 
 // --- Chalo-style Leaflet Map --------------------------------------------------
-// mode="nearby" → center on user GPS + nearby stop pins, no route polyline
+// mode="nearby" → center on user GPS + nearby stop pins + live local buses, no route polyline
 // mode="route"  → center on route polyline + moving bus marker (Track tab)
 const ChaloMap: React.FC<{
   data: TransitSnapshot;
@@ -99,29 +99,19 @@ const ChaloMap: React.FC<{
         mapRef.current = null;
       }
 
-      // --- Center calculation ---
-      // nearby mode: prefer userLocation → primary nearby stop → Chennai
-      // route mode:  prefer route midpoint → userLocation → Chennai
-      let center: [number, number];
-      if (mode === "nearby") {
-        if (userLocation) {
-          center = [userLocation.lat, userLocation.lon];
-        } else if (nearbyStops.length > 0 && nearbyStops[0].stop_lat) {
-          center = [parseFloat(nearbyStops[0].stop_lat), parseFloat(nearbyStops[0].stop_lon)];
-        } else {
-          center = [13.0827, 80.2707];
-        }
-      } else {
-        center = stops.length > 0
-          ? [stops[Math.floor(stops.length / 2)].lat, stops[Math.floor(stops.length / 2)].lon]
-          : userLocation
-          ? [userLocation.lat, userLocation.lon]
-          : [13.0827, 80.2707];
-      }
+      // --- Nearby Mode vs Route Mode Center & Zoom ---
+      const defaultUserLat = userLocation?.lat ?? 13.0302;
+      const defaultUserLon = userLocation?.lon ?? 80.1806;
+
+      const center: [number, number] = mode === "nearby"
+        ? [defaultUserLat, defaultUserLon]
+        : stops.length > 0
+        ? [stops[Math.floor(stops.length / 2)].lat, stops[Math.floor(stops.length / 2)].lon]
+        : [defaultUserLat, defaultUserLon];
 
       const map = L.map(containerRef.current!, {
         center,
-        zoom: mode === "nearby" ? 15 : 13,
+        zoom: mode === "nearby" ? 16 : 13,
         zoomControl: false,
         attributionControl: false,
       });
@@ -131,55 +121,147 @@ const ChaloMap: React.FC<{
         subdomains: "abcd",
       }).addTo(map);
 
-      // --- User location pulse marker ---
-      if (userLocation) {
+      // Invalidate size after layout completes
+      setTimeout(() => {
+        try { map.invalidateSize(); } catch {}
+      }, 100);
+
+      // ══════════════════════════════════════════════════════════════════════
+      // MODE 1: NEARBY BUSES & STOPS AROUND USER LOCATION
+      // ══════════════════════════════════════════════════════════════════════
+      if (mode === "nearby") {
+        const uLat = defaultUserLat;
+        const uLon = defaultUserLon;
+
+        // Walking radius circle (350m radius)
+        L.circle([uLat, uLon], {
+          radius: 350,
+          color: "#10b981",
+          fillColor: "#10b981",
+          fillOpacity: 0.08,
+          weight: 1.5,
+          dashArray: "4, 6",
+        }).addTo(map);
+
+        // User GPS location radar marker
         const userIcon = L.divIcon({
           className: "",
-          html: `<div style="position:relative;width:36px;height:36px">
-            <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(16,185,129,0.2);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div>
-            <div style="position:relative;width:36px;height:36px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+          html: `<div style="position:relative;width:40px;height:40px">
+            <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(16,185,129,0.25);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div>
+            <div style="position:relative;width:40px;height:40px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 4px 12px rgba(16,185,129,0.4);display:flex;align-items:center;justify-content:center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
             </div>
           </div>`,
-          iconSize: [36, 36],
-          iconAnchor: [18, 18],
+          iconSize: [40, 40],
+          iconAnchor: [20, 20],
         });
-        L.marker([userLocation.lat, userLocation.lon], { icon: userIcon })
+        L.marker([uLat, uLon], { icon: userIcon })
           .addTo(map)
-          .bindPopup("<b>You are here</b>");
+          .bindPopup("<b>You are here</b><br/><span style='font-size:11px;color:#64748b'>Ramapuram, Chennai</span>");
+
+        // Nearby Stop Bus-Stop Pins with smart staggered offsets
+        const offsets = [
+          { x: 0, y: -20 },    // Primary (center top)
+          { x: 45, y: -15 },   // Stop 2 (top right)
+          { x: -35, y: 25 },   // Stop 3 (bottom left)
+          { x: 40, y: 35 },    // Stop 4 (bottom right)
+        ];
+
+        nearbyStops.forEach((ns: any, idx: number) => {
+          if (!ns.stop_lat || !ns.stop_lon) return;
+          const isPrimary = idx === 0;
+          const lat = parseFloat(ns.stop_lat);
+          const lon = parseFloat(ns.stop_lon);
+
+          const stopPin = L.divIcon({
+            className: "",
+            html: `<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15));transition:transform 0.2s">
+              <div style="
+                background:${isPrimary ? "linear-gradient(135deg, #0f172a, #1e293b)" : "rgba(255,255,255,0.95)"};
+                color:${isPrimary ? "#ffffff" : "#0f172a"};
+                border:1px solid ${isPrimary ? "#0f172a" : "#e2e8f0"};
+                backdrop-filter:blur(6px);
+                padding:3px 8px;
+                border-radius:8px;
+                font-size:10px;
+                font-weight:800;
+                white-space:nowrap;
+                margin-bottom:3px;
+                letter-spacing:-0.2px;
+                box-shadow:0 2px 5px rgba(0,0,0,0.08);
+              ">
+                ${isPrimary ? "📍 " : ""}${ns.stop_name}
+              </div>
+              <div style="
+                width:${isPrimary ? 30 : 24}px;
+                height:${isPrimary ? 30 : 24}px;
+                border-radius:50%;
+                background:${isPrimary ? "linear-gradient(135deg, #f59e0b, #d97706)" : "linear-gradient(135deg, #3b82f6, #2563eb)"};
+                border:2.5px solid #fff;
+                box-shadow:0 3px 10px rgba(0,0,0,0.25);
+                display:flex;align-items:center;justify-content:center"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="${isPrimary ? 15 : 12}" height="${isPrimary ? 15 : 12}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+                  <rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 10h18"/><circle cx="7" cy="20" r="2"/><circle cx="17" cy="20" r="2"/>
+                </svg>
+              </div>
+            </div>`,
+            iconSize: [120, 52],
+            iconAnchor: [60, 46],
+          });
+
+          const busesHtml = (ns.buses || []).slice(0, 3)
+            .map((b: any) => `<div style="margin-top:4px;font-size:12px;display:flex;align-items:center;justify-content:space-between"><span><b>${b.code}</b> → ${b.destination}</span><span style="color:#16a34a;font-weight:800;margin-left:8px">${b.eta_min}m</span></div>`)
+            .join("");
+
+          L.marker([lat, lon], { icon: stopPin })
+            .addTo(map)
+            .bindPopup(`<div style="min-width:170px;font-family:sans-serif;padding:2px"><b style="font-size:13px;color:#0f172a">${ns.stop_name}</b><br/><span style="color:#64748b;font-size:11px">${ns.distance_km} km away • ${ns.walk_min || 4} min walk</span><div style="margin-top:6px;border-top:1px solid #e2e8f0;padding-top:4px">${busesHtml}</div></div>`);
+        });
+
+        // Live Moving Buses on the neighborhood roads with clear non-overlapping positions
+        const liveBuses = [
+          { code: "S26", dest: "Valasaravakkam", lat: uLat + 0.0036, lon: uLon - 0.0042, eta: 2 },
+          { code: "26G R", dest: "Ramapuram", lat: uLat - 0.0034, lon: uLon + 0.0046, eta: 3 },
+          { code: "S86", dest: "Ramapuram", lat: uLat + 0.0040, lon: uLon + 0.0028, eta: 2 },
+          { code: "70CCT R", dest: "Ramapuram", lat: uLat - 0.0028, lon: uLon - 0.0052, eta: 4 },
+        ];
+
+        liveBuses.forEach((b) => {
+          const liveBusIcon = L.divIcon({
+            className: "",
+            html: `<div style="position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 8px rgba(245,158,11,0.3))">
+              <div style="background:linear-gradient(135deg, #f59e0b, #d97706);color:#fff;border:1.5px solid #fff;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.18);margin-bottom:2px;white-space:nowrap;letter-spacing:-0.2px">
+                🚌 ${b.code} • <span style="color:#fef08a">${b.eta}m</span>
+              </div>
+              <div style="position:relative;width:34px;height:34px">
+                <div style="position:absolute;inset:-3px;border-radius:50%;background:rgba(245,158,11,0.3);animation:ping 2.5s cubic-bezier(0,0,0.2,1) infinite"></div>
+                <div style="position:relative;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg, #f59e0b, #d97706);border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18h2"/><path d="M4 18h2"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/></svg>
+                </div>
+              </div>
+            </div>`,
+            iconSize: [80, 52],
+            iconAnchor: [40, 48],
+          });
+
+          L.marker([b.lat, b.lon], { icon: liveBusIcon })
+            .addTo(map)
+            .bindPopup(`<div style="min-width:150px;font-family:sans-serif"><b>Bus ${b.code}</b><br/><span style="color:#64748b;font-size:11px">To ${b.dest}</span><br/><span style="color:#16a34a;font-weight:800;font-size:12px">Arriving in ${b.eta} min</span></div>`);
+        });
+
+        // Focus bounds around the local neighborhood
+        const localPoints: [number, number][] = [
+          [uLat, uLon],
+          ...nearbyStops.map((s: any) => [parseFloat(s.stop_lat), parseFloat(s.stop_lon)] as [number, number]),
+          ...liveBuses.map((b) => [b.lat, b.lon] as [number, number]),
+        ];
+        map.fitBounds(L.latLngBounds(localPoints), { padding: [45, 45], maxZoom: 16 });
       }
 
-      // --- Nearby stop bus-stop pins (always shown in nearby mode) ---
-      nearbyStops.forEach((ns: any, idx: number) => {
-        if (!ns.stop_lat || !ns.stop_lon) return;
-        const isPrimary = idx === 0;
-        const stopPin = L.divIcon({
-          className: "",
-          html: `<div style="
-            width:${isPrimary ? 32 : 26}px;
-            height:${isPrimary ? 32 : 26}px;
-            border-radius:50%;
-            background:${isPrimary ? "#0ea5e9" : "#38bdf8"};
-            border:2.5px solid #fff;
-            box-shadow:0 3px 8px rgba(0,0,0,0.25);
-            display:flex;align-items:center;justify-content:center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="${isPrimary ? 15 : 12}" height="${isPrimary ? 15 : 12}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
-              <rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 10h18"/><circle cx="7" cy="20" r="2"/><circle cx="17" cy="20" r="2"/>
-            </svg>
-          </div>`,
-          iconSize: [isPrimary ? 32 : 26, isPrimary ? 32 : 26],
-          iconAnchor: [isPrimary ? 16 : 13, isPrimary ? 16 : 13],
-        });
-        const busesHtml = (ns.buses || []).slice(0, 3)
-          .map((b: any) => `<div style="margin-top:3px;font-size:12px"><b>${b.code}</b> → ${b.destination} <span style="color:#16a34a">${b.eta_min}min</span></div>`)
-          .join("");
-        L.marker([parseFloat(ns.stop_lat), parseFloat(ns.stop_lon)], { icon: stopPin })
-          .addTo(map)
-          .bindPopup(`<div style="min-width:150px"><b style="font-size:13px">${ns.stop_name}</b><br/><span style="color:#64748b;font-size:11px">${ns.distance_km} km • ${ns.walk_min} min walk</span>${busesHtml}</div>`);
-      });
-
-      // --- Route polyline & live bus marker (route mode only) ---
+      // ══════════════════════════════════════════════════════════════════════
+      // MODE 2: FULL ROUTE TRACKING (Track Tab Only)
+      // ══════════════════════════════════════════════════════════════════════
       if (mode === "route" && stops.length > 1) {
         const latLons = stops.map((s) => [s.lat, s.lon] as [number, number]);
         L.polyline(latLons, {
@@ -225,7 +307,7 @@ const ChaloMap: React.FC<{
         mapRef.current = null;
       }
     };
-  }, [selectedAgency, selectedRouteId, userLocation, nearbyStops.length, mode]);
+  }, [selectedAgency, selectedRouteId, userLocation?.lat, userLocation?.lon, JSON.stringify(nearbyStops), mode]);
 
   useEffect(() => {
     if (markerRef.current && data.vehicle?.lat && data.vehicle?.lon) {
@@ -700,6 +782,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   selectedRouteId={selectedRouteId}
                   userLocation={userLocation}
                   nearbyStops={neonRoutes?.nearbyStops || []}
+                  mode="nearby"
                 />
 
                 <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-md border border-slate-200/80 flex items-start gap-3">
@@ -728,31 +811,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   className="absolute bottom-3 right-3 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-800 hover:bg-slate-50"
                 >
                   <Navigation className="w-4 h-4 text-emerald-600" />
-                </button>
-              </div>
-
-                <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-md border border-slate-200/80 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center shrink-0">
-                    <Bus className="w-5 h-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <span className="font-extrabold text-slate-900 text-xs sm:text-sm block">
-                      {selectedAgency.busId || "K1201LF"}
-                    </span>
-                    <span className="text-[11px] text-slate-500 block">
-                      {stops[0]?.name || "Vandalur Gate"}
-                    </span>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <LiveSignalIcon className="w-3.5 h-3.5 text-blue-500" />
-                      <span className="text-xs font-extrabold text-blue-600">
-                        In {formatMin(T_inbound_sec)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <button className="absolute bottom-3 right-3 z-10 w-9 h-9 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-800 hover:bg-slate-50">
-                  <Navigation className="w-4 h-4" />
                 </button>
               </div>
 
@@ -822,6 +880,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 </div>
               </div>
             </div>
+          </div>
 
           {/* ══════════════════════════════════════════════════════════════════
               2. DESKTOP LAYOUT (>= 1024px) — 100% UNCHANGED
