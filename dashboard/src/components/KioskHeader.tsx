@@ -40,18 +40,10 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
       {/* Brand Identity & Agency Provider Picker */}
       <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#f7a501] border border-amber-400/60 flex items-center justify-center text-slate-950 font-black shadow-md shrink-0">
-            <Bus className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Yara</h1>
-              <span className="px-2 py-0.5 text-[10px] font-extrabold bg-[#f7a501]/20 text-[#b17816] border border-[#f7a501]/50 rounded-md">
-                SIH 2026
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-500 font-medium hidden sm:block">Predictive Transit Engine</p>
-          </div>
+          <img src="/logo.png" alt="Yara" className="h-10 w-auto object-contain" />
+          <span className="px-2 py-0.5 text-[10px] font-extrabold bg-[#f7a501]/20 text-[#b17816] border border-[#f7a501]/50 rounded-md">
+            SIH 2026
+          </span>
         </div>
 
         {/* PostHog Style Light Agency Switcher Button */}

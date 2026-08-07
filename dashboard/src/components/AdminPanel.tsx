@@ -210,15 +210,10 @@ export const AdminPanel: React.FC = () => {
             </a>
             <div className="h-5 w-px bg-slate-200" />
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#f7a501] flex items-center justify-center shadow-sm">
-                <Bus className="w-[16px] h-[16px] text-white" strokeWidth={2.5} />
-              </div>
-              <div>
-                <span className="font-black text-slate-900 text-sm">Yara</span>
-                <span className="ml-2 px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 border border-rose-300 text-[10px] font-extrabold uppercase">
-                  Admin
-                </span>
-              </div>
+              <img src="/logo.png" alt="Yara" className="h-8 w-auto object-contain" />
+              <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 border border-rose-300 text-[10px] font-extrabold uppercase">
+                Admin
+              </span>
             </div>
           </div>
 

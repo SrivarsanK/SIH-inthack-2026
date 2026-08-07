@@ -409,12 +409,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       {/* (rest of the component rendered below) */}
 
       {/* MOBILE APP HEADER (Mobile/Tablet UI for < 1024px) */}
-      <div className="lg:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
+      <div className="lg:hidden flex items-center justify-between px-4 py-2.5 bg-white border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
         <div className="flex items-center gap-2 select-none">
-          <div className="w-8 h-8 rounded-full bg-[#f7a501] flex items-center justify-center shadow-xs">
-            <Bus className="w-[18px] h-[18px] text-white" strokeWidth={2.5} />
-          </div>
-          <span className="text-xl font-black tracking-tight text-slate-900">Yara</span>
+          <img src="/logo.png" alt="Yara" className="h-8 w-auto object-contain" />
         </div>
 
         <div className="flex items-center gap-2">
@@ -445,18 +442,15 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
       {/* DESKTOP HEADER NAVIGATION (Unchanged Web Layout for >= 1024px) */}
       <header className="hidden lg:block bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
           
           {/* Logo & Main Nav Links */}
           <div className="flex items-center gap-6">
             <button
               onClick={() => setActiveNav("home")}
-              className="flex items-center gap-2.5 hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2.5 hover:opacity-95 transition-opacity"
             >
-              <div className="w-9 h-9 rounded-xl bg-[#f7a501] flex items-center justify-center shadow-sm">
-                <Bus className="w-5 h-5 text-white" strokeWidth={2.5} />
-              </div>
-              <span className="text-xl font-black tracking-tight text-slate-900">Yara</span>
+              <img src="/logo.png" alt="Yara" className="h-9 w-auto object-contain" />
             </button>
 
             {/* Desktop Nav Links */}
