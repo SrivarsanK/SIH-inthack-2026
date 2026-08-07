@@ -16,6 +16,7 @@ import type { TransitAgency } from "../lib/agencies";
 interface SearchViewProps {
   selectedAgency: TransitAgency;
   neonRoutes?: any;
+  onSelectRoute?: (routeCode: string) => void;
 }
 
 // ─── Service Badge ────────────────────────────────────────────────────────────
@@ -26,8 +27,9 @@ const ServiceBadge: React.FC<{ type: string }> = ({ type }) => {
     AC: { label: "AC", bg: "#0284c7", text: "#fff" },
     Fans: { label: "Fans", bg: "#7c3aed", text: "#fff" },
     Ordinary: { label: "Ordinary", bg: "#6b7280", text: "#fff" },
+    MTC: { label: "MTC GTFS", bg: "#2563eb", text: "#fff" },
   };
-  const s = map[type] ?? { label: type, bg: "#6b7280", text: "#fff" };
+  const s = map[type] ?? { label: type, bg: "#2563eb", text: "#fff" };
   return (
     <span
       className="inline-block px-2 py-0.5 rounded-md text-[10px] font-extrabold"
@@ -38,7 +40,7 @@ const ServiceBadge: React.FC<{ type: string }> = ({ type }) => {
   );
 };
 
-export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency, neonRoutes }) => {
+export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency, neonRoutes, onSelectRoute }) => {
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "routes" | "stops">("all");
   const [neonRouteResults, setNeonRouteResults] = useState<any[]>([]);
@@ -192,6 +194,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency, neonRout
               {routeResults.map((r, i) => (
                 <div
                   key={i}
+                  onClick={() => onSelectRoute?.(r.code)}
                   className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#f7a501] hover:bg-amber-50/20 transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">

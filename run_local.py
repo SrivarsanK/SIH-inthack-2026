@@ -37,12 +37,27 @@ def is_port_open(port: int) -> bool:
         s.settimeout(0.5)
         return s.connect_ex(("localhost", port)) == 0
 
+def free_ports(ports: list):
+    """Free orphaned processes holding API ports (8001, 8002) on startup."""
+    for port in ports:
+        if is_port_open(port):
+            try:
+                if os.name == "nt":
+                    cmd = f"for /f \"tokens=5\" %a in ('netstat -aon ^| findstr :{port} ^| findstr LISTENING') do taskkill /f /pid %a"
+                    subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    time.sleep(0.5)
+            except Exception:
+                pass
+
 def main():
     print("=" * 65)
     print("Launching TransitSense Local Multi-Service Pipeline...")
     print("=" * 65)
 
     check_dependencies()
+
+    # Free ports 8001 and 8002 if orphaned processes are running
+    free_ports([8001, 8002])
 
     root_dir = os.path.abspath(os.path.dirname(__file__))
     dashboard_dir = os.path.join(root_dir, "dashboard")

@@ -91,16 +91,16 @@ def query_stops_for_route(route_id: str) -> List[Dict[str, Any]]:
 
 
 def search_routes(term: str, limit: int = 20) -> List[Dict[str, Any]]:
-    """Search routes by short_name or long_name (case-insensitive)."""
+    """Search routes by short_name or long_name (deduplicated by route_short_name)."""
     safe_term = term.replace("'", "''").strip()
     if not safe_term:
         return []
     sql = f"""
-        SELECT route_id, route_short_name, route_long_name, route_type, agency_id
+        SELECT DISTINCT ON (route_short_name) route_id, route_short_name, route_long_name, route_type, agency_id
         FROM routes
         WHERE LOWER(route_short_name) LIKE LOWER('%{safe_term}%')
            OR LOWER(route_long_name) LIKE LOWER('%{safe_term}%')
-        ORDER BY route_short_name
+        ORDER BY route_short_name, route_id
         LIMIT {limit};
     """
     return _rows(_execute(sql))

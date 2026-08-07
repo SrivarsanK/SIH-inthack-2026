@@ -319,7 +319,14 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       {/* BODY CONTENT AREAS */}
       {activeNav === "search" && (
         <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
-          <SearchView selectedAgency={selectedAgency} neonRoutes={neonRoutes} />
+          <SearchView
+            selectedAgency={selectedAgency}
+            neonRoutes={neonRoutes}
+            onSelectRoute={(code) => {
+              onRouteSelect?.(code);
+              setActiveNav("track");
+            }}
+          />
         </div>
       )}
 
