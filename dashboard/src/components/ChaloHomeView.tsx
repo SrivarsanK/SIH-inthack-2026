@@ -1416,7 +1416,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       )}
 
       {/* BEAUTIFIED FIXED MOBILE BOTTOM NAVIGATION BAR (< 768px) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-2 py-1.5 transition-all">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] px-2 py-1.5 transition-all" style={{ zIndex: 99999, isolation: "isolate" }}>
         <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
           {MOBILE_NAV_ITEMS.map(({ id, icon: Icon, label }) => {
             const active = activeNav === id;
