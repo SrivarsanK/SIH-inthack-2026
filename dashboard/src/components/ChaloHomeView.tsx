@@ -46,6 +46,20 @@ function formatMin(sec: number): string {
   return `${Math.floor(sec / 60)} min`;
 }
 
+function formatClockTime(minsFromNow?: number): string {
+  const now = new Date();
+  if (minsFromNow !== undefined && !isNaN(minsFromNow)) {
+    now.setMinutes(now.getMinutes() + minsFromNow);
+  }
+  let hours = now.getHours();
+  const minutes = now.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strMinutes = minutes < 10 ? "0" + minutes : minutes;
+  return `${hours}:${strMinutes} ${ampm}`;
+}
+
 export function abbreviateStopName(name: string): string {
   if (!name) return "";
   let s = name.trim();
@@ -882,7 +896,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                 </div>
 
                                 <div className="text-right shrink-0">
-                                  <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || "10:25 PM"}</span>
+                                  <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || formatClockTime(bus.eta_min)}</span>
                                   <span className="text-[11px] font-bold text-emerald-600">
                                     {bus.eta_min} min away
                                   </span>
@@ -904,7 +918,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                 </div>
                               </div>
                               <div className="text-right">
-                                <span className="font-extrabold text-slate-900 text-sm block">10:25 PM</span>
+                                <span className="font-extrabold text-slate-900 text-sm block">{formatClockTime(4)}</span>
                                 <span className="text-[11px] font-bold text-emerald-600">4 min away</span>
                               </div>
                             </div>
@@ -1342,7 +1356,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                     </div>
 
                                     <div className="text-right shrink-0">
-                                      <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || "10:25 PM"}</span>
+                                      <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || formatClockTime(bus.eta_min)}</span>
                                       <span className="text-xs font-bold text-emerald-600">
                                         {bus.eta_min} min away
                                       </span>
@@ -1364,7 +1378,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                     </div>
                                   </div>
                                   <div className="text-right">
-                                    <span className="font-extrabold text-slate-900 text-sm block">10:25 PM</span>
+                                    <span className="font-extrabold text-slate-900 text-sm block">{formatClockTime(4)}</span>
                                     <span className="text-xs font-bold text-emerald-600">4 min away</span>
                                   </div>
                                 </div>
