@@ -174,17 +174,16 @@ export const DashboardApp: React.FC = () => {
         };
       });
 
-      // Automatically load real stops for the first 2 routes so initial view is fully populated
-      if (enrichedRoutes.length > 0) {
-        const firstCoords = await loadRouteCoords(enrichedRoutes[0].id);
-        enrichedRoutes[0].coords = firstCoords;
-        enrichedRoutes[0].totalStops = firstCoords.length;
-      }
-      if (enrichedRoutes.length > 1) {
-        const secondCoords = await loadRouteCoords(enrichedRoutes[1].id);
-        enrichedRoutes[1].coords = secondCoords;
-        enrichedRoutes[1].totalStops = secondCoords.length;
-      }
+      // Automatically load real stops for all routes from Neon DB
+      await Promise.all(
+        enrichedRoutes.slice(0, 10).map(async (r) => {
+          const coords = await loadRouteCoords(r.id);
+          if (coords.length > 0) {
+            r.coords = coords;
+            r.totalStops = coords.length;
+          }
+        })
+      );
 
       if (!isMounted) return;
 
