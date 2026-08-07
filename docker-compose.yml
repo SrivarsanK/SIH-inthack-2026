@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  transitsense:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: transitsense-app
+    ports:
+      - "4321:4321"   # Dashboard UI (http://localhost:4321)
+      - "8001:8001"   # CH-1 Simulator Control API (http://localhost:8001)
+      - "8002:8002"   # CH-3 ETA & Density Engine (http://localhost:8002)
+      - "1883:1883"   # Mosquitto MQTT Broker
+    restart: unless-stopped
