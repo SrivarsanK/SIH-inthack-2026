@@ -384,12 +384,21 @@ const StopTimeline: React.FC<{
   selectedStopId: string | null;
   onSelectStop: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
   onOpenTimetable: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
-}> = ({ stops, vehiclePos, inboundSec, totalSec, selectedStopId, onSelectStop, onOpenTimetable }) => {
+  userPos?: { lat: number; lon: number };
+}> = ({ stops, vehiclePos, inboundSec, totalSec, selectedStopId, onSelectStop, onOpenTimetable, userPos = { lat: 13.0400, lon: 80.1740 } }) => {
   // Dynamically calculate which stop is closest to current vehicle position on map
   const activeBusIdx = stops.reduce((closestIdx, currStop, i) => {
     const closestStop = stops[closestIdx];
     const distCurr = Math.hypot(currStop.lat - vehiclePos.lat, currStop.lon - vehiclePos.lon);
     const distClosest = Math.hypot(closestStop.lat - vehiclePos.lat, closestStop.lon - vehiclePos.lon);
+    return distCurr < distClosest ? i : closestIdx;
+  }, 0);
+
+  // Dynamically calculate which stop is closest to user location
+  const nearestUserStopIdx = stops.reduce((closestIdx, currStop, i) => {
+    const closestStop = stops[closestIdx];
+    const distCurr = Math.hypot(currStop.lat - userPos.lat, currStop.lon - userPos.lon);
+    const distClosest = Math.hypot(closestStop.lat - userPos.lat, closestStop.lon - userPos.lon);
     return distCurr < distClosest ? i : closestIdx;
   }, 0);
 
@@ -406,7 +415,7 @@ const StopTimeline: React.FC<{
       <div className="space-y-4">
         {stops.map((stop, idx) => {
           const isNearestBus = idx === activeBusIdx;
-          const isUserNearestStop = idx === 0;
+          const isUserNearestStop = idx === nearestUserStopIdx;
           const isSelected = selectedStopId === stop.id;
           const isLast = idx === stops.length - 1;
           const isFirst = idx === 0;
@@ -483,7 +492,7 @@ const StopTimeline: React.FC<{
                         e.stopPropagation();
                         onOpenTimetable(stop);
                       }}
-                      className="text-[#f7a501] text-xs font-bold hover:underline shrink-0"
+                      className="px-3 py-1.5 rounded-lg bg-amber-50 text-[#b17816] hover:bg-amber-100 text-xs font-bold transition-colors shrink-0"
                     >
                       View timetable
                     </button>
@@ -510,14 +519,39 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
   const stops = route?.coords ?? [];
   const { T_total_sec, T_inbound_sec } = data.inbound;
 
-  const [selectedStop, setSelectedStop] = useState<typeof stops[0] | null>(stops[0] ?? null);
+  const [userPos, setUserPos] = useState<{ lat: number; lon: number }>({ lat: 13.0400, lon: 80.1740 });
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => setUserPos({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+        () => {},
+        { timeout: 5000 }
+      );
+    }
+  }, []);
+
+  const nearestStopIdx = stops.reduce((closestIdx, currStop, i) => {
+    const closestStop = stops[closestIdx];
+    const distCurr = Math.hypot(currStop.lat - userPos.lat, currStop.lon - userPos.lon);
+    const distClosest = Math.hypot(closestStop.lat - userPos.lat, closestStop.lon - userPos.lon);
+    return distCurr < distClosest ? i : closestIdx;
+  }, 0);
+
+  const [selectedStop, setSelectedStop] = useState<typeof stops[0] | null>(stops[nearestStopIdx] ?? stops[0] ?? null);
   const [timetableStop, setTimetableStop] = useState<typeof stops[0] | null>(null);
 
   useEffect(() => {
     if (stops.length > 0) {
-      setSelectedStop(stops[0]);
+      const idx = stops.reduce((closestIdx, currStop, i) => {
+        const closestStop = stops[closestIdx];
+        const distCurr = Math.hypot(currStop.lat - userPos.lat, currStop.lon - userPos.lon);
+        const distClosest = Math.hypot(closestStop.lat - userPos.lat, closestStop.lon - userPos.lon);
+        return distCurr < distClosest ? i : closestIdx;
+      }, 0);
+      setSelectedStop(stops[idx] ?? stops[0]);
     }
-  }, [selectedRouteId, stops]);
+  }, [selectedRouteId, stops, userPos]);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
@@ -623,6 +657,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
               selectedStopId={selectedStop?.id ?? null}
               onSelectStop={(stop) => setSelectedStop(stop)}
               onOpenTimetable={(stop) => setTimetableStop(stop)}
+              userPos={userPos}
             />
           </div>
         </div>
