@@ -58,16 +58,20 @@ export function useNeonRoutes() {
     }
   }, []);
 
-  // Fetch stops for a specific route
-  const fetchStopsForRoute = useCallback(async (routeId: string): Promise<NeonStop[]> => {
-    if (stopsCache.current[routeId]) {
-      return stopsCache.current[routeId];
+  // Fetch stops for a specific route (with optional direction=0 or 1)
+  const fetchStopsForRoute = useCallback(async (routeId: string, direction?: number): Promise<NeonStop[]> => {
+    const cacheKey = direction !== undefined ? `${routeId}-d${direction}` : routeId;
+    if (stopsCache.current[cacheKey]) {
+      return stopsCache.current[cacheKey];
     }
     try {
-      const res = await fetch(`${API_BASE}/api/routes/${routeId}/stops`);
+      const url = direction !== undefined 
+        ? `${API_BASE}/api/routes/${routeId}/stops?direction=${direction}`
+        : `${API_BASE}/api/routes/${routeId}/stops`;
+      const res = await fetch(url);
       const data = await res.json();
       const stops: NeonStop[] = data.stops || [];
-      stopsCache.current[routeId] = stops;
+      stopsCache.current[cacheKey] = stops;
       return stops;
     } catch (err) {
       console.error(`[useNeonRoutes] Failed to fetch stops for route ${routeId}:`, err);

@@ -169,15 +169,17 @@ def count_routes(agency_id: int = 69) -> int:
     return int(rows[0]["cnt"]) if rows else 0
 
 
-def query_stops_for_route(route_id: str) -> List[Dict[str, Any]]:
-    """Ordered stops for a route using the canonical longest direction_id=0 trip."""
+def query_stops_for_route(route_id: str, direction_id: int = 0) -> List[Dict[str, Any]]:
+    """Ordered stops for a route. Supports direction_id=0 (forward) and direction_id=1 (return)."""
     safe_route_id = route_id.replace("'", "''")
+    
+    # First try fetching explicit trip for requested direction_id
     sql = f"""
         WITH best_trip AS (
           SELECT t.trip_id, COUNT(st.stop_id) AS stop_cnt
           FROM trips t
           JOIN stop_times st ON st.trip_id = t.trip_id
-          WHERE t.route_id = '{safe_route_id}' AND t.direction_id = 0
+          WHERE t.route_id = '{safe_route_id}' AND t.direction_id = {direction_id}
           GROUP BY t.trip_id
           ORDER BY stop_cnt DESC
           LIMIT 1
@@ -194,22 +196,31 @@ def query_stops_for_route(route_id: str) -> List[Dict[str, Any]]:
         WHERE st.trip_id = (SELECT trip_id FROM best_trip)
         ORDER BY st.stop_sequence;
     """
-    return _rows(_execute(sql))
+    stops = _rows(_execute(sql))
+    
+    # If no direction_id=1 trip exists, fetch direction 0 stops and reverse them
+    if not stops and direction_id == 1:
+        fwd_stops = query_stops_for_route(route_id, direction_id=0)
+        rev_stops = list(reversed(fwd_stops))
+        for idx, s in enumerate(rev_stops):
+            s_copy = dict(s)
+            s_copy["stop_sequence"] = idx + 1
+            rev_stops[idx] = s_copy
+        return rev_stops
+        
+    return stops
 
 
 def search_routes(term: str, limit: int = 20) -> List[Dict[str, Any]]:
     """Search routes by canonical base code or stop name.
 
-    Pipeline:
-      1. Extract base route code from user query (strip CT/service suffixes).
-      2. DISTINCT ON base route code so each bus number appears exactly once.
-      3. Terminus (origin/destination) derived deterministically from stop_times.
+    Strictly filters out CT/CT1/CT2 cut-trips and returns BOTH Direction 0 (Station A -> B)
+    and Direction 1 (Station B -> A) for every matching bus.
     """
     safe_term = term.replace("'", "''").strip()
     if not safe_term:
         return []
 
-    # Also try the base code extraction on the user's input
     base = _base_route_code(safe_term).replace("'", "''")
 
     sql = f"""
@@ -235,24 +246,54 @@ def search_routes(term: str, limit: int = 20) -> List[Dict[str, Any]]:
           OR LOWER(r.route_short_name) LIKE LOWER('%%{base}%%')
         )
         ORDER BY r.route_short_name, r.route_id
-        LIMIT {limit};
+        LIMIT {limit * 2};
     """
     rows = _rows(_execute(sql))
 
-    # Apply client-side lexical normalization:
-    # Rows are already DISTINCT ON route_short_name, but we further deduplicate
-    # by base_route_code to hide CT variants (e.g. "101 CT2" hidden under "101")
     seen: set = set()
     results: List[Dict[str, Any]] = []
+
     for row in rows:
         raw_code = row.get("route_short_name", "")
+        # Strictly ignore CT / CT1 / CT2 cut-trip variants in search
+        if _is_cut_trip(raw_code):
+            continue
+
         base_code = _base_route_code(raw_code)
         if base_code not in seen:
             seen.add(base_code)
-            row["canonical_code"] = base_code
-            row["is_cut_trip"] = _is_cut_trip(raw_code)
-            row["service_class"] = _service_class(raw_code)
-            results.append(row)
+            raw_long = row.get("route_long_name", "")
+            parts = raw_long.split(" TO ")
+            origin = row.get("origin") or (parts[0].strip() if len(parts) > 0 else "Station A")
+            destination = row.get("destination") or (parts[1].strip() if len(parts) > 1 else "Station B")
+
+            # Direction 0: Outbound (Station A -> Station B)
+            dir0_item = dict(row)
+            dir0_item["route_id"] = f"{row['route_id']}-dir0"
+            dir0_item["real_route_id"] = row["route_id"]
+            dir0_item["canonical_code"] = base_code
+            dir0_item["route_short_name"] = base_code
+            dir0_item["direction_id"] = 0
+            dir0_item["origin"] = origin
+            dir0_item["destination"] = destination
+            dir0_item["direction_label"] = "Outbound"
+            results.append(dir0_item)
+
+            # Direction 1: Return (Station B -> Station A)
+            dir1_item = dict(row)
+            dir1_item["route_id"] = f"{row['route_id']}-dir1"
+            dir1_item["real_route_id"] = row["route_id"]
+            dir1_item["canonical_code"] = base_code
+            dir1_item["route_short_name"] = base_code
+            dir1_item["direction_id"] = 1
+            dir1_item["origin"] = destination
+            dir1_item["destination"] = origin
+            dir1_item["direction_label"] = "Return"
+            results.append(dir1_item)
+
+            if len(results) >= limit:
+                break
+
     return results
 
 

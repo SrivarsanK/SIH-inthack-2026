@@ -188,11 +188,21 @@ def api_routes_search(q: str = "", limit: int = 20) -> Dict[str, Any]:
 
 
 @app.get("/api/routes/{route_id}/stops")
-def api_route_stops(route_id: str) -> Dict[str, Any]:
-    """Ordered stops for a specific route."""
+def api_route_stops(route_id: str, direction: int = 0) -> Dict[str, Any]:
+    """Ordered stops for a specific route (direction=0 for forward, direction=1 for return)."""
     try:
-        stops = neon_client.query_stops_for_route(route_id)
-        return {"route_id": route_id, "stops": stops, "total": len(stops)}
+        # Strip synthetic direction suffix if present (e.g., "16917-dir1" -> real_id "16917", direction 1)
+        real_id = route_id
+        req_dir = direction
+        if "-dir0" in route_id:
+            real_id = route_id.replace("-dir0", "")
+            req_dir = 0
+        elif "-dir1" in route_id:
+            real_id = route_id.replace("-dir1", "")
+            req_dir = 1
+
+        stops = neon_client.query_stops_for_route(real_id, direction_id=req_dir)
+        return {"route_id": route_id, "real_route_id": real_id, "direction": req_dir, "stops": stops, "total": len(stops)}
     except Exception as err:
         return {"error": str(err), "stops": []}
 

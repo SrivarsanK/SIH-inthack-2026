@@ -91,24 +91,55 @@ export const DashboardApp: React.FC = () => {
   // When user selects a route (by routeId or code), lazy-load stops from Neon DB and set selectedRouteId
   const handleRouteSelect = useCallback(async (routeIdOrCode: string) => {
     // Match by route_id first (from search results), fall back to code match
-    const route = selectedAgency.routes.find(
+    let route = selectedAgency.routes.find(
       (r) => r.id === routeIdOrCode || r.code === routeIdOrCode
     );
-    if (!route) return;
 
-    setSelectedRouteId(route.id);
+    // If route is not in initial preset list (searched from Neon DB), fetch stops & dynamically construct it
+    if (!route) {
+      const fetchedCoords = await loadRouteCoords(routeIdOrCode);
+      if (fetchedCoords.length > 0) {
+        const origin = fetchedCoords[0].name;
+        const destination = fetchedCoords[fetchedCoords.length - 1].name;
+        const cleanCode = routeIdOrCode.replace(/-dir[01]$/, "");
 
-    if (route.coords.length === 0) {
-      const enrichedCoords = await loadRouteCoords(route.id);
-      if (enrichedCoords.length > 0) {
+        const dynamicRoute = {
+          id: routeIdOrCode,
+          code: cleanCode,
+          name: `Route ${cleanCode}: ${origin} → ${destination}`,
+          origin,
+          destination,
+          fare: 25,
+          totalStops: fetchedCoords.length,
+          durationMin: 30,
+          coords: fetchedCoords,
+        };
+
         setSelectedAgency((prev) => ({
           ...prev,
-          routes: prev.routes.map((r) =>
-            r.id === route.id
-              ? { ...r, coords: enrichedCoords, totalStops: enrichedCoords.length }
-              : r
-          ),
+          routes: [dynamicRoute, ...prev.routes],
         }));
+
+        setSelectedRouteId(routeIdOrCode);
+        return;
+      }
+    }
+
+    if (route) {
+      setSelectedRouteId(route.id);
+
+      if (route.coords.length === 0) {
+        const enrichedCoords = await loadRouteCoords(route.id);
+        if (enrichedCoords.length > 0) {
+          setSelectedAgency((prev) => ({
+            ...prev,
+            routes: prev.routes.map((r) =>
+              r.id === route.id
+                ? { ...r, coords: enrichedCoords, totalStops: enrichedCoords.length }
+                : r
+            ),
+          }));
+        }
       }
     }
   }, [selectedAgency, loadRouteCoords]);

@@ -87,23 +87,24 @@ export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency, neonRout
   ];
 
   // Use Neon DB results when available, otherwise fall back to local filter
+  // Use Neon DB results when available, otherwise fall back to local filter
   const routeResults = query
     ? (neonRouteResults.length > 0
       ? neonRouteResults.map((r: any) => {
-          // Use deterministically-inferred origin/destination from normalization pipeline
           const code = r.canonical_code || r.route_short_name;
           const origin = r.origin || r.route_long_name?.split(" TO ")[0]?.trim() || "";
           const dest = r.destination || r.route_long_name?.split(" TO ")[1]?.trim() || "";
-          const svcClass = r.service_class || "MTC";
+          const dirLabel = r.direction_label || (r.direction_id === 1 ? "Return" : "Outbound");
           return {
             routeId: r.route_id,
             code,
-            badge: svcClass,
+            badge: dirLabel,
             path: origin && dest ? `${origin} → ${dest}` : r.route_long_name || "",
           };
         })
       : selectedAgency.routes.flatMap((r) => [
-          { routeId: r.id, code: r.code, badge: "MTC", path: `${r.origin} → ${r.destination}` },
+          { routeId: `${r.id}-dir0`, code: r.code, badge: "Outbound", path: `${r.origin} → ${r.destination}` },
+          { routeId: `${r.id}-dir1`, code: r.code, badge: "Return", path: `${r.destination} → ${r.origin}` },
         ]).filter(
           (r) =>
             r.code.toLowerCase().includes(query.toLowerCase()) ||
