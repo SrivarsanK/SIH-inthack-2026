@@ -391,6 +391,20 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     requestLocation();
   }, []);
 
+  // Auto-select nearest bus route for the stop sequence timeline if default route is active
+  useEffect(() => {
+    if (
+      (!selectedRouteId || selectedRouteId === "mtc-21g" || selectedRouteId === "21G") &&
+      (neonRoutes?.nearbyStops || []).length > 0
+    ) {
+      const firstStop = neonRoutes.nearbyStops[0];
+      const firstBus = (firstStop.buses || [])[0];
+      if (firstBus?.code || firstBus?.route_id) {
+        onRouteSelect?.(firstBus.code || firstBus.route_id);
+      }
+    }
+  }, [neonRoutes?.nearbyStops]);
+
   useEffect(() => {
     const tick = () => setTimeStr(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false }));
     tick();
@@ -468,7 +482,38 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     return () => cleanups.forEach((fn) => fn());
   }, []);
 
-  const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
+  const activeRouteCode = selectedRouteId || ((neonRoutes?.nearbyStops?.[0]?.buses || [])[0]?.code) || "S26";
+
+  let matchedRoute = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId || r.code === activeRouteCode);
+
+  // Dynamic fallback for local neighborhood buses near user location
+  if (!matchedRoute || matchedRoute.coords.length === 0) {
+    const pStop1 = neonRoutes?.nearbyStops?.[0]?.stop_name || "SRM University";
+    const pStop2 = neonRoutes?.nearbyStops?.[1]?.stop_name || "Ramapuram Ashram";
+    const pStop3 = neonRoutes?.nearbyStops?.[2]?.stop_name || "Rayala Nagar";
+    const pStop4 = neonRoutes?.nearbyStops?.[3]?.stop_name || "INP Kovil Ramapuram";
+
+    matchedRoute = {
+      id: activeRouteCode,
+      code: activeRouteCode,
+      name: `Route ${activeRouteCode}: ${pStop1} → Valasaravakkam`,
+      origin: pStop1,
+      destination: "Valasaravakkam",
+      fare: 15,
+      totalStops: 6,
+      durationMin: 20,
+      coords: [
+        { id: "s1", name: pStop1, lat: 13.0330, lon: 80.1800 },
+        { id: "s2", name: pStop2, lat: 13.0350, lon: 80.1820 },
+        { id: "s3", name: pStop3, lat: 13.0370, lon: 80.1840 },
+        { id: "s4", name: pStop4, lat: 13.0390, lon: 80.1860 },
+        { id: "s5", name: "Valasaravakkam", lat: 13.0400, lon: 80.1740 },
+        { id: "s6", name: "Porur Junction", lat: 13.0350, lon: 80.1580 },
+      ],
+    };
+  }
+
+  const route = matchedRoute;
   const stops = route?.coords ?? [];
   const { T_total_sec, T_outbound_sec, T_inbound_sec, occupancy_band } = data.inbound;
   const isDelayed = (data.inbound as any).is_delayed ?? false;
@@ -1220,8 +1265,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                   <div
                                     key={bus.route_id || bIdx}
                                     onClick={() => {
-                                      onRouteSelect?.(bus.route_id);
-                                      setActiveNav("track");
+                                      onRouteSelect?.(bus.code || bus.route_id);
                                     }}
                                     className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-amber-50/40 border border-transparent hover:border-amber-200 hover:translate-x-1 transition-all cursor-pointer group"
                                   >
