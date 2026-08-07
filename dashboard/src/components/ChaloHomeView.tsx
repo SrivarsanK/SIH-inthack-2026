@@ -363,21 +363,72 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
   const timelineRef = useRef<HTMLDivElement>(null);
   const mobileTimelineRef = useRef<HTMLDivElement>(null);
+  const activeRoutesRef = useRef<HTMLDivElement>(null);
 
-  // Convert vertical mouse wheel / trackpad scroll into horizontal scroll when hovering timeline
+  // Setup vertical wheel scroll & click-and-drag horizontal scroll for all horizontal containers
   useEffect(() => {
-    const el = timelineRef.current;
-    if (!el) return;
+    const refs = [timelineRef, mobileTimelineRef, activeRoutesRef];
 
-    const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY !== 0) {
+    const cleanups: Array<() => void> = [];
+
+    refs.forEach((ref) => {
+      const el = ref.current;
+      if (!el) return;
+
+      // 1. Wheel listener
+      const handleWheel = (e: WheelEvent) => {
+        if (e.deltaY !== 0) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY * 1.3;
+        }
+      };
+
+      // 2. Mouse Drag listener
+      let isDown = false;
+      let startX = 0;
+      let scrollLeft = 0;
+
+      const handleMouseDown = (e: MouseEvent) => {
+        isDown = true;
+        el.classList.add("select-none");
+        startX = e.pageX - el.offsetLeft;
+        scrollLeft = el.scrollLeft;
+      };
+
+      const handleMouseLeave = () => {
+        isDown = false;
+        el.classList.remove("select-none");
+      };
+
+      const handleMouseUp = () => {
+        isDown = false;
+        el.classList.remove("select-none");
+      };
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isDown) return;
         e.preventDefault();
-        el.scrollLeft += e.deltaY * 1.2;
-      }
-    };
+        const x = e.pageX - el.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        el.scrollLeft = scrollLeft - walk;
+      };
 
-    el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => el.removeEventListener("wheel", handleWheel);
+      el.addEventListener("wheel", handleWheel, { passive: false });
+      el.addEventListener("mousedown", handleMouseDown);
+      el.addEventListener("mouseleave", handleMouseLeave);
+      el.addEventListener("mouseup", handleMouseUp);
+      el.addEventListener("mousemove", handleMouseMove);
+
+      cleanups.push(() => {
+        el.removeEventListener("wheel", handleWheel);
+        el.removeEventListener("mousedown", handleMouseDown);
+        el.removeEventListener("mouseleave", handleMouseLeave);
+        el.removeEventListener("mouseup", handleMouseUp);
+        el.removeEventListener("mousemove", handleMouseMove);
+      });
+    });
+
+    return () => cleanups.forEach((fn) => fn());
   }, []);
 
   const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
@@ -860,38 +911,62 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
              ══════════════════════════════════════════════════════════════════ */}
           <div className="hidden lg:block space-y-5 sm:space-y-6">
             
-            {/* Quick Route Selector Bar — Fixed Padding to Prevent Card & Shadow Clipping */}
-            <div className="flex items-center gap-3 overflow-x-auto py-2.5 px-1 -mx-1" style={{ scrollbarWidth: "none" }}>
+            {/* Quick Route Selector Bar — Side Scrollable with Wheel, Drag & Chevron Buttons */}
+            <div className="relative flex items-center gap-3">
               <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider shrink-0 mr-1 hidden sm:inline select-none">
                 Active Routes:
               </span>
-              {selectedAgency.routes.map((r, idx) => (
-                <div
-                  key={r.id}
-                  onClick={() => {
-                    onRouteSelect?.(r.id);
-                    setActiveNav("track");
-                  }}
-                  className="shrink-0 flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-sm cursor-pointer hover:border-[#f7a501] hover:bg-amber-50/40 transition-all group min-w-[165px]"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-[#f7a501]/20 transition-colors shrink-0">
-                    <Bus className="w-4 h-4 text-slate-600 group-hover:text-[#b17816] transition-colors" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-black text-slate-900 text-sm">{r.code}</span>
-                      {idx === 0 && (
-                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-[#f7a501] text-slate-950 shrink-0">
-                          LIVE
-                        </span>
-                      )}
+              <div
+                ref={activeRoutesRef}
+                className="flex items-center gap-3 overflow-x-auto py-2.5 px-1 -mx-1 scroll-smooth touch-pan-x cursor-grab active:cursor-grabbing flex-1"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {selectedAgency.routes.map((r, idx) => (
+                  <div
+                    key={r.id}
+                    onClick={() => {
+                      onRouteSelect?.(r.id);
+                      setActiveNav("track");
+                    }}
+                    className="shrink-0 flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-sm cursor-pointer hover:border-[#f7a501] hover:bg-amber-50/40 transition-all group min-w-[165px] select-none"
+                  >
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-[#f7a501]/20 transition-colors shrink-0">
+                      <Bus className="w-4 h-4 text-slate-600 group-hover:text-[#b17816] transition-colors" />
                     </div>
-                    <span className="text-[11px] font-medium text-slate-500 block truncate max-w-[135px]" title={`To ${r.destination}`}>
-                      To {r.destination}
-                    </span>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black text-slate-900 text-sm">{r.code}</span>
+                        {idx === 0 && (
+                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-[#f7a501] text-slate-950 shrink-0">
+                            LIVE
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-medium text-slate-500 block truncate max-w-[135px]" title={`To ${r.destination}`}>
+                        To {r.destination}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+
+              {/* Chevron scroll buttons for Active Routes */}
+              <div className="flex items-center gap-1 shrink-0 ml-1">
+                <button
+                  onClick={() => activeRoutesRef.current?.scrollBy({ left: -220, behavior: "smooth" })}
+                  className="w-7 h-7 rounded-full bg-white hover:bg-amber-100 hover:text-[#b17816] border border-slate-200 flex items-center justify-center text-slate-600 transition-colors shadow-2xs"
+                  title="Scroll Left"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => activeRoutesRef.current?.scrollBy({ left: 220, behavior: "smooth" })}
+                  className="w-7 h-7 rounded-full bg-white hover:bg-amber-100 hover:text-[#b17816] border border-slate-200 flex items-center justify-center text-slate-600 transition-colors shadow-2xs"
+                  title="Scroll Right"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* Responsive Layout Grid for Desktop */}
