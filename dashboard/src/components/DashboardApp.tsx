@@ -67,7 +67,7 @@ export const DashboardApp: React.FC = () => {
         return {
           id: r.route_id,
           code: displayCode,
-          name: `Route ${displayCode}: ${origin} → ${destination}`,
+          name: `Bus ${displayCode}: ${origin} → ${destination}`,
           origin,
           destination,
           fare: 25,
@@ -127,7 +127,7 @@ export const DashboardApp: React.FC = () => {
         const dynamicRoute = {
           id: routeIdOrCode,
           code: cleanCode,
-          name: `Route ${cleanCode}: ${origin} → ${destination}`,
+          name: `Bus ${cleanCode}: ${origin} → ${destination}`,
           origin,
           destination,
           fare: 25,

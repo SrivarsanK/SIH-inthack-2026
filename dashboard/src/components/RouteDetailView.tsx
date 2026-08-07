@@ -421,7 +421,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
               {selectedAgency.dataStatus === "Chalo Chained Feed" ? "Deluxe" : "LIVE"}
             </span>
             <div>
-              <h1 className="text-xl font-black text-slate-900 leading-tight">Route {route?.code}</h1>
+              <h1 className="text-xl font-black text-slate-900 leading-tight">Bus {route?.code}</h1>
               <span className="text-xs text-slate-500 font-bold block">To {route?.destination}</span>
             </div>
           </div>
@@ -446,7 +446,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">
-                Route Overview
+                Bus Overview
               </span>
               <span className="text-xs font-mono font-bold text-slate-700">
                 GTFS Block: {data.vehicle.block_id}
@@ -474,7 +474,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-slate-600" />
-              <h2 className="font-black text-slate-900 text-base">Full Route Stop Timeline</h2>
+              <h2 className="font-black text-slate-900 text-base">Full Bus Stop Timeline</h2>
             </div>
             <span className="text-xs font-bold text-slate-500">
               {stops.length} Stops Total

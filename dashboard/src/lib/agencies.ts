@@ -36,7 +36,7 @@ export const AGENCY_PRESETS: TransitAgency[] = [
       {
         id: "mtc-21g",
         code: "21G",
-        name: "Route 21G: Tambaram to Broadway",
+        name: "Bus 21G: Tambaram to Broadway",
         origin: "Tambaram Sanatorium",
         destination: "Broadway Bus Terminus",
         fare: 30,
@@ -54,7 +54,7 @@ export const AGENCY_PRESETS: TransitAgency[] = [
       {
         id: "mtc-570",
         code: "570",
-        name: "Route 570: Koyambedu to Siruseri IT Park",
+        name: "Bus 570: Koyambedu to Siruseri IT Park",
         origin: "Koyambedu CMBT",
         destination: "Siruseri SIPCOT",
         fare: 40,
@@ -84,7 +84,7 @@ export const AGENCY_PRESETS: TransitAgency[] = [
       {
         id: "bmtc-101",
         code: "101",
-        name: "Route 101: Majestic to Station B",
+        name: "Bus 101: Majestic to Station B",
         origin: "Majestic BS",
         destination: "Indiranagar Station B",
         fare: 35,

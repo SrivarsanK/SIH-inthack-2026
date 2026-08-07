@@ -496,7 +496,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     matchedRoute = {
       id: activeRouteCode,
       code: activeRouteCode,
-      name: `Route ${activeRouteCode}: ${pStop1} → Valasaravakkam`,
+      name: `Bus ${activeRouteCode}: ${pStop1} → Valasaravakkam`,
       origin: pStop1,
       destination: "Valasaravakkam",
       fare: 15,
