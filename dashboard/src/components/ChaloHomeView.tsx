@@ -862,7 +862,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                         {/* Available Buses at this Stop (matching reference image) */}
                         <div className="border-t border-slate-100 pt-3 space-y-2.5">
                           {primaryBuses.length > 0 ? (
-                            primaryBuses.map((bus: any, bIdx: number) => (
+                            primaryBuses.slice(0, 2).map((bus: any, bIdx: number) => (
                               <div
                                 key={bus.route_id || bIdx}
                                 onClick={() => {
@@ -1323,7 +1323,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                             {/* Available Buses at this Station */}
                             <div className="border-t border-slate-100 pt-4 space-y-2.5 flex-1">
                               {primaryBuses.length > 0 ? (
-                                primaryBuses.map((bus: any, bIdx: number) => (
+                                primaryBuses.slice(0, 4).map((bus: any, bIdx: number) => (
                                   <div
                                     key={bus.route_id || bIdx}
                                     onClick={() => {
