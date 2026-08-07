@@ -23,54 +23,6 @@ export interface TransitAgency {
 
 export const AGENCY_PRESETS: TransitAgency[] = [
   {
-    id: "bmtc",
-    name: "Bengaluru Metropolitan Transport Corp",
-    shortName: "BMTC",
-    city: "Bengaluru",
-    state: "Karnataka",
-    logo: "🚌",
-    accentColor: "#0284c7",
-    providerType: "Namma BMTC",
-    dataStatus: "GTFS Static + Kalman",
-    routes: [
-      {
-        id: "bmtc-101",
-        code: "101",
-        name: "Route 101: Majestic to Station B",
-        origin: "Majestic BS",
-        destination: "Indiranagar Station B",
-        fare: 35,
-        totalStops: 6,
-        durationMin: 25,
-        coords: [
-          { id: "S1", name: "Majestic Kempegowda BS", lat: 12.9716, lon: 77.5946 },
-          { id: "S2", name: "Corporation Circle", lat: 12.9740, lon: 77.5970 },
-          { id: "S3", name: "Residency Road", lat: 12.9760, lon: 77.5990 },
-          { id: "S4", name: "MG Road Metro", lat: 12.9780, lon: 77.6010 },
-          { id: "S5", name: "Halasuru", lat: 12.9800, lon: 77.6030 },
-          { id: "S6", name: "Indiranagar Depot", lat: 12.9820, lon: 77.6050 }
-        ]
-      },
-      {
-        id: "bmtc-500d",
-        code: "500D",
-        name: "Route 500D: Hebbal to Silk Board",
-        origin: "Hebbal Flyover",
-        destination: "Silk Board Junction",
-        fare: 45,
-        totalStops: 5,
-        durationMin: 40,
-        coords: [
-          { id: "S1", name: "Hebbal", lat: 13.0358, lon: 77.5970 },
-          { id: "S2", name: "Manyata Tech Park", lat: 13.0450, lon: 77.6200 },
-          { id: "S3", name: "Tin Factory", lat: 12.9980, lon: 77.6680 },
-          { id: "S4", name: "Marathahalli", lat: 12.9560, lon: 77.7010 },
-          { id: "S5", name: "Silk Board", lat: 12.9170, lon: 77.6230 }
-        ]
-      }
-    ]
-  },
-  {
     id: "mtc-chennai",
     name: "Metropolitan Transport Corp Chennai",
     shortName: "MTC Chennai",
@@ -114,6 +66,54 @@ export const AGENCY_PRESETS: TransitAgency[] = [
           { id: "S3", name: "Velachery Railway", lat: 12.9781, lon: 80.2198 },
           { id: "S4", name: "Perungudi OMR", lat: 12.9650, lon: 80.2450 },
           { id: "S5", name: "Siruseri IT Park", lat: 12.8284, lon: 80.2185 }
+        ]
+      }
+    ]
+  },
+  {
+    id: "bmtc",
+    name: "Bengaluru Metropolitan Transport Corp",
+    shortName: "BMTC",
+    city: "Bengaluru",
+    state: "Karnataka",
+    logo: "🚌",
+    accentColor: "#0284c7",
+    providerType: "Namma BMTC",
+    dataStatus: "GTFS Static + Kalman",
+    routes: [
+      {
+        id: "bmtc-101",
+        code: "101",
+        name: "Route 101: Majestic to Station B",
+        origin: "Majestic BS",
+        destination: "Indiranagar Station B",
+        fare: 35,
+        totalStops: 6,
+        durationMin: 25,
+        coords: [
+          { id: "S1", name: "Majestic Kempegowda BS", lat: 12.9716, lon: 77.5946 },
+          { id: "S2", name: "Corporation Circle", lat: 12.9740, lon: 77.5970 },
+          { id: "S3", name: "Residency Road", lat: 12.9760, lon: 77.5990 },
+          { id: "S4", name: "MG Road Metro", lat: 12.9780, lon: 77.6010 },
+          { id: "S5", name: "Halasuru", lat: 12.9800, lon: 77.6030 },
+          { id: "S6", name: "Indiranagar Depot", lat: 12.9820, lon: 77.6050 }
+        ]
+      },
+      {
+        id: "bmtc-500d",
+        code: "500D",
+        name: "Route 500D: Hebbal to Silk Board",
+        origin: "Hebbal Flyover",
+        destination: "Silk Board Junction",
+        fare: 45,
+        totalStops: 5,
+        durationMin: 40,
+        coords: [
+          { id: "S1", name: "Hebbal", lat: 13.0358, lon: 77.5970 },
+          { id: "S2", name: "Manyata Tech Park", lat: 13.0450, lon: 77.6200 },
+          { id: "S3", name: "Tin Factory", lat: 12.9980, lon: 77.6680 },
+          { id: "S4", name: "Marathahalli", lat: 12.9560, lon: 77.7010 },
+          { id: "S5", name: "Silk Board", lat: 12.9170, lon: 77.6230 }
         ]
       }
     ]
