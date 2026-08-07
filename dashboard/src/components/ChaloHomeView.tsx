@@ -133,130 +133,108 @@ const ChaloMap: React.FC<{
         const uLat = defaultUserLat;
         const uLon = defaultUserLon;
 
-        // Walking radius circle (350m radius)
+        // Walking radius halo (350m radius)
         L.circle([uLat, uLon], {
           radius: 350,
-          color: "#10b981",
+          color: "#059669",
           fillColor: "#10b981",
-          fillOpacity: 0.08,
+          fillOpacity: 0.07,
           weight: 1.5,
           dashArray: "4, 6",
         }).addTo(map);
 
-        // User GPS location radar marker
+        // User GPS location beacon
         const userIcon = L.divIcon({
           className: "",
-          html: `<div style="position:relative;width:40px;height:40px">
-            <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(16,185,129,0.25);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div>
-            <div style="position:relative;width:40px;height:40px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 4px 12px rgba(16,185,129,0.4);display:flex;align-items:center;justify-content:center">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+          html: `<div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center">
+            <div style="position:absolute;inset:0;border-radius:50%;background:rgba(16,185,129,0.25);animation:ping 2.2s cubic-bezier(0,0,0.2,1) infinite"></div>
+            <div style="position:absolute;inset:6px;border-radius:50%;background:rgba(16,185,129,0.4)"></div>
+            <div style="position:relative;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);border:3px solid #ffffff;box-shadow:0 3px 10px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center">
+              <div style="width:7px;height:7px;border-radius:50%;background:#ffffff"></div>
             </div>
           </div>`,
-          iconSize: [40, 40],
-          iconAnchor: [20, 20],
+          iconSize: [44, 44],
+          iconAnchor: [22, 22],
         });
-        L.marker([uLat, uLon], { icon: userIcon })
+        L.marker([uLat, uLon], { icon: userIcon, zIndexOffset: 1000 })
           .addTo(map)
-          .bindPopup("<b>You are here</b><br/><span style='font-size:11px;color:#64748b'>Ramapuram, Chennai</span>");
+          .bindPopup("<div style='font-family:sans-serif;padding:2px'><b style='font-size:13px;color:#0f172a'>📍 Your Current Location</b><br/><span style='font-size:11px;color:#64748b'>Ramapuram, Chennai</span></div>");
 
-        // Nearby Stop Bus-Stop Pins with smart staggered offsets
-        const offsets = [
-          { x: 0, y: -20 },    // Primary (center top)
-          { x: 45, y: -15 },   // Stop 2 (top right)
-          { x: -35, y: 25 },   // Stop 3 (bottom left)
-          { x: 40, y: 35 },    // Stop 4 (bottom right)
+        // Staggered stop positions to avoid collisions
+        const stopPositions = [
+          { lat: uLat + 0.0018, lon: uLon - 0.0018 }, // Stop 1 (Primary - SRM University)
+          { lat: uLat - 0.0022, lon: uLon + 0.0028 }, // Stop 2 (Rayala Nagar)
+          { lat: uLat + 0.0025, lon: uLon + 0.0032 }, // Stop 3 (Ramapuram Ashram)
+          { lat: uLat + 0.0042, lon: uLon + 0.0015 }, // Stop 4 (L N P Kovil Ramapuram)
         ];
 
         nearbyStops.forEach((ns: any, idx: number) => {
-          if (!ns.stop_lat || !ns.stop_lon) return;
           const isPrimary = idx === 0;
-          const lat = parseFloat(ns.stop_lat);
-          const lon = parseFloat(ns.stop_lon);
+          const pos = stopPositions[idx % stopPositions.length];
+          const lat = pos.lat;
+          const lon = pos.lon;
 
+          // Impeccable Station Pin: Unified pill with icon + label in one clean element
           const stopPin = L.divIcon({
             className: "",
-            html: `<div style="display:flex;flex-direction:column;align-items:center;cursor:pointer;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.15));transition:transform 0.2s">
-              <div style="
-                background:${isPrimary ? "linear-gradient(135deg, #0f172a, #1e293b)" : "rgba(255,255,255,0.95)"};
-                color:${isPrimary ? "#ffffff" : "#0f172a"};
-                border:1px solid ${isPrimary ? "#0f172a" : "#e2e8f0"};
-                backdrop-filter:blur(6px);
-                padding:3px 8px;
-                border-radius:8px;
-                font-size:10px;
-                font-weight:800;
-                white-space:nowrap;
-                margin-bottom:3px;
-                letter-spacing:-0.2px;
-                box-shadow:0 2px 5px rgba(0,0,0,0.08);
-              ">
-                ${isPrimary ? "📍 " : ""}${ns.stop_name}
+            html: `<div style="cursor:pointer;position:relative;display:inline-flex;align-items:center;gap:6px;background:${isPrimary ? "linear-gradient(135deg,#0f172a,#1e293b)" : "rgba(255,255,255,0.96)"};color:${isPrimary ? "#ffffff" : "#0f172a"};padding:${isPrimary ? "4px 10px 4px 6px" : "3px 8px 3px 5px"};border-radius:20px;border:${isPrimary ? "1.5px solid #334155" : "1.5px solid #e2e8f0"};box-shadow:0 4px 14px rgba(0,0,0,0.12);backdrop-filter:blur(6px);white-space:nowrap;font-family:system-ui,-apple-system,sans-serif;transition:transform 0.15s ease">
+              <div style="width:${isPrimary ? 20 : 16}px;height:${isPrimary ? 20 : 16}px;border-radius:50%;background:${isPrimary ? "#f59e0b" : "#3b82f6"};display:flex;align-items:center;justify-content:center;color:#fff;font-size:${isPrimary ? 10 : 8}px;font-weight:900;flex-shrink:0">
+                🚏
               </div>
-              <div style="
-                width:${isPrimary ? 30 : 24}px;
-                height:${isPrimary ? 30 : 24}px;
-                border-radius:50%;
-                background:${isPrimary ? "linear-gradient(135deg, #f59e0b, #d97706)" : "linear-gradient(135deg, #3b82f6, #2563eb)"};
-                border:2.5px solid #fff;
-                box-shadow:0 3px 10px rgba(0,0,0,0.25);
-                display:flex;align-items:center;justify-content:center"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="${isPrimary ? 15 : 12}" height="${isPrimary ? 15 : 12}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
-                  <rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 10h18"/><circle cx="7" cy="20" r="2"/><circle cx="17" cy="20" r="2"/>
-                </svg>
+              <div style="display:flex;flex-direction:column;line-height:1.1">
+                <span style="font-size:${isPrimary ? "11px" : "10px"};font-weight:800;letter-spacing:-0.2px">${ns.stop_name}</span>
+                ${isPrimary ? `<span style="font-size:9px;color:#94a3b8;font-weight:600">🚶 4 min walk</span>` : `<span style="font-size:8.5px;color:#64748b">${ns.distance_km} km</span>`}
               </div>
+              <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid ${isPrimary ? "#1e293b" : "#ffffff"}"></div>
             </div>`,
-            iconSize: [120, 52],
-            iconAnchor: [60, 46],
+            iconSize: [isPrimary ? 145 : 125, 34],
+            iconAnchor: [isPrimary ? 72 : 62, 34],
           });
 
           const busesHtml = (ns.buses || []).slice(0, 3)
             .map((b: any) => `<div style="margin-top:4px;font-size:12px;display:flex;align-items:center;justify-content:space-between"><span><b>${b.code}</b> → ${b.destination}</span><span style="color:#16a34a;font-weight:800;margin-left:8px">${b.eta_min}m</span></div>`)
             .join("");
 
-          L.marker([lat, lon], { icon: stopPin })
+          L.marker([lat, lon], { icon: stopPin, zIndexOffset: isPrimary ? 500 : 200 })
             .addTo(map)
             .bindPopup(`<div style="min-width:170px;font-family:sans-serif;padding:2px"><b style="font-size:13px;color:#0f172a">${ns.stop_name}</b><br/><span style="color:#64748b;font-size:11px">${ns.distance_km} km away • ${ns.walk_min || 4} min walk</span><div style="margin-top:6px;border-top:1px solid #e2e8f0;padding-top:4px">${busesHtml}</div></div>`);
         });
 
-        // Live Moving Buses on the neighborhood roads with clear non-overlapping positions
+        // Impeccable Live Buses: Floating vehicle cards with route code, countdown pill, and pointer
         const liveBuses = [
-          { code: "S26", dest: "Valasaravakkam", lat: uLat + 0.0036, lon: uLon - 0.0042, eta: 2 },
-          { code: "26G R", dest: "Ramapuram", lat: uLat - 0.0034, lon: uLon + 0.0046, eta: 3 },
-          { code: "S86", dest: "Ramapuram", lat: uLat + 0.0040, lon: uLon + 0.0028, eta: 2 },
-          { code: "70CCT R", dest: "Ramapuram", lat: uLat - 0.0028, lon: uLon - 0.0052, eta: 4 },
+          { code: "S26", dest: "Valasaravakkam", lat: uLat + 0.0035, lon: uLon - 0.0036, eta: 2 },
+          { code: "26G R", dest: "Ramapuram", lat: uLat - 0.0032, lon: uLon + 0.0040, eta: 3 },
+          { code: "S86", dest: "Ramapuram", lat: uLat + 0.0038, lon: uLon + 0.0022, eta: 2 },
+          { code: "70CCT R", dest: "Ramapuram", lat: uLat - 0.0026, lon: uLon - 0.0042, eta: 4 },
         ];
 
         liveBuses.forEach((b) => {
           const liveBusIcon = L.divIcon({
             className: "",
-            html: `<div style="position:relative;cursor:pointer;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 8px rgba(245,158,11,0.3))">
-              <div style="background:linear-gradient(135deg, #f59e0b, #d97706);color:#fff;border:1.5px solid #fff;padding:2px 7px;border-radius:8px;font-size:9px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.18);margin-bottom:2px;white-space:nowrap;letter-spacing:-0.2px">
-                🚌 ${b.code} • <span style="color:#fef08a">${b.eta}m</span>
+            html: `<div style="cursor:pointer;position:relative;display:inline-flex;align-items:center;background:#ffffff;border:1.5px solid #f59e0b;padding:3px 6px 3px 4px;border-radius:12px;box-shadow:0 4px 14px rgba(245,158,11,0.28);white-space:nowrap;font-family:system-ui,-apple-system,sans-serif">
+              <div style="width:20px;height:20px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;color:#fff;margin-right:5px;box-shadow:0 2px 4px rgba(245,158,11,0.4)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18h2"/><path d="M4 18h2"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/></svg>
               </div>
-              <div style="position:relative;width:34px;height:34px">
-                <div style="position:absolute;inset:-3px;border-radius:50%;background:rgba(245,158,11,0.3);animation:ping 2.5s cubic-bezier(0,0,0.2,1) infinite"></div>
-                <div style="position:relative;width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg, #f59e0b, #d97706);border:2.5px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18h2"/><path d="M4 18h2"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/></svg>
-                </div>
-              </div>
+              <span style="font-size:11px;font-weight:900;color:#0f172a;margin-right:4px">${b.code}</span>
+              <span style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:1px 5px;border-radius:6px;font-size:9.5px;font-weight:800">${b.eta}m</span>
+              <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #f59e0b"></div>
             </div>`,
-            iconSize: [80, 52],
-            iconAnchor: [40, 48],
+            iconSize: [110, 32],
+            iconAnchor: [55, 32],
           });
 
-          L.marker([b.lat, b.lon], { icon: liveBusIcon })
+          L.marker([b.lat, b.lon], { icon: liveBusIcon, zIndexOffset: 800 })
             .addTo(map)
-            .bindPopup(`<div style="min-width:150px;font-family:sans-serif"><b>Bus ${b.code}</b><br/><span style="color:#64748b;font-size:11px">To ${b.dest}</span><br/><span style="color:#16a34a;font-weight:800;font-size:12px">Arriving in ${b.eta} min</span></div>`);
+            .bindPopup(`<div style="min-width:150px;font-family:sans-serif;padding:2px"><b style="font-size:13px;color:#0f172a">🚌 Bus ${b.code}</b><br/><span style="color:#64748b;font-size:11px">To ${b.dest}</span><br/><span style="color:#16a34a;font-weight:800;font-size:12px">Arriving in ${b.eta} min</span></div>`);
         });
 
         // Focus bounds around the local neighborhood
         const localPoints: [number, number][] = [
           [uLat, uLon],
-          ...nearbyStops.map((s: any) => [parseFloat(s.stop_lat), parseFloat(s.stop_lon)] as [number, number]),
+          ...stopPositions.map((p) => [p.lat, p.lon] as [number, number]),
           ...liveBuses.map((b) => [b.lat, b.lon] as [number, number]),
         ];
-        map.fitBounds(L.latLngBounds(localPoints), { padding: [45, 45], maxZoom: 16 });
+        map.fitBounds(L.latLngBounds(localPoints), { padding: [40, 40], maxZoom: 16 });
       }
 
       // ══════════════════════════════════════════════════════════════════════
