@@ -860,30 +860,33 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
              ══════════════════════════════════════════════════════════════════ */}
           <div className="hidden lg:block space-y-5 sm:space-y-6">
             
-            {/* Quick Route Selector Bar */}
-            <div className="flex items-center gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-              <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider shrink-0 mr-1 hidden sm:inline">
+            {/* Quick Route Selector Bar — Fixed Padding to Prevent Card & Shadow Clipping */}
+            <div className="flex items-center gap-3 overflow-x-auto py-2.5 px-1 -mx-1" style={{ scrollbarWidth: "none" }}>
+              <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider shrink-0 mr-1 hidden sm:inline select-none">
                 Active Routes:
               </span>
               {selectedAgency.routes.map((r, idx) => (
                 <div
                   key={r.id}
-                  onClick={() => setActiveNav("track")}
-                  className="shrink-0 flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-[#f7a501] hover:bg-amber-50/30 transition-all group min-w-[150px]"
+                  onClick={() => {
+                    onRouteSelect?.(r.id);
+                    setActiveNav("track");
+                  }}
+                  className="shrink-0 flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-sm cursor-pointer hover:border-[#f7a501] hover:bg-amber-50/40 transition-all group min-w-[165px]"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-[#f7a501]/10">
-                    <Bus className="w-4 h-4 text-slate-600 group-hover:text-[#b17816]" />
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-[#f7a501]/20 transition-colors shrink-0">
+                    <Bus className="w-4 h-4 text-slate-600 group-hover:text-[#b17816] transition-colors" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="font-black text-slate-900 text-sm">{r.code}</span>
                       {idx === 0 && (
-                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-[#f7a501] text-slate-950">
+                        <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-[#f7a501] text-slate-950 shrink-0">
                           LIVE
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] text-slate-500 block truncate max-w-[120px]">
+                    <span className="text-[11px] font-medium text-slate-500 block truncate max-w-[135px]" title={`To ${r.destination}`}>
                       To {r.destination}
                     </span>
                   </div>
