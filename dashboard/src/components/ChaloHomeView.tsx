@@ -870,7 +870,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h2 className="font-black text-slate-900 text-base sm:text-lg">Buses around you</h2>
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 </div>
                 <button
                   onClick={() => setActiveNav("track")}
@@ -1060,10 +1059,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 {/* Buses around you — Live Map Card */}
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <h2 className="font-black text-slate-900 text-lg">Buses around you</h2>
-                    </div>
+                    <h2 className="font-black text-slate-900 text-lg">Buses around you</h2>
                     <button
                       onClick={() => setActiveNav("track")}
                       className="text-xs font-extrabold text-[#f7a501] hover:text-amber-600 transition-colors flex items-center gap-1"
@@ -1197,10 +1193,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 {/* Nearest Bus Stop Card — 1:1 match with Chalo App reference */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="font-black text-slate-900 text-base flex items-center gap-2">
-                      <span>Nearest bus stop</span>
-                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    </h3>
+                    <h3 className="font-black text-slate-900 text-base">Nearest bus stop</h3>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={requestLocation}
@@ -1281,8 +1274,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
                                     <div className="text-right shrink-0">
                                       <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || "10:25 PM"}</span>
-                                      <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                      <span className="text-[11px] font-bold text-emerald-600">
                                         {bus.eta_min} min away
                                       </span>
                                     </div>
@@ -1371,7 +1363,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       <span className="w-2 h-4 rounded-full bg-slate-200" />
                     </div>
                     <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 shadow-2xs">
-                      <span className={`w-2 h-2 rounded-full animate-pulse ${OCCUPANCY_DOT[occupancy_band] ?? "bg-emerald-500"}`} />
                       <span>40 / 55 Seats</span>
                     </span>
                   </div>

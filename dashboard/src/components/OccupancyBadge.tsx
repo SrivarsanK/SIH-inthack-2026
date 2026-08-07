@@ -48,7 +48,6 @@ export const OccupancyBadge: React.FC<OccupancyBadgeProps> = ({ band }) => {
       </div>
 
       <div className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 font-bold text-xs shadow-sm ${config.badgeColor}`}>
-        <span className={`w-2 h-2 rounded-full ${config.dotColor} animate-pulse`} />
         <span>{config.label}</span>
       </div>
     </div>
