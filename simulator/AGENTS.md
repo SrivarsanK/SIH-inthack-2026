@@ -105,10 +105,10 @@ Do NOT use a fixed offset — randomness is required so CH-2's Kalman smoothing 
 
 ## Phase Checklist
 
-- [ ] Phase 1: All 5 GTFS static CSVs created and valid
-- [ ] Phase 2: `interpolate_position()` returns correct lat/lon at 0.0, 0.5, 1.0
-- [ ] Phase 3: MQTT messages visible at 1Hz via `mosquitto_sub -t "fleet/bus_1/telemetry"`
-- [ ] Phase 4: All 4 control endpoints return `{"status": "ok"}` and change behavior within 1s
+- [x] Phase 1: All 5 GTFS static CSVs created and valid
+- [x] Phase 2: `interpolate_position()` returns correct lat/lon at 0.0, 0.5, 1.0
+- [x] Phase 3: MQTT messages visible at 1Hz via `mosquitto_sub -t "fleet/bus_1/telemetry"`
+- [x] Phase 4: All 4 control endpoints return `{"status": "ok"}` and change behavior within 1s
 
 ---
 

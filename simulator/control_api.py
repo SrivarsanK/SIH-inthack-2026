@@ -1,9 +1,9 @@
 import json
 import os
-import fcntl # For file locking on Linux (optional, but since we are on Windows, we'll use a simpler approach or a cross-platform lock. Wait, we are on Windows! fcntl is not available on Windows.)
-from fastapi import FastAPI
-import uvicorn
 import sys
+
+import uvicorn
+from fastapi import FastAPI
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from shared.constants import SIM_CONTROL_PORT

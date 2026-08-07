@@ -1,18 +1,19 @@
-import time
 import json
 import os
+import sys
 import threading
+import time
+
 import numpy as np
 import paho.mqtt.client as mqtt
-import sys
 
 # Add parent dir to path to import shared constants
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from shared.constants import (
-    MQTT_HOST, MQTT_PORT, TOPIC_TELEMETRY, BLOCK_ID,
-    DWELL_BASELINE_SEC, SIM_PUBLISH_HZ, SIM_BASE_SPEED, GNSS_NOISE_STD
-)
 from route_geometry import get_position
+from shared.constants import (
+    BLOCK_ID, DWELL_BASELINE_SEC, GNSS_NOISE_STD, MQTT_HOST, MQTT_PORT,
+    SIM_BASE_SPEED, SIM_PUBLISH_HZ, TOPIC_TELEMETRY
+)
 
 STATE_FILE = os.path.join(os.path.dirname(__file__), 'shared_state.json')
 
