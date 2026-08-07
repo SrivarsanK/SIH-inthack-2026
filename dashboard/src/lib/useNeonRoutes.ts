@@ -8,6 +8,12 @@ export interface NeonRoute {
   route_long_name: string;
   route_type: number;
   agency_id: number;
+  // Normalized fields from the transit data normalization pipeline
+  canonical_code?: string;     // base route code with CT/service suffixes stripped
+  origin?: string;             // deterministically inferred from MIN stop_sequence
+  destination?: string;        // deterministically inferred from MAX stop_sequence
+  is_cut_trip?: boolean;       // true if route_short_name contains CT suffix
+  service_class?: string;      // Deluxe / Ordinary / Express / AC etc.
 }
 
 export interface NeonStop {

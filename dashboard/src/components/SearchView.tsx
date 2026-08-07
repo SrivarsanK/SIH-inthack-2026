@@ -90,12 +90,20 @@ export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency, neonRout
   const routeResults = query
     ? (neonRouteResults.length > 0
       ? neonRouteResults.map((r: any) => {
-          const parts = (r.route_long_name || "").split(" TO ");
-          return { code: r.route_short_name, badge: "Deluxe", path: `${parts[0]?.trim() || ""} → ${parts[1]?.trim() || ""}` };
+          // Use deterministically-inferred origin/destination from normalization pipeline
+          const code = r.canonical_code || r.route_short_name;
+          const origin = r.origin || r.route_long_name?.split(" TO ")[0]?.trim() || "";
+          const dest = r.destination || r.route_long_name?.split(" TO ")[1]?.trim() || "";
+          const svcClass = r.service_class || "MTC";
+          return {
+            routeId: r.route_id,
+            code,
+            badge: svcClass,
+            path: origin && dest ? `${origin} → ${dest}` : r.route_long_name || "",
+          };
         })
       : selectedAgency.routes.flatMap((r) => [
-          { code: r.code, badge: "Deluxe", path: `${r.origin} → ${r.destination}` },
-          { code: r.code, badge: "AC", path: `${r.origin} → ${r.destination}` },
+          { routeId: r.id, code: r.code, badge: "MTC", path: `${r.origin} → ${r.destination}` },
         ]).filter(
           (r) =>
             r.code.toLowerCase().includes(query.toLowerCase()) ||
@@ -194,7 +202,7 @@ export const SearchView: React.FC<SearchViewProps> = ({ selectedAgency, neonRout
               {routeResults.map((r, i) => (
                 <div
                   key={i}
-                  onClick={() => onSelectRoute?.(r.code)}
+                  onClick={() => onSelectRoute?.(r.routeId || r.code)}
                   className="flex items-center justify-between p-4 rounded-2xl bg-white border border-slate-200 shadow-xs hover:border-[#f7a501] hover:bg-amber-50/20 transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-3.5">

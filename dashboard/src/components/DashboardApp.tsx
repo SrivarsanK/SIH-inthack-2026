@@ -35,15 +35,17 @@ export const DashboardApp: React.FC = () => {
 
     const initNeonRoutes = async () => {
       // Build basic routes from Neon DB
-      const baseRoutes = neon.routes.map((r: NeonRoute) => {
-        const parts = r.route_long_name.split(" TO ");
-        const origin = parts[0]?.trim() || r.route_long_name;
-        const destination = parts[1]?.trim() || "";
+      const enrichedRoutes = neon.routes.map((r: NeonRoute) => {
+        // Use deterministically-inferred terminus from stop_times (MIN/MAX stop_sequence)
+        // Falls back to parsing route_long_name if terminus data unavailable
+        const origin = r.origin || r.route_long_name.split(" TO ")[0]?.trim() || r.route_long_name;
+        const destination = r.destination || r.route_long_name.split(" TO ")[1]?.trim() || "";
+        const displayCode = r.canonical_code || r.route_short_name;
 
         return {
           id: r.route_id,
-          code: r.route_short_name,
-          name: `Route ${r.route_short_name}: ${r.route_long_name}`,
+          code: displayCode,
+          name: `Route ${displayCode}: ${origin} → ${destination}`,
           origin,
           destination,
           fare: 25,
@@ -54,22 +56,22 @@ export const DashboardApp: React.FC = () => {
       });
 
       // Automatically load real stops for the first 2 routes so initial view is fully populated
-      if (baseRoutes.length > 0) {
-        const firstCoords = await loadRouteCoords(baseRoutes[0].id);
-        baseRoutes[0].coords = firstCoords;
-        baseRoutes[0].totalStops = firstCoords.length;
+      if (enrichedRoutes.length > 0) {
+        const firstCoords = await loadRouteCoords(enrichedRoutes[0].id);
+        enrichedRoutes[0].coords = firstCoords;
+        enrichedRoutes[0].totalStops = firstCoords.length;
       }
-      if (baseRoutes.length > 1) {
-        const secondCoords = await loadRouteCoords(baseRoutes[1].id);
-        baseRoutes[1].coords = secondCoords;
-        baseRoutes[1].totalStops = secondCoords.length;
+      if (enrichedRoutes.length > 1) {
+        const secondCoords = await loadRouteCoords(enrichedRoutes[1].id);
+        enrichedRoutes[1].coords = secondCoords;
+        enrichedRoutes[1].totalStops = secondCoords.length;
       }
 
       if (!isMounted) return;
 
       const enriched: TransitAgency = {
         ...mtcAgency,
-        routes: baseRoutes,
+        routes: enrichedRoutes,
       };
 
       setSelectedAgency(enriched);
@@ -82,9 +84,12 @@ export const DashboardApp: React.FC = () => {
     };
   }, [neon.routes, loadRouteCoords]);
 
-  // When user selects a route, lazy-load its stops from Neon DB
-  const handleRouteSelect = useCallback(async (routeCode: string) => {
-    const route = selectedAgency.routes.find((r) => r.code === routeCode);
+  // When user selects a route (by routeId or code), lazy-load stops from Neon DB
+  const handleRouteSelect = useCallback(async (routeIdOrCode: string) => {
+    // Match by route_id first (from search results), fall back to code match
+    const route = selectedAgency.routes.find(
+      (r) => r.id === routeIdOrCode || r.code === routeIdOrCode
+    );
     if (!route) return;
 
     if (route.coords.length === 0) {
