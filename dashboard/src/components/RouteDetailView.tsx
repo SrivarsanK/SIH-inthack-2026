@@ -32,10 +32,13 @@ const DetailMap: React.FC<{
   data: TransitSnapshot;
   selectedAgency: TransitAgency;
   selectedRouteId?: string | null;
-  selectedStop?: { lat: number; lon: number; name: string } | null;
-}> = ({ data, selectedAgency, selectedRouteId, selectedStop }) => {
+  selectedStop?: { lat: number; lon: number; name: string; idx?: number } | null;
+  inboundSec?: number;
+  totalSec?: number;
+}> = ({ data, selectedAgency, selectedRouteId, selectedStop, inboundSec = 0, totalSec = 3300 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
+  const mapRef       = useRef<any>(null);
+  const stopMarkerRef = useRef<any>(null); // highlighted stop marker
 
   const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
   const stops = route?.coords ?? [];
@@ -171,14 +174,74 @@ const DetailMap: React.FC<{
     };
   }, [selectedAgency, selectedRouteId]);
 
-  // ── Pan to selected stop ────────────────────────────────────────────────────
+  // ── Highlight selected stop with ETA popup ────────────────────────────────
   useEffect(() => {
     if (!mapRef.current || !selectedStop) return;
-    mapRef.current.flyTo([selectedStop.lat, selectedStop.lon], 15, {
-      animate: true,
-      duration: 0.9,
+    const map = mapRef.current;
+
+    // Remove previous highlight marker
+    if (stopMarkerRef.current) {
+      stopMarkerRef.current.remove();
+      stopMarkerRef.current = null;
+    }
+
+    // Calculate ETA for this stop
+    const stopIdx = selectedStop.idx ?? 0;
+    const route   = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
+    const nStops  = (route?.coords?.length ?? 1) - 1;
+    const fraction = nStops > 0 ? stopIdx / nStops : 0;
+    const arrSec  = Math.round(totalSec * fraction);
+    const etaMin  = stopIdx === 0
+      ? Math.max(1, Math.round(inboundSec / 60))
+      : Math.round(arrSec / 60);
+    const etaLabel = stopIdx === 0
+      ? `${etaMin} min away (approaching)`
+      : `~${etaMin} min from start`;
+
+    // Import Leaflet async
+    import("leaflet").then((leaflet) => {
+      const L = (leaflet as any).default ?? leaflet;
+
+      const icon = L.divIcon({
+        className: "",
+        html: `
+          <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+            <!-- ETA Bubble -->
+            <div style="
+              background:#f7a501;color:#1c1400;
+              font-size:11px;font-weight:900;
+              padding:5px 12px;border-radius:16px;
+              white-space:nowrap;
+              box-shadow:0 4px 14px rgba(247,165,1,0.5);
+              letter-spacing:0.3px;
+              display:flex;align-items:center;gap:6px;
+            ">
+              <svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><polyline points='12 6 12 12 16 14'/></svg>
+              ${etaLabel}
+            </div>
+            <!-- Stem -->
+            <div style="width:2px;height:8px;background:#f7a501"></div>
+            <!-- Pulsing pin circle -->
+            <div style="position:relative;width:20px;height:20px">
+              <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(247,165,1,0.25);animation:ping 1.5s cubic-bezier(0,0,0.2,1) infinite"></div>
+              <div style="width:20px;height:20px;border-radius:50%;background:#f7a501;border:3px solid #fff;box-shadow:0 2px 10px rgba(247,165,1,0.6)"></div>
+            </div>
+          </div>`,
+        iconSize: [160, 52],
+        iconAnchor: [80, 52],
+      });
+
+      const marker = L.marker([selectedStop.lat, selectedStop.lon], {
+        icon,
+        zIndexOffset: 2000,
+      }).addTo(map);
+
+      stopMarkerRef.current = marker;
+
+      // Pan to stop
+      map.flyTo([selectedStop.lat, selectedStop.lon], 15, { animate: true, duration: 0.85 });
     });
-  }, [selectedStop]);
+  }, [selectedStop, inboundSec, totalSec]);
 
   return (
     <div className="relative w-full h-full">
@@ -481,7 +544,14 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
         {/* Left Column: Leaflet Map & Route Overview Card (6 cols) */}
         <div className="lg:col-span-6 space-y-5">
           <div className="relative z-0 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 380 }}>
-            <DetailMap data={data} selectedAgency={selectedAgency} selectedRouteId={selectedRouteId} selectedStop={selectedStop} />
+            <DetailMap
+              data={data}
+              selectedAgency={selectedAgency}
+              selectedRouteId={selectedRouteId}
+              selectedStop={selectedStop ? { ...selectedStop, idx: stops.indexOf(selectedStop) } : null}
+              inboundSec={T_inbound_sec}
+              totalSec={T_total_sec}
+            />
           </div>
 
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
