@@ -158,8 +158,13 @@ const DetailMap: React.FC<{
           L.marker([busLat, busLon], { icon: busIcon, zIndexOffset: 1000 }).addTo(map);
         }
 
-        // Fit to full route
-        map.fitBounds(L.latLngBounds(latLons), { padding: [50, 50] });
+        // ── Fit to full route after layout is stable ──────────────────────────────
+        setTimeout(() => {
+          try {
+            map.invalidateSize();
+            map.fitBounds(L.latLngBounds(latLons), { padding: [60, 60], maxZoom: 14 });
+          } catch {}
+        }, 120);
       }
 
       mapRef.current = map;
@@ -167,12 +172,17 @@ const DetailMap: React.FC<{
 
     initMap();
     return () => {
+      if (stopMarkerRef.current) {
+        try { stopMarkerRef.current.remove(); } catch {}
+        stopMarkerRef.current = null;
+      }
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
       }
     };
-  }, [selectedAgency, selectedRouteId]);
+  // ⚠️ Use stable string IDs — NOT the full agency object (changes every SSE tick)
+  }, [selectedAgency.name, selectedAgency.city, selectedRouteId]);
 
   // ── Highlight selected stop with ETA popup ────────────────────────────────
   useEffect(() => {
@@ -238,10 +248,13 @@ const DetailMap: React.FC<{
 
       stopMarkerRef.current = marker;
 
-      // Pan to stop
-      map.flyTo([selectedStop.lat, selectedStop.lon], 15, { animate: true, duration: 0.85 });
+      // Only pan to stop when it was explicitly clicked (idx > 0 means user picked it,
+      // idx === 0 is the auto-selected first stop on mount — don’t override fitBounds)
+      if ((selectedStop.idx ?? 0) > 0) {
+        map.flyTo([selectedStop.lat, selectedStop.lon], 15, { animate: true, duration: 0.85 });
+      }
     });
-  }, [selectedStop, inboundSec, totalSec]);
+  }, [selectedStop?.lat, selectedStop?.lon, selectedStop?.name, inboundSec, totalSec]);
 
   return (
     <div className="relative w-full h-full">
@@ -548,7 +561,10 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
               data={data}
               selectedAgency={selectedAgency}
               selectedRouteId={selectedRouteId}
-              selectedStop={selectedStop ? { ...selectedStop, idx: stops.indexOf(selectedStop) } : null}
+              selectedStop={selectedStop ? {
+                ...selectedStop,
+                idx: stops.findIndex((s) => s.id === selectedStop.id),
+              } : null}
               inboundSec={T_inbound_sec}
               totalSec={T_total_sec}
             />
