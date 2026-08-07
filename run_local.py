@@ -5,6 +5,33 @@ import subprocess
 import time
 import signal
 
+def check_dependencies():
+    needed = []
+    try:
+        import paho.mqtt
+    except ImportError:
+        needed.append("paho-mqtt")
+    try:
+        import fastapi
+    except ImportError:
+        needed.append("fastapi")
+    try:
+        import uvicorn
+    except ImportError:
+        needed.append("uvicorn")
+    try:
+        import requests
+    except ImportError:
+        needed.append("requests")
+    try:
+        import amqtt
+    except ImportError:
+        needed.append("amqtt")
+
+    if needed:
+        print(f"[Setup] Installing missing Python packages: {', '.join(needed)}...")
+        subprocess.run([sys.executable, "-m", "pip", "install"] + needed, check=True)
+
 def is_port_open(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.settimeout(0.5)
@@ -14,6 +41,8 @@ def main():
     print("=" * 65)
     print("Launching TransitSense Local Multi-Service Pipeline...")
     print("=" * 65)
+
+    check_dependencies()
 
     root_dir = os.path.abspath(os.path.dirname(__file__))
     dashboard_dir = os.path.join(root_dir, "dashboard")

@@ -12,10 +12,6 @@ config = {
             "bind": "0.0.0.0:1883",
         },
     },
-    "sys_interval": 0,
-    "auth": {
-        "allow-anonymous": True,
-    },
 }
 
 async def main():
