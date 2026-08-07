@@ -244,9 +244,9 @@ class SimulatorEngine:
         if self.gtfs_dir:
             try:
                 blocks = self._load_gtfs_dir(Path(self.gtfs_dir))
-            except Exception:
-                logger.exception("Failed to parse GTFS dir %s — falling back to synthetic shapes",
-                                  self.gtfs_dir)
+            except Exception as e:
+                logger.error("Failed to parse GTFS dir %s — falling back to synthetic shapes: %s",
+                                  self.gtfs_dir, e)
                 blocks = None
         if not blocks:
             logger.info("Using built-in synthetic demo network (no valid GTFS_DIR found)")
@@ -353,10 +353,10 @@ class SimulatorEngine:
         try:
             self._mqtt.connect(self.mqtt_host, self.mqtt_port, keepalive=30)
             self._mqtt.loop_start()
-        except Exception:
-            logger.exception(
-                "Could not connect to MQTT broker %s:%s — telemetry will not be published",
-                self.mqtt_host, self.mqtt_port,
+        except Exception as e:
+            logger.error(
+                "Could not connect to MQTT broker %s:%s — telemetry will not be published (Error: %s)",
+                self.mqtt_host, self.mqtt_port, e
             )
 
     def _publish(self, v: VehicleState) -> None:
@@ -364,8 +364,8 @@ class SimulatorEngine:
         topic = f"{self.topic_prefix}/vehicle/{v.vehicle_id}/telemetry"
         try:
             self._mqtt.publish(topic, json.dumps(payload), qos=0, retain=False)
-        except Exception:
-            logger.warning("Failed to publish telemetry for %s", v.vehicle_id, exc_info=True)
+        except Exception as e:
+            logger.warning("Failed to publish telemetry for %s: %s", v.vehicle_id, e)
 
     # -- simulation loop ------------------------------------------------------ #
 
@@ -551,6 +551,7 @@ class SimulatorEngine:
         band = OccupancyBand(band) if isinstance(band, str) else band
         v.crowd_spike_band = band
         v.crowd_spike_remaining_s = max(0.0, float(duration_s))
+        v.occupancy_band = band
         logger.info("Injected crowd spike (%s, %.0fs) on %s", band.value, duration_s, vehicle_id)
         return self.get_vehicle_state(vehicle_id)
 
