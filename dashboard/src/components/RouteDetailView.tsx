@@ -40,6 +40,7 @@ const DetailMap: React.FC<{
   const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
   const stops = route?.coords ?? [];
 
+  // ── Init / re-init when route changes ──────────────────────────────────────
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return;
 
@@ -58,9 +59,10 @@ const DetailMap: React.FC<{
 
       const map = L.map(containerRef.current!, {
         center,
-        zoom: 12,
+        zoom: 13,
         zoomControl: false,
         attributionControl: false,
+        scrollWheelZoom: true,
       });
 
       L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
@@ -70,55 +72,91 @@ const DetailMap: React.FC<{
 
       if (stops.length > 1) {
         const latLons = stops.map((s) => [s.lat, s.lon] as [number, number]);
+
+        // Route polyline
         L.polyline(latLons, {
-          color: "#1e293b",
-          weight: 4,
-          opacity: 0.85,
-          dashArray: "6 8",
+          color: "#1e40af",
+          weight: 5,
+          opacity: 0.9,
+          dashArray: "8 10",
           lineCap: "round",
+          lineJoin: "round",
         }).addTo(map);
 
+        // Intermediate stop circles
         stops.forEach((s, idx) => {
-          const isTerminal = idx === 0 || idx === stops.length - 1;
+          if (idx === 0 || idx === stops.length - 1) return;
           L.circleMarker([s.lat, s.lon], {
-            radius: isTerminal ? 7 : 5,
-            fillColor: isTerminal ? "#1e293b" : "#fff",
+            radius: 5,
+            fillColor: "#fff",
             fillOpacity: 1,
-            color: "#1e293b",
-            weight: 2,
+            color: "#1e40af",
+            weight: 2.5,
           }).addTo(map);
         });
 
-        // Start label
+        // ── START marker ─────────────────────────────────────────────────────
         L.marker([stops[0].lat, stops[0].lon], {
           icon: L.divIcon({
             className: "",
-            html: `<div style="background:#1e293b;color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:12px;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,0.2)">Start</div>`,
-            iconAnchor: [20, -6],
+            html: `
+              <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="background:#16a34a;color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px;white-space:nowrap;box-shadow:0 3px 10px rgba(22,163,74,0.45);letter-spacing:0.5px">
+                  START
+                </div>
+                <div style="width:2px;height:6px;background:#16a34a;border-radius:2px"></div>
+                <div style="width:14px;height:14px;border-radius:50%;background:#16a34a;border:3px solid #fff;box-shadow:0 2px 8px rgba(22,163,74,0.5)"></div>
+              </div>`,
+            iconSize: [70, 38],
+            iconAnchor: [35, 38],
           }),
         }).addTo(map);
 
-        // End label
+        // ── END marker ───────────────────────────────────────────────────────
         const endStop = stops[stops.length - 1];
         L.marker([endStop.lat, endStop.lon], {
           icon: L.divIcon({
             className: "",
-            html: `<div style="background:#1e293b;color:#fff;font-size:10px;font-weight:800;padding:3px 8px;border-radius:12px;white-space:nowrap;box-shadow:0 4px 10px rgba(0,0,0,0.2)">End</div>`,
-            iconAnchor: [16, -6],
+            html: `
+              <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+                <div style="background:#dc2626;color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:20px;white-space:nowrap;box-shadow:0 3px 10px rgba(220,38,38,0.45);letter-spacing:0.5px">
+                  END
+                </div>
+                <div style="width:2px;height:6px;background:#dc2626;border-radius:2px"></div>
+                <div style="width:14px;height:14px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(220,38,38,0.5)"></div>
+              </div>`,
+            iconSize: [60, 38],
+            iconAnchor: [30, 38],
           }),
         }).addTo(map);
 
-        // Live bus marker
-        const busIcon = L.divIcon({
-          className: "",
-          html: `<div style="position:relative;width:40px;height:40px"><div style="position:absolute;inset:0;border-radius:50%;background:rgba(37,99,235,0.25);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div><div style="position:relative;width:40px;height:40px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 4px 14px rgba(37,99,235,0.4);display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18h2"/><path d="M4 18h2"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/></svg></div></div>`,
-          iconSize: [40, 40],
-          iconAnchor: [20, 20],
-        });
+        // ── Live bus marker ──────────────────────────────────────────────────
+        const busLat = data?.vehicle?.lat;
+        const busLon = data?.vehicle?.lon;
+        if (busLat && busLon) {
+          const busIcon = L.divIcon({
+            className: "",
+            html: `
+              <div style="position:relative;width:44px;height:44px">
+                <div style="position:absolute;inset:0;border-radius:50%;background:rgba(37,99,235,0.22);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div>
+                <div style="position:relative;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#2563eb,#1d4ed8);border:3px solid #fff;box-shadow:0 4px 16px rgba(37,99,235,0.55);display:flex;align-items:center;justify-content:center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/>
+                    <path d="M18 18h2"/><path d="M4 18h2"/>
+                    <path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>
+                    <path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>
+                    <path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/>
+                  </svg>
+                </div>
+              </div>`,
+            iconSize: [44, 44],
+            iconAnchor: [22, 22],
+          });
+          L.marker([busLat, busLon], { icon: busIcon, zIndexOffset: 1000 }).addTo(map);
+        }
 
-        L.marker([data.vehicle.lat, data.vehicle.lon], { icon: busIcon }).addTo(map);
-
-        map.fitBounds(L.latLngBounds(latLons), { padding: [40, 40] });
+        // Fit to full route
+        map.fitBounds(L.latLngBounds(latLons), { padding: [50, 50] });
       }
 
       mapRef.current = map;
@@ -131,21 +169,22 @@ const DetailMap: React.FC<{
         mapRef.current = null;
       }
     };
-  }, [selectedAgency]);
+  }, [selectedAgency, selectedRouteId]);
 
-  // Pan to clicked stop when selectedStop changes
+  // ── Pan to selected stop ────────────────────────────────────────────────────
   useEffect(() => {
-    if (mapRef.current && selectedStop) {
-      const map = mapRef.current;
-      map.flyTo([selectedStop.lat, selectedStop.lon], 14, { animate: true, duration: 0.8 });
-    }
+    if (!mapRef.current || !selectedStop) return;
+    mapRef.current.flyTo([selectedStop.lat, selectedStop.lon], 15, {
+      animate: true,
+      duration: 0.9,
+    });
   }, [selectedStop]);
 
   return (
     <div className="relative w-full h-full">
       <div ref={containerRef} className="w-full h-full" />
-      {/* Clean HTML overlay badge for status */}
-      <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl px-3 py-1.5 shadow-md border border-slate-200/80 flex items-center gap-2">
+      {/* Status badge */}
+      <div className="absolute top-3 right-3 z-[500] bg-white/95 backdrop-blur-md rounded-2xl px-3 py-1.5 shadow-md border border-slate-200/80 flex items-center gap-2">
         <LiveSignalIcon className="w-4 h-4 text-blue-500" />
         <span className="text-xs font-extrabold text-slate-800">Updated 1 min ago</span>
       </div>
