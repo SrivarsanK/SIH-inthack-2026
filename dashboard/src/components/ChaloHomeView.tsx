@@ -639,7 +639,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
       {/* DESKTOP HEADER NAVIGATION (Unchanged Web Layout for >= 1024px) */}
       <header className="hidden lg:block bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
+        <div className="max-w-[1720px] mx-auto px-6 sm:px-8 lg:px-10 py-2.5 flex items-center justify-between gap-4">
           
           {/* Logo & Main Nav Links */}
           <div className="flex items-center gap-6">
@@ -697,7 +697,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
       {/* BODY CONTENT AREAS */}
       {activeNav === "search" && (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+        <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-6 flex-1">
           <SearchView
             selectedAgency={selectedAgency}
             neonRoutes={neonRoutes}
@@ -710,7 +710,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       )}
 
       {activeNav === "track" && (
-        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+        <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-6 flex-1">
           <RouteDetailView
             data={data}
             selectedAgency={selectedAgency}
@@ -721,7 +721,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       )}
 
       {activeNav === "routes" && (
-        <div className="max-w-4xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+        <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-6 flex-1">
           <RoutesListView
             selectedAgency={selectedAgency}
             onSelectRoute={(code) => {
@@ -735,7 +735,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
       {/* HOME DASHBOARD VIEW */}
       {activeNav === "home" && (
-        <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 space-y-5 sm:space-y-6">
+        <main className="max-w-[1720px] mx-auto w-full px-4 sm:px-6 lg:px-10 py-4 sm:py-6 flex-1 space-y-5 sm:space-y-6">
 
           {/* ══════════════════════════════════════════════════════════════════
               1. MOBILE & TABLET LAYOUT (< 1024px) — Matches Chalo App 1:1
@@ -1131,7 +1131,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                     </button>
                   </div>
 
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 bg-slate-100 shadow-inner flex-1 min-h-[460px]">
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 bg-slate-100 shadow-inner flex-1 min-h-[500px]">
                     <ChaloMap
                       data={data}
                       selectedAgency={selectedAgency}
