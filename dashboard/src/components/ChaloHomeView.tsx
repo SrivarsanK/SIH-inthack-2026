@@ -146,11 +146,14 @@ const ChaloMap: React.FC<{
         ? [stops[Math.floor(stops.length / 2)].lat, stops[Math.floor(stops.length / 2)].lon]
         : [defaultUserLat, defaultUserLon];
 
+      const isMobileDevice = typeof window !== "undefined" && window.innerWidth < 768;
       const map = L.map(containerRef.current!, {
         center,
         zoom: mode === "nearby" ? 16 : 13,
         zoomControl: false,
         attributionControl: false,
+        dragging: mode === "nearby" ? !isMobileDevice : true,
+        tap: false,
       });
 
       // High-performance OpenStreetMap / CartoDB voyager tiles
@@ -385,7 +388,7 @@ const ChaloMap: React.FC<{
     }
   }, [data.vehicle.lat, data.vehicle.lon]);
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return <div ref={containerRef} className="w-full h-full touch-pan-y" style={{ touchAction: "pan-y" }} />;
 };
 
 // --- Main View ----------------------------------------------------------------
