@@ -170,16 +170,24 @@ def count_routes(agency_id: int = 69) -> int:
 
 
 def query_stops_for_route(route_id: str, direction_id: int = 0) -> List[Dict[str, Any]]:
-    """Ordered stops for a route. Supports direction_id=0 (forward) and direction_id=1 (return)."""
-    safe_route_id = route_id.replace("'", "''")
+    """Ordered stops for a route. Matches route_id or route_short_name.
+    Supports direction_id=0 (forward) and direction_id=1 (return).
+    """
+    safe_route_id = route_id.replace("'", "''").strip()
+    base_code = safe_route_id.split("-")[0]
     
-    # First try fetching explicit trip for requested direction_id
     sql = f"""
-        WITH best_trip AS (
+        WITH matching_routes AS (
+          SELECT route_id FROM routes 
+          WHERE route_id = '{safe_route_id}' 
+             OR route_short_name = '{safe_route_id}'
+             OR route_short_name = '{base_code}'
+        ),
+        best_trip AS (
           SELECT t.trip_id, COUNT(st.stop_id) AS stop_cnt
           FROM trips t
           JOIN stop_times st ON st.trip_id = t.trip_id
-          WHERE t.route_id = '{safe_route_id}' AND t.direction_id = {direction_id}
+          WHERE t.route_id IN (SELECT route_id FROM matching_routes) AND t.direction_id = {direction_id}
           GROUP BY t.trip_id
           ORDER BY stop_cnt DESC
           LIMIT 1
@@ -198,10 +206,40 @@ def query_stops_for_route(route_id: str, direction_id: int = 0) -> List[Dict[str
     """
     stops = _rows(_execute(sql))
     
-    # If no direction_id=1 trip exists, fetch direction 0 stops and reverse them
-    if not stops and direction_id == 1:
-        fwd_stops = query_stops_for_route(route_id, direction_id=0)
-        rev_stops = list(reversed(fwd_stops))
+    # Fallback: if no direction-specific trip, match ANY trip for matching routes
+    if not stops:
+        sql_fallback = f"""
+            WITH matching_routes AS (
+              SELECT route_id FROM routes 
+              WHERE route_id = '{safe_route_id}' 
+                 OR route_short_name = '{safe_route_id}'
+                 OR route_short_name = '{base_code}'
+            ),
+            best_trip AS (
+              SELECT t.trip_id, COUNT(st.stop_id) AS stop_cnt
+              FROM trips t
+              JOIN stop_times st ON st.trip_id = t.trip_id
+              WHERE t.route_id IN (SELECT route_id FROM matching_routes)
+              GROUP BY t.trip_id
+              ORDER BY stop_cnt DESC
+              LIMIT 1
+            )
+            SELECT
+              s.stop_id,
+              s.stop_name,
+              s.stop_lat,
+              s.stop_lon,
+              st.stop_sequence,
+              st.arrival_time
+            FROM stop_times st
+            JOIN stops s ON s.stop_id = st.stop_id
+            WHERE st.trip_id = (SELECT trip_id FROM best_trip)
+            ORDER BY st.stop_sequence;
+        """
+        stops = _rows(_execute(sql_fallback))
+
+    if stops and direction_id == 1:
+        rev_stops = list(reversed(stops))
         for idx, s in enumerate(rev_stops):
             s_copy = dict(s)
             s_copy["stop_sequence"] = idx + 1
