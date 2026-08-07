@@ -601,7 +601,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-transparent">
+    <div className="min-h-screen flex flex-col bg-transparent pb-20 md:pb-0">
       {/* ... header code ... */}
       {/* (rest of the component rendered below) */}
 
@@ -1409,19 +1409,28 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
         </main>
       )}
 
-      {/* MOBILE BOTTOM NAVIGATION BAR (Old Chalo UI for Mobile Viewports < 768px) */}
-      <nav className="md:hidden sticky bottom-0 bg-white border-t border-slate-200 shadow-lg px-2 py-2 z-40">
-        <div className="grid grid-cols-5 gap-1">
+      {/* BEAUTIFIED FIXED MOBILE BOTTOM NAVIGATION BAR (< 768px) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-2 py-1.5 transition-all">
+        <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
           {MOBILE_NAV_ITEMS.map(({ id, icon: Icon, label }) => {
             const active = activeNav === id;
             return (
               <button
                 key={id}
                 onClick={() => setActiveNav(id as any)}
-                className="flex flex-col items-center gap-1 py-1.5 rounded-xl transition-colors"
+                className={`relative flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-2xl transition-all duration-200 active:scale-95 ${
+                  active
+                    ? "bg-amber-500/10 text-[#b17816] font-black"
+                    : "text-slate-400 hover:text-slate-600 font-bold"
+                }`}
               >
-                <Icon className={`w-5 h-5 ${active ? "text-[#f7a501]" : "text-slate-400"}`} />
-                <span className={`text-[10px] font-bold ${active ? "text-[#f7a501]" : "text-slate-400"}`}>
+                {active && (
+                  <span className="absolute -top-1.5 w-7 h-1 rounded-full bg-[#f7a501] shadow-xs" />
+                )}
+                <div className={`p-1 rounded-xl transition-all ${active ? "bg-[#f7a501] text-slate-950 shadow-sm scale-105" : ""}`}>
+                  <Icon className={`w-5 h-5 ${active ? "text-slate-950 font-black" : "text-slate-400"}`} />
+                </div>
+                <span className={`text-[10px] tracking-tight leading-none ${active ? "text-[#b17816] font-extrabold" : "text-slate-400 font-semibold"}`}>
                   {label}
                 </span>
               </button>
