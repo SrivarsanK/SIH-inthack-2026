@@ -1112,25 +1112,26 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               </div>
             </div>
 
-            {/* Responsive Layout Grid for Desktop */}
-            <div className="grid grid-cols-12 gap-6 items-start">
+            {/* Responsive Layout Grid for Desktop — Impeccable Symmetric 12-Col Grid */}
+            <div className="grid grid-cols-12 gap-6 items-stretch">
               
               {/* Left Column: Live Map & Bus Details (7 cols) */}
-              <div className="col-span-7 space-y-6">
+              <div className="col-span-12 lg:col-span-7 flex flex-col justify-between space-y-6">
                 
                 {/* Buses around you — Live Map Card */}
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
+                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-6 space-y-5 flex-1 flex flex-col justify-between">
                   <div className="flex items-center justify-between">
-                    <h2 className="font-black text-slate-900 text-lg">Buses around you</h2>
+                    <h2 className="font-black text-slate-900 text-xl tracking-tight">Buses around you</h2>
                     <button
                       onClick={() => setActiveNav("track")}
-                      className="text-xs font-extrabold text-[#f7a501] hover:text-amber-600 transition-colors flex items-center gap-1"
+                      className="text-xs font-extrabold text-[#f7a501] hover:text-amber-600 transition-colors flex items-center gap-1 group"
                     >
-                      Live tracking <ChevronRight className="w-4 h-4" />
+                      <span>Live tracking</span>
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                     </button>
                   </div>
 
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 shadow-inner" style={{ height: 440 }}>
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-200/90 bg-slate-100 shadow-inner flex-1 min-h-[460px]">
                     <ChaloMap
                       data={data}
                       selectedAgency={selectedAgency}
@@ -1141,17 +1142,17 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                     />
 
                     {/* GPS indicator — top-right */}
-                    <div className={`absolute top-3 right-3 z-10 px-2.5 py-1.5 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 shadow-sm border ${
+                    <div className={`absolute top-3.5 right-3.5 z-10 px-3 py-1.5 rounded-full text-[11px] font-extrabold flex items-center gap-1.5 shadow-md backdrop-blur-md border ${
                       locationStatus === "granted"
-                        ? "bg-emerald-50/95 border-emerald-200 text-emerald-700"
-                        : "bg-white/90 border-slate-200 text-slate-600"
+                        ? "bg-emerald-50/95 border-emerald-200 text-emerald-800"
+                        : "bg-white/95 border-slate-200 text-slate-700"
                     }`}>
-                      <Navigation className="w-3 h-3" />
-                      {locationStatus === "granted" ? "Live Location" : "Chennai"}
+                      <Navigation className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>{locationStatus === "granted" ? "GPS Active" : "Chennai"}</span>
                     </div>
 
                     {isDelayed && (
-                      <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 shadow-sm">
+                      <div className="absolute bottom-3.5 right-3.5 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50/95 border border-rose-200 shadow-md backdrop-blur-md">
                         <AlertCircle className="w-4 h-4 text-rose-600" />
                         <span className="text-xs font-bold text-rose-700">Delayed +{delayMin}m</span>
                       </div>
@@ -1159,30 +1160,30 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   </div>
 
                   {/* Horizontal Timeline Strip */}
-                  <div className="pt-3 border-t border-slate-100">
-                    <div className="flex items-center justify-between mb-3">
+                  <div className="pt-4 border-t border-slate-100 space-y-3">
+                    <div className="flex items-center justify-between">
                       <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
                         Stop Sequence Timeline
                       </span>
                       
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold text-slate-500">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-xs font-bold text-slate-500">
                           {stops.length} stops on route
                         </span>
                         <div className="flex items-center gap-1">
                           <button
-                            onClick={() => timelineRef.current?.scrollBy({ left: -160, behavior: "smooth" })}
-                            className="w-6 h-6 rounded-full bg-slate-100 hover:bg-amber-100 hover:text-[#b17816] flex items-center justify-center text-slate-600 transition-colors shadow-2xs"
+                            onClick={() => timelineRef.current?.scrollBy({ left: -180, behavior: "smooth" })}
+                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-amber-100 hover:text-[#b17816] flex items-center justify-center text-slate-600 transition-colors shadow-2xs"
                             title="Scroll Left"
                           >
-                            <ChevronLeft className="w-3.5 h-3.5" />
+                            <ChevronLeft className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => timelineRef.current?.scrollBy({ left: 160, behavior: "smooth" })}
-                            className="w-6 h-6 rounded-full bg-slate-100 hover:bg-amber-100 hover:text-[#b17816] flex items-center justify-center text-slate-600 transition-colors shadow-2xs"
+                            onClick={() => timelineRef.current?.scrollBy({ left: 180, behavior: "smooth" })}
+                            className="w-7 h-7 rounded-full bg-slate-100 hover:bg-amber-100 hover:text-[#b17816] flex items-center justify-center text-slate-600 transition-colors shadow-2xs"
                             title="Scroll Right"
                           >
-                            <ChevronRight className="w-3.5 h-3.5" />
+                            <ChevronRight className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -1199,7 +1200,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       {stops.map((stop, idx) => {
                         const isFirst = idx === 0;
                         return (
-                          <div key={stop.id} className="flex flex-col items-center shrink-0 min-w-[110px] max-w-[125px] px-1">
+                          <div key={stop.id} className="flex flex-col items-center shrink-0 min-w-[120px] max-w-[135px] px-1.5">
                             <div className="flex items-center w-full relative">
                               {idx > 0 && <div className={`h-0.5 flex-1 ${idx <= 1 ? "bg-[#f7a501]" : "bg-slate-200"}`} />}
                               <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 z-10 transition-all ${
@@ -1213,13 +1214,13 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                             </div>
                             <span
                               title={stop.name}
-                              className="text-[11px] font-bold text-slate-800 text-center mt-2 px-1 leading-tight line-clamp-2 min-h-[28px] max-h-[36px] flex items-center justify-center"
+                              className="text-[11px] font-bold text-slate-800 text-center mt-2 px-1 leading-tight line-clamp-2 min-h-[30px] max-h-[38px] flex items-center justify-center"
                             >
                               {abbreviateStopName(stop.name)}
                             </span>
                             <div className="mt-1">
                               {isFirst ? (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold border border-blue-200">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-extrabold border border-blue-200 shadow-2xs">
                                   <LiveSignalIcon className="w-3 h-3 text-blue-500" />
                                   In {formatMin(T_inbound_sec)}
                                 </span>
@@ -1237,36 +1238,36 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 </div>
               </div>
 
-              {/* Right Column: Search, Stops, Occupancy (5 cols) */}
-              <div className="col-span-5 space-y-5">
+              {/* Right Column: Search, Nearest Stops & Other Nearby (5 cols) */}
+              <div className="col-span-12 lg:col-span-5 flex flex-col justify-between space-y-6">
                 
                 {/* Search Bar Input */}
                 <div
                   onClick={() => setActiveNav("search")}
-                  className="flex items-center gap-3 px-4 py-3.5 rounded-2xl bg-white border border-slate-200 shadow-sm cursor-pointer hover:border-[#f7a501] transition-all group"
+                  className="flex items-center gap-3.5 px-5 py-4 rounded-3xl bg-white border border-slate-200 shadow-sm hover:shadow-md cursor-pointer hover:border-[#f7a501] transition-all group"
                 >
-                  <Search className="w-5 h-5 text-slate-400 group-hover:text-[#f7a501] shrink-0" />
+                  <Search className="w-5 h-5 text-slate-400 group-hover:text-[#f7a501] transition-colors shrink-0" />
                   <span className="flex-1 text-sm text-slate-400 font-medium">
                     Search bus number, stop or destination...
                   </span>
-                  <Mic className="w-4 h-4 text-slate-400 shrink-0" />
+                  <Mic className="w-4 h-4 text-slate-400 shrink-0 group-hover:text-slate-600 transition-colors" />
                 </div>
 
-                {/* Nearest Bus Stop Card — 1:1 match with Chalo App reference */}
-                <div className="space-y-3">
+                {/* Nearest Bus Stop Container */}
+                <div className="space-y-4 flex-1 flex flex-col justify-between">
                   <div className="flex items-center justify-between px-1">
-                    <h3 className="font-black text-slate-900 text-base">Nearest bus stop</h3>
+                    <h3 className="font-black text-slate-900 text-lg">Nearest bus stop</h3>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={requestLocation}
                         title="Click to detect your current location"
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 transition-all shadow-2xs ${
+                        className={`px-3 py-1 rounded-full text-xs font-extrabold flex items-center gap-1.5 transition-all shadow-2xs ${
                           locationStatus === "granted"
                             ? "bg-emerald-100/90 text-emerald-800 hover:bg-emerald-200 border border-emerald-200"
                             : "bg-amber-100/90 text-amber-900 hover:bg-amber-200 border border-amber-200"
                         }`}
                       >
-                        <Navigation className="w-3 h-3 text-emerald-700" />
+                        <Navigation className="w-3.5 h-3.5 text-emerald-700" />
                         <span>{locationStatus === "granted" ? "GPS Active" : "Detect GPS"}</span>
                       </button>
                       <button
@@ -1280,9 +1281,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   </div>
 
                   {neonRoutes?.nearbyLoading ? (
-                    <div className="bg-white rounded-3xl border border-slate-200 p-8 flex items-center justify-center shadow-xs">
+                    <div className="bg-white rounded-3xl border border-slate-200 p-10 flex items-center justify-center shadow-xs flex-1">
                       <div className="w-6 h-6 border-2 border-[#f7a501] border-t-transparent rounded-full animate-spin" />
-                      <span className="ml-2.5 text-sm text-slate-500 font-semibold">Finding nearest bus stops...</span>
+                      <span className="ml-3 text-sm text-slate-500 font-semibold">Finding nearest bus stops...</span>
                     </div>
                   ) : (neonRoutes?.nearbyStops || []).length > 0 ? (
                     (() => {
@@ -1290,31 +1291,31 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       const primaryBuses = primaryStop.buses || [];
 
                       return (
-                        <div className="space-y-3">
+                        <div className="space-y-4 flex-1 flex flex-col justify-between">
                           {/* Main Featured Stop Card */}
-                          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 space-y-4">
+                          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-6 space-y-4 flex-1 flex flex-col justify-between">
                             {/* Stop Name & Walking Time */}
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-xs">
+                              <div className="flex items-center gap-3.5">
+                                <div className="w-11 h-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-xs">
                                   <MapPin className="w-5 h-5 text-amber-400" />
                                 </div>
                                 <div>
-                                  <h4 className="font-black text-slate-900 text-base leading-tight">
+                                  <h4 className="font-black text-slate-900 text-lg leading-tight">
                                     {primaryStop.stop_name}
                                   </h4>
-                                  <span className="text-[11px] font-medium text-slate-400">Primary Station</span>
+                                  <span className="text-xs font-medium text-slate-400">Primary Station</span>
                                 </div>
                               </div>
 
-                              <div className="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-xs font-extrabold flex items-center gap-1.5 shrink-0 border border-slate-200/80 shadow-2xs">
+                              <div className="px-3.5 py-1.5 rounded-full bg-slate-100 text-slate-700 text-xs font-extrabold flex items-center gap-1.5 shrink-0 border border-slate-200/80 shadow-2xs">
                                 <Navigation className="w-3.5 h-3.5 text-slate-500" />
                                 <span>{primaryStop.walk_min || 4} min walk</span>
                               </div>
                             </div>
 
                             {/* Available Buses at this Station */}
-                            <div className="border-t border-slate-100 pt-3 space-y-2">
+                            <div className="border-t border-slate-100 pt-4 space-y-2.5 flex-1">
                               {primaryBuses.length > 0 ? (
                                 primaryBuses.map((bus: any, bIdx: number) => (
                                   <div
@@ -1322,21 +1323,21 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                     onClick={() => {
                                       handleBusClick(bus.code || bus.route_id);
                                     }}
-                                    className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-amber-50/40 border border-transparent hover:border-amber-200 hover:translate-x-1 transition-all cursor-pointer group"
+                                    className="flex items-center justify-between p-3 rounded-2xl hover:bg-amber-50/50 border border-slate-100 hover:border-amber-200 hover:translate-x-1 transition-all cursor-pointer group shadow-2xs"
                                   >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0 group-hover:bg-amber-100 transition-colors">
-                                        <Bus className="w-4 h-4 text-amber-700" />
+                                    <div className="flex items-center gap-3.5 min-w-0">
+                                      <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0 group-hover:bg-amber-100 transition-colors">
+                                        <Bus className="w-4.5 h-4.5 text-amber-700" />
                                       </div>
                                       <div className="min-w-0">
-                                        <span className="font-black text-slate-900 text-sm block group-hover:text-amber-900 transition-colors">{bus.code}</span>
+                                        <span className="font-black text-slate-900 text-base block group-hover:text-amber-900 transition-colors">{bus.code}</span>
                                         <span className="text-xs text-slate-500 block truncate">To {bus.destination}</span>
                                       </div>
                                     </div>
 
                                     <div className="text-right shrink-0">
                                       <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || "10:25 PM"}</span>
-                                      <span className="text-[11px] font-bold text-emerald-600">
+                                      <span className="text-xs font-bold text-emerald-600">
                                         {bus.eta_min} min away
                                       </span>
                                     </div>
@@ -1345,11 +1346,11 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                               ) : (
                                 <div
                                   onClick={() => setActiveNav("track")}
-                                  className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer"
+                                  className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 border border-slate-100 transition-all cursor-pointer"
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
-                                      <Bus className="w-4 h-4 text-amber-700" />
+                                  <div className="flex items-center gap-3.5">
+                                    <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                                      <Bus className="w-4.5 h-4.5 text-amber-700" />
                                     </div>
                                     <div>
                                       <span className="font-black text-slate-900 text-sm block">{route?.code ?? "S26"}</span>
@@ -1358,7 +1359,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                   </div>
                                   <div className="text-right">
                                     <span className="font-extrabold text-slate-900 text-sm block">10:25 PM</span>
-                                    <span className="text-[11px] font-bold text-emerald-600">4 min away</span>
+                                    <span className="text-xs font-bold text-emerald-600">4 min away</span>
                                   </div>
                                 </div>
                               )}
@@ -1367,7 +1368,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
                           {/* Other Nearby Stops List */}
                           {neonRoutes.nearbyStops.length > 1 && (
-                            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 space-y-2.5">
+                            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 space-y-3">
                               <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block px-1">Other nearby stops</span>
                               {neonRoutes.nearbyStops.slice(1, 4).map((ns: any, idx: number) => (
                                 <div
@@ -1378,13 +1379,13 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                       setActiveNav("track");
                                     }
                                   }}
-                                  className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all cursor-pointer group"
+                                  className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-amber-50/40 border border-transparent hover:border-amber-200 transition-all cursor-pointer group"
                                 >
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 text-slate-500 group-hover:text-slate-900 group-hover:bg-slate-200 transition-colors">
-                                      <MapPin className="w-3.5 h-3.5" />
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 text-slate-500 group-hover:text-amber-700 group-hover:bg-amber-100 transition-colors">
+                                      <MapPin className="w-4 h-4" />
                                     </div>
-                                    <span className="font-bold text-slate-900 text-xs truncate">{ns.stop_name}</span>
+                                    <span className="font-bold text-slate-900 text-xs truncate group-hover:text-amber-900 transition-colors">{ns.stop_name}</span>
                                   </div>
                                   <span className="text-[11px] font-bold text-slate-400 shrink-0">
                                     {ns.distance_km} km
@@ -1397,7 +1398,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       );
                     })()
                   ) : (
-                    <div className="bg-white rounded-3xl border border-slate-200 p-6 text-center text-sm text-slate-400 shadow-xs">
+                    <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-sm text-slate-400 shadow-xs flex-1 flex items-center justify-center">
                       {locationStatus === "asking" ? "Requesting location access..." : "No nearby stops found"}
                     </div>
                   )}
