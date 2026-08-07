@@ -40,7 +40,7 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
       {/* Brand Identity & Agency Provider Picker */}
       <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Yara" className="h-10 w-auto object-contain" />
+          <img src="/logo.png" alt="Yara" className="h-11 w-auto object-contain" />
           <span className="px-2 py-0.5 text-[10px] font-extrabold bg-[#f7a501]/20 text-[#b17816] border border-[#f7a501]/50 rounded-md">
             SIH 2026
           </span>

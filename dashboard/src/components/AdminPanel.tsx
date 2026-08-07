@@ -210,7 +210,7 @@ export const AdminPanel: React.FC = () => {
             </a>
             <div className="h-5 w-px bg-slate-200" />
             <div className="flex items-center gap-2">
-              <img src="/logo.png" alt="Yara" className="h-8 w-auto object-contain" />
+              <img src="/logo.png" alt="Yara" className="h-9 sm:h-10 w-auto object-contain" />
               <span className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 border border-rose-300 text-[10px] font-extrabold uppercase">
                 Admin
               </span>

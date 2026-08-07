@@ -411,7 +411,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       {/* MOBILE APP HEADER (Mobile/Tablet UI for < 1024px) */}
       <div className="lg:hidden flex items-center justify-between px-4 py-2.5 bg-white border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
         <div className="flex items-center gap-2 select-none">
-          <img src="/logo.png" alt="Yara" className="h-8 w-auto object-contain" />
+          <img src="/logo.png" alt="Yara" className="h-9 w-auto object-contain" />
         </div>
 
         <div className="flex items-center gap-2">
@@ -448,9 +448,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
           <div className="flex items-center gap-6">
             <button
               onClick={() => setActiveNav("home")}
-              className="flex items-center gap-2.5 hover:opacity-95 transition-opacity"
+              className="flex items-center gap-2.5 hover:opacity-90 transition-opacity"
             >
-              <img src="/logo.png" alt="Yara" className="h-9 w-auto object-contain" />
+              <img src="/logo.png" alt="Yara" className="h-10 sm:h-11 w-auto object-contain" />
             </button>
 
             {/* Desktop Nav Links */}
