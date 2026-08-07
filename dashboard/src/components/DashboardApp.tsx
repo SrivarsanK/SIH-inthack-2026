@@ -26,11 +26,20 @@ function generateFallbackChennaiCoords(routeCode: string) {
   }));
 }
 
+export function formatBusShortName(codeOrId?: string): string {
+  if (!codeOrId) return "S26";
+  const clean = codeOrId.replace(/-dir[01]$/, "").trim();
+  if (clean === "13311") return "S26";
+  if (clean === "16917") return "21G";
+  if (clean === "15421") return "570";
+  return clean;
+}
+
 export const DashboardApp: React.FC = () => {
   const { data, isConnected } = useTransitStream();
   const neon = useNeonRoutes();
   const [selectedAgency, setSelectedAgency] = useState<TransitAgency>(AGENCY_PRESETS[0]);
-  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>("mtc-21g");
 
   // Load stops for a route and return formatted coords
   const loadRouteCoords = useCallback(async (routeId: string) => {
@@ -62,7 +71,7 @@ export const DashboardApp: React.FC = () => {
         // Falls back to parsing route_long_name if terminus data unavailable
         const origin = r.origin || r.route_long_name.split(" TO ")[0]?.trim() || r.route_long_name;
         const destination = r.destination || r.route_long_name.split(" TO ")[1]?.trim() || "";
-        const displayCode = r.canonical_code || r.route_short_name;
+        const displayCode = formatBusShortName(r.canonical_code || r.route_short_name || r.route_id);
 
         return {
           id: r.route_id,
@@ -122,7 +131,7 @@ export const DashboardApp: React.FC = () => {
       if (fetchedCoords.length > 0) {
         const origin = fetchedCoords[0].name;
         const destination = fetchedCoords[fetchedCoords.length - 1].name;
-        const cleanCode = routeIdOrCode.replace(/-dir[01]$/, "");
+        const cleanCode = formatBusShortName(routeIdOrCode);
 
         const dynamicRoute = {
           id: routeIdOrCode,

@@ -18,6 +18,8 @@ import type { TransitSnapshot } from "../lib/useTransitStream";
 import type { TransitAgency } from "../lib/agencies";
 import { LiveSignalIcon } from "./LiveSignalIcon";
 
+import { formatBusShortName } from "./DashboardApp";
+
 interface RouteDetailViewProps {
   data: TransitSnapshot;
   selectedAgency: TransitAgency;
@@ -421,7 +423,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
               {selectedAgency.dataStatus === "Chalo Chained Feed" ? "Deluxe" : "LIVE"}
             </span>
             <div>
-              <h1 className="text-xl font-black text-slate-900 leading-tight">Bus {route?.code}</h1>
+              <h1 className="text-xl font-black text-slate-900 leading-tight">Bus {formatBusShortName(route?.code)}</h1>
               <span className="text-xs text-slate-500 font-bold block">To {route?.destination}</span>
             </div>
           </div>
