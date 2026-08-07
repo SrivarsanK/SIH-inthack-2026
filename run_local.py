@@ -56,8 +56,8 @@ def main():
 
     check_dependencies()
 
-    # Free ports 8001 and 8002 if orphaned processes are running
-    free_ports([8001, 8002])
+    # Free ports 8000, 8001, and 8002 if orphaned processes are running
+    free_ports([8000, 8001, 8002])
 
     root_dir = os.path.abspath(os.path.dirname(__file__))
     dashboard_dir = os.path.join(root_dir, "dashboard")
