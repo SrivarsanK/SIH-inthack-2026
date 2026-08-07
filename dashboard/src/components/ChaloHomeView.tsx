@@ -238,32 +238,86 @@ const ChaloMap: React.FC<{
             .bindPopup(`<div style="min-width:170px;font-family:sans-serif;padding:2px"><b style="font-size:13px;color:#0f172a">${ns.stop_name}</b><br/><span style="color:#64748b;font-size:11px">${ns.distance_km} km away • ${ns.walk_min || 4} min walk</span><div style="margin-top:6px;border-top:1px solid #e2e8f0;padding-top:4px">${busesHtml}</div></div>`);
         });
 
-        // Impeccable Live Buses: Floating vehicle cards with route code, countdown pill, and pointer
+        const OCCUPANCY_CONFIG: Record<string, {
+          bg: string;
+          border: string;
+          shadow: string;
+          badgeBg: string;
+          badgeText: string;
+          badgeBorder: string;
+          label: string;
+          sub: string;
+        }> = {
+          low: {
+            bg: "linear-gradient(135deg, #10b981, #059669)", // Green
+            border: "#10b981",
+            shadow: "rgba(16, 185, 129, 0.35)",
+            badgeBg: "#ecfdf5",
+            badgeText: "#047857",
+            badgeBorder: "#a7f3d0",
+            label: "Low",
+            sub: "Low (15/55 seats)",
+          },
+          medium: {
+            bg: "linear-gradient(135deg, #eab308, #ca8a04)", // Yellow
+            border: "#eab308",
+            shadow: "rgba(234, 179, 8, 0.35)",
+            badgeBg: "#fefce8",
+            badgeText: "#a16207",
+            badgeBorder: "#fef08a",
+            label: "Medium",
+            sub: "Medium (28/55 seats)",
+          },
+          high: {
+            bg: "linear-gradient(135deg, #f97316, #ea580c)", // Orange
+            border: "#f97316",
+            shadow: "rgba(249, 115, 22, 0.35)",
+            badgeBg: "#fff7ed",
+            badgeText: "#c2410c",
+            badgeBorder: "#ffedd5",
+            label: "High",
+            sub: "High (42/55 seats)",
+          },
+          overcrowded: {
+            bg: "linear-gradient(135deg, #ef4444, #dc2626)", // Red
+            border: "#ef4444",
+            shadow: "rgba(239, 68, 68, 0.35)",
+            badgeBg: "#fef2f2",
+            badgeText: "#b91c1c",
+            badgeBorder: "#fecaca",
+            label: "Crowded",
+            sub: "Overcrowded (54/55 seats)",
+          },
+        };
+
+        // Impeccable Live Buses: Floating vehicle cards colored by occupancy level
         const liveBuses = [
-          { code: "S26", dest: "Valasaravakkam", lat: uLat + 0.0035, lon: uLon - 0.0036, eta: 2 },
-          { code: "26G R", dest: "Ramapuram", lat: uLat - 0.0032, lon: uLon + 0.0040, eta: 3 },
-          { code: "S86", dest: "Ramapuram", lat: uLat + 0.0038, lon: uLon + 0.0022, eta: 2 },
-          { code: "70CCT R", dest: "Ramapuram", lat: uLat - 0.0026, lon: uLon - 0.0042, eta: 4 },
+          { code: "S26", dest: "Valasaravakkam", lat: uLat + 0.0035, lon: uLon - 0.0036, eta: 2, occupancy: "low" },
+          { code: "26G R", dest: "Ramapuram", lat: uLat - 0.0032, lon: uLon + 0.0040, eta: 3, occupancy: "medium" },
+          { code: "S86", dest: "Ramapuram", lat: uLat + 0.0038, lon: uLon + 0.0022, eta: 2, occupancy: "high" },
+          { code: "70CCT R", dest: "Ramapuram", lat: uLat - 0.0026, lon: uLon - 0.0042, eta: 4, occupancy: "overcrowded" },
         ];
 
         liveBuses.forEach((b) => {
+          const occ = OCCUPANCY_CONFIG[b.occupancy] || OCCUPANCY_CONFIG.low;
+
           const liveBusIcon = L.divIcon({
             className: "",
-            html: `<div style="cursor:pointer;position:relative;display:inline-flex;align-items:center;background:#ffffff;border:1.5px solid #f59e0b;padding:3px 6px 3px 4px;border-radius:12px;box-shadow:0 4px 14px rgba(245,158,11,0.28);white-space:nowrap;font-family:system-ui,-apple-system,sans-serif">
-              <div style="width:20px;height:20px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;color:#fff;margin-right:5px;box-shadow:0 2px 4px rgba(245,158,11,0.4)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18h2"/><path d="M4 18h2"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/></svg>
+            html: `<div style="cursor:pointer;position:relative;display:inline-flex;align-items:center;background:#ffffff;border:2px solid ${occ.border};padding:3.5px 7px 3.5px 5px;border-radius:14px;box-shadow:0 4px 14px ${occ.shadow};white-space:nowrap;font-family:system-ui,-apple-system,sans-serif">
+              <div style="width:22px;height:22px;border-radius:8px;background:${occ.bg};display:flex;align-items:center;justify-content:center;color:#fff;margin-right:6px;box-shadow:0 2px 6px ${occ.shadow}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18h2"/><path d="M4 18h2"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/></svg>
               </div>
-              <span style="font-size:11px;font-weight:900;color:#0f172a;margin-right:4px">${b.code}</span>
-              <span style="background:#ecfdf5;color:#059669;border:1px solid #a7f3d0;padding:1px 5px;border-radius:6px;font-size:9.5px;font-weight:800">${b.eta}m</span>
-              <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid #f59e0b"></div>
+              <span style="font-size:11.5px;font-weight:900;color:#0f172a;margin-right:5px">${b.code}</span>
+              <span style="background:${occ.badgeBg};color:${occ.badgeText};border:1px solid ${occ.badgeBorder};padding:1px 6px;border-radius:6px;font-size:9.5px;font-weight:800">${b.eta}m</span>
+              <div style="position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:6px solid ${occ.border}"></div>
             </div>`,
-            iconSize: [110, 32],
-            iconAnchor: [55, 32],
+            iconSize: [120, 34],
+            iconAnchor: [60, 34],
           });
 
           L.marker([b.lat, b.lon], { icon: liveBusIcon, zIndexOffset: 800 })
             .addTo(map)
-            .bindPopup(`<div style="min-width:150px;font-family:sans-serif;padding:2px"><b style="font-size:13px;color:#0f172a">🚌 Bus ${b.code}</b><br/><span style="color:#64748b;font-size:11px">To ${b.dest}</span><br/><span style="color:#16a34a;font-weight:800;font-size:12px">Arriving in ${b.eta} min</span></div>`);
+            .bindPopup(`<div style="min-width:160px;font-family:sans-serif;padding:3px"><b style="font-size:13px;color:#0f172a">🚌 Bus ${b.code}</b><br/><span style="color:#64748b;font-size:11px">To ${b.dest}</span><br/><div style="margin-top:5px;display:flex;align-items:center;gap:6px"><span style="color:#0f172a;font-weight:800;font-size:12px">ETA: ${b.eta} min</span><span style="background:${occ.badgeBg};color:${occ.badgeText};border:1px solid ${occ.badgeBorder};padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800">${occ.sub}</span></div></div>`);
         });
 
         // Focus bounds around the local neighborhood
