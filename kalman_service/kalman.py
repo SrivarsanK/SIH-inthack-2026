@@ -68,14 +68,14 @@ class KalmanTracker:
         ]
 
         # Measurement noise R (2x2)
-        # R_cell is 1000x larger than R_gnss to suppress noisy dropout coordinates
+        # R_cell is 5000x larger than R_gnss to heavily suppress noisy dropout coordinates
         self.R_gnss: list[list[float]] = [
             [0.00001, 0.0],
             [0.0, 0.00001]
         ]
         self.R_cell: list[list[float]] = [
-            [0.01, 0.0],
-            [0.0, 0.01]
+            [0.05, 0.0],
+            [0.0, 0.05]
         ]
 
         # Measurement matrix H (2x4)
@@ -97,6 +97,12 @@ class KalmanTracker:
         """
         current_ts = ts if ts is not None else time.time()
 
+        # Edge Case 4: Zero or out-of-bounds coordinate fallback
+        if abs(lat) < 1.0 or abs(lon) < 1.0:
+            if self.initialized:
+                lat, lon = self.x[0][0], self.x[1][0]
+                gnss_valid = False
+
         if not self.initialized:
             self.x = [[lat], [lon], [0.0], [0.0]]
             self.P = [
@@ -109,6 +115,7 @@ class KalmanTracker:
             self.initialized = True
             return self.x[0][0], self.x[1][0]
 
+        # Edge Case 3: Out-of-order timestamp / time gap clamping
         dt = current_ts - (self.last_ts if self.last_ts is not None else current_ts - 1.0)
         dt = max(0.1, min(dt, 5.0))
         self.last_ts = current_ts
@@ -123,6 +130,11 @@ class KalmanTracker:
 
         # 1. Prediction step
         x_pred = mat_mult(F, self.x)
+        # If GNSS is invalid (dropout), damp velocity so position stays stationary/smooth if bus halts during outage
+        if not gnss_valid:
+            x_pred[2][0] *= 0.8
+            x_pred[3][0] *= 0.8
+
         P_pred = mat_add(mat_mult(mat_mult(F, self.P), mat_transpose(F)), self.Q)
 
         # 2. Measurement update step
@@ -141,6 +153,11 @@ class KalmanTracker:
 
         # x = x_pred + K @ y (4x1)
         self.x = mat_add(x_pred, mat_mult(K, y))
+
+        # Edge Case 5: Clamp velocity v_lat, v_lon to max +/- 0.001 deg/s (~110 km/h) to prevent explosion on jumps
+        MAX_VEL = 0.001
+        self.x[2][0] = max(-MAX_VEL, min(self.x[2][0], MAX_VEL))
+        self.x[3][0] = max(-MAX_VEL, min(self.x[3][0], MAX_VEL))
 
         # P = (I - K @ H) @ P_pred (4x4)
         I4 = [
