@@ -46,6 +46,43 @@ function formatMin(sec: number): string {
   return `${Math.floor(sec / 60)} min`;
 }
 
+export function abbreviateStopName(name: string): string {
+  if (!name) return "";
+  let s = name.trim();
+
+  // Specific long MTC / Chennai landmarks
+  s = s.replace(/mgr central or rajiv gandhi government general hospital/gi, "MGR Central / RGGGH");
+  s = s.replace(/rajiv gandhi government general hospital/gi, "RGGGH Hospital");
+  s = s.replace(/puratchi thalaivar dr\.? m\.?g\.?r\.? central/gi, "MGR Central");
+  s = s.replace(/dr\.? m\.?g\.?r\.? central/gi, "MGR Central");
+  s = s.replace(/kilambakkam bus terminus/gi, "KCBT Terminus");
+  s = s.replace(/koyambedu bus terminus/gi, "CMBT Terminus");
+  s = s.replace(/thiruvottriyur/gi, "Thiruvottiyur");
+
+  // Common transit terms
+  s = s.replace(/\bBus Terminus\b/gi, "B.T.");
+  s = s.replace(/\bBus Stand\b/gi, "B.S.");
+  s = s.replace(/\bRailway Station\b/gi, "Rly Stn");
+  s = s.replace(/\bGovernment\b/gi, "Govt");
+  s = s.replace(/\bGeneral Hospital\b/gi, "Gen Hosp");
+  s = s.replace(/\bHospital\b/gi, "Hosp");
+  s = s.replace(/\bStation\b/gi, "Stn");
+  s = s.replace(/\bRoad\b/gi, "Rd");
+  s = s.replace(/\bStreet\b/gi, "St");
+  s = s.replace(/\bJunction\b/gi, "Jn");
+  s = s.replace(/\bColony\b/gi, "Clny");
+
+  // Trim extraneous double spaces
+  s = s.replace(/\s+/g, " ").trim();
+
+  // If still long (> 24 chars), truncate with ellipsis
+  if (s.length > 24) {
+    s = s.substring(0, 22) + "…";
+  }
+
+  return s;
+}
+
 const OCCUPANCY_LABEL: Record<string, string> = {
   SEATS_AVAILABLE: "Seats Available",
   MODERATE: "Moderate",
@@ -183,7 +220,7 @@ const ChaloMap: React.FC<{
                 🚏
               </div>
               <div style="display:flex;flex-direction:column;line-height:1.1">
-                <span style="font-size:${isPrimary ? "11px" : "10px"};font-weight:800;letter-spacing:-0.2px">${ns.stop_name}</span>
+                <span style="font-size:${isPrimary ? "11px" : "10px"};font-weight:800;letter-spacing:-0.2px">${abbreviateStopName(ns.stop_name)}</span>
                 ${isPrimary ? `<span style="font-size:9px;color:#94a3b8;font-weight:600">🚶 4 min walk</span>` : `<span style="font-size:8.5px;color:#64748b">${ns.distance_km} km</span>`}
               </div>
               <div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:5px solid ${isPrimary ? "#1e293b" : "#ffffff"}"></div>
@@ -1073,9 +1110,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                             </div>
                             <span
                               title={stop.name}
-                              className="text-[11px] font-bold text-slate-800 text-center mt-2 px-1 leading-snug line-clamp-2 h-7 flex items-center justify-center"
+                              className="text-[11px] font-bold text-slate-800 text-center mt-2 px-1 leading-tight line-clamp-2 min-h-[28px] max-h-[36px] flex items-center justify-center"
                             >
-                              {stop.name}
+                              {abbreviateStopName(stop.name)}
                             </span>
                             <div className="mt-1">
                               {isFirst ? (
