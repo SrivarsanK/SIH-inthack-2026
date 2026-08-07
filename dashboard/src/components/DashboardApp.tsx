@@ -6,18 +6,106 @@ import { ChaloHomeView } from "./ChaloHomeView";
 import { AGENCY_PRESETS } from "../lib/agencies";
 import type { TransitAgency } from "../lib/agencies";
 
-const CHENNAI_HUBS = [
-  { name: "Broadway Terminus", lat: 13.0891, lon: 80.2854 },
-  { name: "High Court / RGGGH", lat: 13.0864, lon: 80.2870 },
-  { name: "MGR Central", lat: 13.0827, lon: 80.2707 },
-  { name: "T. Nagar Bus Stand", lat: 13.0418, lon: 80.2341 },
-  { name: "Saidapet", lat: 13.0213, lon: 80.2231 },
-  { name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
-  { name: "Chromepet", lat: 12.9516, lon: 80.1462 },
-  { name: "Tambaram Sanatorium", lat: 12.9279, lon: 80.1214 },
-];
+const ACCURATE_CHENNAI_ROUTES: Record<string, Array<{ name: string; lat: number; lon: number }>> = {
+  "S26": [
+    { name: "Valasaravakkam", lat: 13.0400, lon: 80.1740 },
+    { name: "Alwarthirunagar", lat: 13.0420, lon: 80.1800 },
+    { name: "Kesavardhini", lat: 13.0430, lon: 80.1850 },
+    { name: "SRM University / Ramapuram", lat: 13.0330, lon: 80.1800 },
+    { name: "KK Nagar Depot", lat: 13.0380, lon: 80.1980 },
+    { name: "Ashok Pillar", lat: 13.0355, lon: 80.2110 },
+  ],
+  "13311": [
+    { name: "Valasaravakkam", lat: 13.0400, lon: 80.1740 },
+    { name: "Alwarthirunagar", lat: 13.0420, lon: 80.1800 },
+    { name: "Kesavardhini", lat: 13.0430, lon: 80.1850 },
+    { name: "SRM University / Ramapuram", lat: 13.0330, lon: 80.1800 },
+    { name: "KK Nagar Depot", lat: 13.0380, lon: 80.1980 },
+    { name: "Ashok Pillar", lat: 13.0355, lon: 80.2110 },
+  ],
+  "21G": [
+    { name: "Tambaram Sanatorium", lat: 12.9279, lon: 80.1214 },
+    { name: "Chromepet", lat: 12.9516, lon: 80.1462 },
+    { name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
+    { name: "Saidapet", lat: 13.0213, lon: 80.2231 },
+    { name: "T. Nagar Bus Stand", lat: 13.0418, lon: 80.2341 },
+    { name: "MGR Central", lat: 13.0827, lon: 80.2707 },
+    { name: "High Court / RGGGH", lat: 13.0864, lon: 80.2870 },
+    { name: "Broadway Terminus", lat: 13.0891, lon: 80.2854 },
+  ],
+  "16917": [
+    { name: "Tambaram Sanatorium", lat: 12.9279, lon: 80.1214 },
+    { name: "Chromepet", lat: 12.9516, lon: 80.1462 },
+    { name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
+    { name: "Saidapet", lat: 13.0213, lon: 80.2231 },
+    { name: "T. Nagar Bus Stand", lat: 13.0418, lon: 80.2341 },
+    { name: "MGR Central", lat: 13.0827, lon: 80.2707 },
+    { name: "High Court / RGGGH", lat: 13.0864, lon: 80.2870 },
+    { name: "Broadway Terminus", lat: 13.0891, lon: 80.2854 },
+  ],
+  "570": [
+    { name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 },
+    { name: "Vadapalani", lat: 13.0500, lon: 80.2120 },
+    { name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
+    { name: "Velachery Railway", lat: 12.9781, lon: 80.2198 },
+    { name: "Perungudi OMR", lat: 12.9650, lon: 80.2450 },
+    { name: "Siruseri IT Park", lat: 12.8284, lon: 80.2185 },
+  ],
+  "15421": [
+    { name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 },
+    { name: "Vadapalani", lat: 13.0500, lon: 80.2120 },
+    { name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
+    { name: "Velachery Railway", lat: 12.9781, lon: 80.2198 },
+    { name: "Perungudi OMR", lat: 12.9650, lon: 80.2450 },
+    { name: "Siruseri IT Park", lat: 12.8284, lon: 80.2185 },
+  ],
+  "101": [
+    { name: "Thiruvottiyur B.T.", lat: 13.1610, lon: 80.3010 },
+    { name: "Royapuram", lat: 13.1050, lon: 80.2910 },
+    { name: "Parrys / High Court", lat: 13.0864, lon: 80.2870 },
+    { name: "MGR Central", lat: 13.0827, lon: 80.2707 },
+    { name: "Aminjikarai", lat: 13.0740, lon: 80.2180 },
+    { name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 },
+  ],
+  "26G R": [
+    { name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 },
+    { name: "Vadapalani Matrix", lat: 13.0500, lon: 80.2120 },
+    { name: "Ashok Pillar", lat: 13.0355, lon: 80.2110 },
+    { name: "KK Nagar Depot", lat: 13.0380, lon: 80.1980 },
+    { name: "SRM University / Ramapuram", lat: 13.0330, lon: 80.1800 },
+    { name: "Ramapuram Ashram", lat: 13.0350, lon: 80.1820 },
+  ],
+  "S86": [
+    { name: "Porur Junction", lat: 13.0350, lon: 80.1580 },
+    { name: "DLF IT Park", lat: 13.0280, lon: 80.1690 },
+    { name: "L N P Kovil Ramapuram", lat: 13.0310, lon: 80.1810 },
+    { name: "SRM University", lat: 13.0330, lon: 80.1800 },
+    { name: "Guindy Metro Station", lat: 13.0067, lon: 80.2020 },
+  ],
+  "70CCT R": [
+    { name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 },
+    { name: "Vadapalani", lat: 13.0500, lon: 80.2120 },
+    { name: "Ashok Pillar", lat: 13.0355, lon: 80.2110 },
+    { name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
+    { name: "Chromepet", lat: 12.9516, lon: 80.1462 },
+    { name: "Tambaram Sanatorium", lat: 12.9279, lon: 80.1214 },
+    { name: "Kilambakkam KCBT Terminus", lat: 12.8350, lon: 80.0510 },
+  ],
+};
 
 function generateFallbackChennaiCoords(routeCode: string) {
+  const cleanCode = formatBusShortName(routeCode);
+  const accurateStops = ACCURATE_CHENNAI_ROUTES[cleanCode] || ACCURATE_CHENNAI_ROUTES[routeCode];
+
+  if (accurateStops) {
+    return accurateStops.map((stop, idx) => ({
+      id: `fb-${cleanCode}-${idx}`,
+      name: stop.name,
+      lat: stop.lat,
+      lon: stop.lon,
+    }));
+  }
+
   return CHENNAI_HUBS.map((hub, idx) => ({
     id: `fb-${routeCode}-${idx}`,
     name: hub.name,

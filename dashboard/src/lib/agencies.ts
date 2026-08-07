@@ -34,13 +34,31 @@ export const AGENCY_PRESETS: TransitAgency[] = [
     dataStatus: "GTFS Static + Kalman",
     routes: [
       {
+        id: "S26",
+        code: "S26",
+        name: "Bus S26: Valasaravakkam to Ashok Pillar",
+        origin: "Valasaravakkam",
+        destination: "Ashok Pillar",
+        fare: 15,
+        totalStops: 6,
+        durationMin: 20,
+        coords: [
+          { id: "S1", name: "Valasaravakkam", lat: 13.0400, lon: 80.1740 },
+          { id: "S2", name: "Alwarthirunagar", lat: 13.0420, lon: 80.1800 },
+          { id: "S3", name: "Kesavardhini", lat: 13.0430, lon: 80.1850 },
+          { id: "S4", name: "SRM University / Ramapuram", lat: 13.0330, lon: 80.1800 },
+          { id: "S5", name: "KK Nagar Depot", lat: 13.0380, lon: 80.1980 },
+          { id: "S6", name: "Ashok Pillar", lat: 13.0355, lon: 80.2110 },
+        ]
+      },
+      {
         id: "mtc-21g",
         code: "21G",
         name: "Bus 21G: Tambaram to Broadway",
         origin: "Tambaram Sanatorium",
         destination: "Broadway Bus Terminus",
         fare: 30,
-        totalStops: 6,
+        totalStops: 8,
         durationMin: 35,
         coords: [
           { id: "S1", name: "Tambaram Sanatorium", lat: 12.9279, lon: 80.1214 },
@@ -48,7 +66,9 @@ export const AGENCY_PRESETS: TransitAgency[] = [
           { id: "S3", name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
           { id: "S4", name: "Saidapet", lat: 13.0213, lon: 80.2231 },
           { id: "S5", name: "T. Nagar Bus Stand", lat: 13.0418, lon: 80.2341 },
-          { id: "S6", name: "Broadway Terminus", lat: 13.0891, lon: 80.2854 }
+          { id: "S6", name: "MGR Central", lat: 13.0827, lon: 80.2707 },
+          { id: "S7", name: "High Court / RGGGH", lat: 13.0864, lon: 80.2870 },
+          { id: "S8", name: "Broadway Terminus", lat: 13.0891, lon: 80.2854 }
         ]
       },
       {
@@ -58,14 +78,87 @@ export const AGENCY_PRESETS: TransitAgency[] = [
         origin: "Koyambedu CMBT",
         destination: "Siruseri SIPCOT",
         fare: 40,
-        totalStops: 5,
+        totalStops: 6,
         durationMin: 50,
         coords: [
           { id: "S1", name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 },
           { id: "S2", name: "Vadapalani", lat: 13.0500, lon: 80.2120 },
-          { id: "S3", name: "Velachery Railway", lat: 12.9781, lon: 80.2198 },
-          { id: "S4", name: "Perungudi OMR", lat: 12.9650, lon: 80.2450 },
-          { id: "S5", name: "Siruseri IT Park", lat: 12.8284, lon: 80.2185 }
+          { id: "S3", name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
+          { id: "S4", name: "Velachery Railway", lat: 12.9781, lon: 80.2198 },
+          { id: "S5", name: "Perungudi OMR", lat: 12.9650, lon: 80.2450 },
+          { id: "S6", name: "Siruseri IT Park", lat: 12.8284, lon: 80.2185 }
+        ]
+      },
+      {
+        id: "101",
+        code: "101",
+        name: "Bus 101: Thiruvottiyur to Koyambedu CMBT",
+        origin: "Thiruvottiyur B.T.",
+        destination: "CMBT Koyambedu",
+        fare: 25,
+        totalStops: 6,
+        durationMin: 35,
+        coords: [
+          { id: "S1", name: "Thiruvottiyur B.T.", lat: 13.1610, lon: 80.3010 },
+          { id: "S2", name: "Royapuram", lat: 13.1050, lon: 80.2910 },
+          { id: "S3", name: "Parrys / High Court", lat: 13.0864, lon: 80.2870 },
+          { id: "S4", name: "MGR Central", lat: 13.0827, lon: 80.2707 },
+          { id: "S5", name: "Aminjikarai", lat: 13.0740, lon: 80.2180 },
+          { id: "S6", name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 }
+        ]
+      },
+      {
+        id: "26G R",
+        code: "26G R",
+        name: "Bus 26G R: CMBT to Ramapuram / SRM University",
+        origin: "CMBT Koyambedu",
+        destination: "SRM University / Ramapuram",
+        fare: 20,
+        totalStops: 6,
+        durationMin: 25,
+        coords: [
+          { id: "S1", name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 },
+          { id: "S2", name: "Vadapalani Matrix", lat: 13.0500, lon: 80.2120 },
+          { id: "S3", name: "Ashok Pillar", lat: 13.0355, lon: 80.2110 },
+          { id: "S4", name: "KK Nagar Depot", lat: 13.0380, lon: 80.1980 },
+          { id: "S5", name: "SRM University / Ramapuram", lat: 13.0330, lon: 80.1800 },
+          { id: "S6", name: "Ramapuram Ashram", lat: 13.0350, lon: 80.1820 }
+        ]
+      },
+      {
+        id: "S86",
+        code: "S86",
+        name: "Bus S86: Porur to Guindy Metro",
+        origin: "Porur Junction",
+        destination: "Guindy Metro Station",
+        fare: 15,
+        totalStops: 5,
+        durationMin: 20,
+        coords: [
+          { id: "S1", name: "Porur Junction", lat: 13.0350, lon: 80.1580 },
+          { id: "S2", name: "DLF IT Park", lat: 13.0280, lon: 80.1690 },
+          { id: "S3", name: "L N P Kovil Ramapuram", lat: 13.0310, lon: 80.1810 },
+          { id: "S4", name: "SRM University", lat: 13.0330, lon: 80.1800 },
+          { id: "S5", name: "Guindy Metro Station", lat: 13.0067, lon: 80.2020 }
+        ]
+      },
+      {
+        id: "70CCT R",
+        code: "70CCT R",
+        name: "Bus 70CCT R: CMBT to Kilambakkam KCBT",
+        origin: "CMBT Koyambedu",
+        destination: "Kilambakkam KCBT Terminus",
+        fare: 45,
+        totalStops: 7,
+        durationMin: 55,
+        coords: [
+          { id: "S1", name: "CMBT Koyambedu", lat: 13.0694, lon: 80.1948 },
+          { id: "S2", name: "Vadapalani", lat: 13.0500, lon: 80.2120 },
+          { id: "S3", name: "Ashok Pillar", lat: 13.0355, lon: 80.2110 },
+          { id: "S4", name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
+          { id: "S5", name: "Chromepet", lat: 12.9516, lon: 80.1462 },
+          { id: "S6", name: "Tambaram Sanatorium", lat: 12.9279, lon: 80.1214 },
+          { id: "S7", name: "Kilambakkam KCBT Terminus", lat: 12.8350, lon: 80.0510 }
         ]
       }
     ]
