@@ -63,18 +63,22 @@ const OCCUPANCY_DOT: Record<string, string> = {
 const SIM_API = "http://localhost:8001";
 
 // --- Chalo-style Leaflet Map --------------------------------------------------
+// mode="nearby" → center on user GPS + nearby stop pins, no route polyline
+// mode="route"  → center on route polyline + moving bus marker (Track tab)
 const ChaloMap: React.FC<{
   data: TransitSnapshot;
   selectedAgency: TransitAgency;
   selectedRouteId?: string | null;
   userLocation?: { lat: number; lon: number } | null;
   nearbyStops?: any[];
+  mode?: "nearby" | "route";
 }> = ({
   data,
   selectedAgency,
   selectedRouteId,
   userLocation,
   nearbyStops = [],
+  mode = "route",
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -95,16 +99,29 @@ const ChaloMap: React.FC<{
         mapRef.current = null;
       }
 
-      // Center on route stops, user GPS, or Chennai center (13.0827, 80.2707)
-      const center: [number, number] = stops.length > 0
-        ? [stops[Math.floor(stops.length / 2)].lat, stops[Math.floor(stops.length / 2)].lon]
-        : userLocation
-        ? [userLocation.lat, userLocation.lon]
-        : [13.0827, 80.2707];
+      // --- Center calculation ---
+      // nearby mode: prefer userLocation → primary nearby stop → Chennai
+      // route mode:  prefer route midpoint → userLocation → Chennai
+      let center: [number, number];
+      if (mode === "nearby") {
+        if (userLocation) {
+          center = [userLocation.lat, userLocation.lon];
+        } else if (nearbyStops.length > 0 && nearbyStops[0].stop_lat) {
+          center = [parseFloat(nearbyStops[0].stop_lat), parseFloat(nearbyStops[0].stop_lon)];
+        } else {
+          center = [13.0827, 80.2707];
+        }
+      } else {
+        center = stops.length > 0
+          ? [stops[Math.floor(stops.length / 2)].lat, stops[Math.floor(stops.length / 2)].lon]
+          : userLocation
+          ? [userLocation.lat, userLocation.lon]
+          : [13.0827, 80.2707];
+      }
 
       const map = L.map(containerRef.current!, {
         center,
-        zoom: 13,
+        zoom: mode === "nearby" ? 15 : 13,
         zoomControl: false,
         attributionControl: false,
       });
@@ -114,31 +131,56 @@ const ChaloMap: React.FC<{
         subdomains: "abcd",
       }).addTo(map);
 
-      // Add user location marker if available
+      // --- User location pulse marker ---
       if (userLocation) {
         const userIcon = L.divIcon({
           className: "",
-          html: `<div style="position:relative;width:32px;height:32px"><div style="position:absolute;inset:0;border-radius:50%;background:rgba(16,185,129,0.3);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div><div style="position:relative;width:32px;height:32px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a8 8 0 0 0-8 8c0 5.25 8 12 8 12s8-6.75 8-12a8 8 0 0 0-8-8z"/><circle cx="12" cy="10" r="3"/></svg></div></div>`,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
+          html: `<div style="position:relative;width:36px;height:36px">
+            <div style="position:absolute;inset:-6px;border-radius:50%;background:rgba(16,185,129,0.2);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div>
+            <div style="position:relative;width:36px;height:36px;border-radius:50%;background:#10b981;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+            </div>
+          </div>`,
+          iconSize: [36, 36],
+          iconAnchor: [18, 18],
         });
-        L.marker([userLocation.lat, userLocation.lon], { icon: userIcon }).addTo(map).bindPopup("You are here");
+        L.marker([userLocation.lat, userLocation.lon], { icon: userIcon })
+          .addTo(map)
+          .bindPopup("<b>You are here</b>");
       }
 
-      // Add nearby stop pins
-      nearbyStops.forEach((ns: any) => {
-        if (ns.stop_lat && ns.stop_lon) {
-          const stopPin = L.divIcon({
-            className: "",
-            html: `<div style="width:24px;height:24px;border-radius:50%;background:#0284c7;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg></div>`,
-            iconSize: [24, 24],
-            iconAnchor: [12, 12],
-          });
-          L.marker([parseFloat(ns.stop_lat), parseFloat(ns.stop_lon)], { icon: stopPin }).addTo(map).bindPopup(`<b>${ns.stop_name}</b><br/>${ns.distance_km} km away`);
-        }
+      // --- Nearby stop bus-stop pins (always shown in nearby mode) ---
+      nearbyStops.forEach((ns: any, idx: number) => {
+        if (!ns.stop_lat || !ns.stop_lon) return;
+        const isPrimary = idx === 0;
+        const stopPin = L.divIcon({
+          className: "",
+          html: `<div style="
+            width:${isPrimary ? 32 : 26}px;
+            height:${isPrimary ? 32 : 26}px;
+            border-radius:50%;
+            background:${isPrimary ? "#0ea5e9" : "#38bdf8"};
+            border:2.5px solid #fff;
+            box-shadow:0 3px 8px rgba(0,0,0,0.25);
+            display:flex;align-items:center;justify-content:center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="${isPrimary ? 15 : 12}" height="${isPrimary ? 15 : 12}" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+              <rect x="3" y="3" width="18" height="14" rx="2"/><path d="M3 10h18"/><circle cx="7" cy="20" r="2"/><circle cx="17" cy="20" r="2"/>
+            </svg>
+          </div>`,
+          iconSize: [isPrimary ? 32 : 26, isPrimary ? 32 : 26],
+          iconAnchor: [isPrimary ? 16 : 13, isPrimary ? 16 : 13],
+        });
+        const busesHtml = (ns.buses || []).slice(0, 3)
+          .map((b: any) => `<div style="margin-top:3px;font-size:12px"><b>${b.code}</b> → ${b.destination} <span style="color:#16a34a">${b.eta_min}min</span></div>`)
+          .join("");
+        L.marker([parseFloat(ns.stop_lat), parseFloat(ns.stop_lon)], { icon: stopPin })
+          .addTo(map)
+          .bindPopup(`<div style="min-width:150px"><b style="font-size:13px">${ns.stop_name}</b><br/><span style="color:#64748b;font-size:11px">${ns.distance_km} km • ${ns.walk_min} min walk</span>${busesHtml}</div>`);
       });
 
-      if (stops.length > 1) {
+      // --- Route polyline & live bus marker (route mode only) ---
+      if (mode === "route" && stops.length > 1) {
         const latLons = stops.map((s) => [s.lat, s.lon] as [number, number]);
         L.polyline(latLons, {
           color: "#f7a501",
@@ -166,7 +208,6 @@ const ChaloMap: React.FC<{
           iconAnchor: [19, 19],
         });
 
-        // Use vehicle position or first stop
         const vLat = data.vehicle?.lat && Math.abs(data.vehicle.lat - 12.975) > 0.01 ? data.vehicle.lat : stops[0].lat;
         const vLon = data.vehicle?.lon && Math.abs(data.vehicle.lon - 77.598) > 0.01 ? data.vehicle.lon : stops[0].lon;
 
@@ -184,7 +225,7 @@ const ChaloMap: React.FC<{
         mapRef.current = null;
       }
     };
-  }, [selectedAgency, selectedRouteId, userLocation, nearbyStops.length]);
+  }, [selectedAgency, selectedRouteId, userLocation, nearbyStops.length, mode]);
 
   useEffect(() => {
     if (markerRef.current && data.vehicle?.lat && data.vehicle?.lon) {
@@ -824,49 +865,72 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               {/* Left Column: Live Map & Bus Details (7 cols) */}
               <div className="col-span-7 space-y-6">
                 
-                {/* Live Map Card */}
+                {/* Buses around you — Live Map Card */}
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-5 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <h2 className="font-black text-slate-900 text-lg">Track Live Bus</h2>
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-mono font-bold">
-                        Route {route?.code}
-                      </span>
+                      <h2 className="font-black text-slate-900 text-lg">Buses around you</h2>
                     </div>
                     <button
                       onClick={() => setActiveNav("track")}
                       className="text-xs font-extrabold text-[#f7a501] hover:text-amber-600 transition-colors flex items-center gap-1"
                     >
-                      Full Route Details <ChevronRight className="w-4 h-4" />
+                      Live tracking <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 300 }}>
-                    <ChaloMap data={data} selectedAgency={selectedAgency} />
+                  <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 340 }}>
+                    <ChaloMap
+                      data={data}
+                      selectedAgency={selectedAgency}
+                      selectedRouteId={selectedRouteId}
+                      userLocation={userLocation}
+                      nearbyStops={neonRoutes?.nearbyStops || []}
+                      mode="nearby"
+                    />
 
-                    <div className="absolute top-3 right-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-md border border-slate-200/80 flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center shrink-0">
-                        <Bus className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <span className="font-extrabold text-slate-900 text-xs sm:text-sm block">
-                          {selectedAgency.shortName}-{route?.code}
-                        </span>
-                        <span className="text-[11px] text-slate-500 block">
-                          To {route?.destination}
-                        </span>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          <LiveSignalIcon className="w-3.5 h-3.5 text-blue-500" />
-                          <span className="text-xs font-extrabold text-blue-600">
-                            In {formatMin(T_inbound_sec)}
-                          </span>
+                    {/* Nearest stop badge — bottom-left overlay */}
+                    {(neonRoutes?.nearbyStops || []).length > 0 && (() => {
+                      const ns = neonRoutes.nearbyStops[0];
+                      const firstBus = (ns.buses || [])[0];
+                      return (
+                        <div className="absolute bottom-3 left-3 z-10 bg-white/95 backdrop-blur-md rounded-2xl p-3 shadow-md border border-slate-200/80 max-w-[220px]">
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+                              <MapPin className="w-3.5 h-3.5 text-slate-700" />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-extrabold text-slate-900 text-xs block truncate">{ns.stop_name}</span>
+                              <span className="text-[10px] text-slate-500">{ns.walk_min} min walk</span>
+                            </div>
+                          </div>
+                          {firstBus && (
+                            <div className="flex items-center gap-2 pt-1.5 border-t border-slate-100">
+                              <div className="w-6 h-6 rounded-md bg-amber-50 border border-amber-200 flex items-center justify-center shrink-0">
+                                <Bus className="w-3 h-3 text-amber-700" />
+                              </div>
+                              <span className="font-black text-slate-900 text-xs">{firstBus.code}</span>
+                              <span className="text-[10px] text-slate-500 flex-1 truncate">To {firstBus.destination}</span>
+                              <span className="text-[10px] font-bold text-emerald-600 shrink-0">{firstBus.eta_min}m</span>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      );
+                    })()}
+
+                    {/* GPS indicator — top-right */}
+                    <div className={`absolute top-3 right-3 z-10 px-2.5 py-1.5 rounded-full text-[10px] font-extrabold flex items-center gap-1.5 shadow-sm border ${
+                      locationStatus === "granted"
+                        ? "bg-emerald-50/95 border-emerald-200 text-emerald-700"
+                        : "bg-white/90 border-slate-200 text-slate-600"
+                    }`}>
+                      <Navigation className="w-3 h-3" />
+                      {locationStatus === "granted" ? "Live Location" : "Chennai"}
                     </div>
 
                     {isDelayed && (
-                      <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 shadow-sm">
+                      <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 shadow-sm">
                         <AlertCircle className="w-4 h-4 text-rose-600" />
                         <span className="text-xs font-bold text-rose-700">Delayed +{delayMin}m</span>
                       </div>
