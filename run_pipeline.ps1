@@ -4,6 +4,10 @@ Write-Host "============================================================" -Foreg
 
 $rootDir = Get-Location
 
+Write-Host "[0/5] Starting Embedded MQTT Broker (:1883)..." -ForegroundColor Yellow
+Start-Process python -ArgumentList "shared/mqtt_broker.py" -WorkingDirectory $rootDir
+Start-Sleep -Seconds 2
+
 Write-Host "[1/5] Starting CH-1 Simulator Engine..." -ForegroundColor Yellow
 Start-Process python -ArgumentList "simulator/simulator.py" -WorkingDirectory $rootDir
 

@@ -1,12 +1,18 @@
 import os
 import sys
+import socket
 import subprocess
 import time
 import signal
 
+def is_port_open(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("localhost", port)) == 0
+
 def main():
     print("=" * 65)
-    print("🚀 Launching TransitSense Local Multi-Service Pipeline...")
+    print("Launching TransitSense Local Multi-Service Pipeline...")
     print("=" * 65)
 
     root_dir = os.path.abspath(os.path.dirname(__file__))
@@ -15,6 +21,15 @@ def main():
     processes = []
 
     try:
+        # 0. Check / Start MQTT Broker on port 1883
+        if not is_port_open(1883):
+            print("[0/5] Starting Embedded Python MQTT Broker (:1883)...")
+            p_broker = subprocess.Popen([sys.executable, "shared/mqtt_broker.py"], cwd=root_dir)
+            processes.append(("MQTT Broker", p_broker))
+            time.sleep(2)
+        else:
+            print("[0/5] External MQTT Broker detected on port 1883.")
+
         # 1. Start CH-1 Simulator Engine
         print("[1/5] Starting CH-1 Simulator Engine...")
         p_sim = subprocess.Popen([sys.executable, "simulator/simulator.py"], cwd=root_dir)
@@ -46,7 +61,7 @@ def main():
         processes.append(("CH-4 Dashboard", p_dash))
 
         print("\n" + "=" * 65)
-        print("  ✨ All TransitSense Services Running Successfully!")
+        print("  All TransitSense Services Running Successfully!")
         print("  --> Dashboard UI:  http://localhost:4321")
         print("  --> Simulator API: http://localhost:8001")
         print("  --> ETA Stream:    http://localhost:8002/stream")
@@ -58,10 +73,10 @@ def main():
             time.sleep(1)
             for name, proc in processes:
                 if proc.poll() is not None:
-                    print(f"⚠️ Warning: Process '{name}' exited unexpectedly with code {proc.returncode}")
+                    print(f"Warning: Process '{name}' exited unexpectedly with code {proc.returncode}")
 
     except KeyboardInterrupt:
-        print("\n🛑 Stopping all TransitSense services...")
+        print("\nStopping all TransitSense services...")
         for name, proc in processes:
             if proc.poll() is None:
                 print(f"  --> Terminating {name}...")
@@ -70,7 +85,7 @@ def main():
                     proc.wait(timeout=2)
                 except subprocess.TimeoutExpired:
                     proc.kill()
-        print("✅ All services stopped cleanly.")
+        print("All services stopped cleanly.")
 
 if __name__ == "__main__":
     main()
