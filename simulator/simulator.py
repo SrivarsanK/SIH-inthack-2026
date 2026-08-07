@@ -1,5 +1,5 @@
 """
-TransitSense — CH-1 Simulator Engine
+Yara — CH-1 Simulator Engine
 =====================================
 
 File:      simulator.py

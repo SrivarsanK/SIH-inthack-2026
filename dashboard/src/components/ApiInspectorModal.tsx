@@ -85,7 +85,7 @@ export const ApiInspectorModal: React.FC<ApiInspectorModalProps> = ({ isOpen, on
             </div>
             <div>
               <h2 className="text-lg font-black text-slate-900">System API Architecture & Data Contracts</h2>
-              <p className="text-xs text-slate-500 font-medium">Live endpoint status, ports, and protocol schemas used by TransitSense</p>
+              <p className="text-xs text-slate-500 font-medium">Live endpoint status, ports, and protocol schemas used by Yara</p>
             </div>
           </div>
           <button

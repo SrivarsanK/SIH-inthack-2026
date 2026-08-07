@@ -23,7 +23,7 @@ export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit
   const routeCode = activeRoute?.code || "101";
   const originName = activeRoute?.origin || "Station A";
   const destName = activeRoute?.destination || "Station B";
-  const agencyName = selectedAgency?.shortName || "TransitSense";
+  const agencyName = selectedAgency?.shortName || "Yara";
 
   const bandConfig = {
     SEATS_AVAILABLE: { label: "Seats Available", bg: "bg-emerald-500", text: "text-emerald-950" },

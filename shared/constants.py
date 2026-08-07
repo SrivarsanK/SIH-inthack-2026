@@ -1,6 +1,6 @@
 # shared/constants.py
 # ============================================================
-# TransitSense — Shared Constants
+# Yara — Shared Constants
 # ALL channels must import from here. Never hardcode these values.
 # ============================================================
 

@@ -27,13 +27,11 @@ Start task in channel CH-1. My name is Alex.
 
 ---
 
-## 🎯 Pitch & Vision
+## 🎯 The Core Innovation
 
-> *"Watch this bus disappear from Route A and instantly become a live, shrinking ETA on Route B — before it has even arrived at the terminal."*
+In public transit networks, when a bus runs late on **Route A (Outbound)**, passengers waiting at terminal **Station B for Route B (Inbound)** are left stranded without reliable information.
 
-Existing public transport apps treat bus trips in isolated silos: when a bus is completing an outbound journey (Station A → Station B), waiting commuters on the return leg (Station B → Station A) see **zero vehicle availability**. This **Trip-Bound Visibility Gap** causes commuter anxiety, overcrowding, and lost trust.
-
-**TransitSense** connects continuous vehicle assets across scheduled route blocks (`block_id`). It projects **compounding ETAs** ($T_{\text{outbound}} + T_{\text{dwell}} + T_{\text{inbound}}$) and **passenger occupancy bands** in real time—even while the bus is still en route on its prior leg.
+**Yara** connects continuous vehicle assets across scheduled route blocks (`block_id`). It projects **compounding ETAs** ($T_{\text{outbound}} + T_{\text{dwell}} + T_{\text{inbound}}$) and **passenger occupancy bands** in real time—even while the bus is still en route on its prior leg.
 
 ---
 

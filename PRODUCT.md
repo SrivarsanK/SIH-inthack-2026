@@ -29,7 +29,7 @@ Used by passengers on smartphones and public stop kiosks under variable outdoor 
 - Stack constraints: Astro.js full-stack web framework, Neon DB, YOLO CV model integration.
 
 ## Brand Commitments
-**TransitSense** — high-contrast, accessible, and glanceable public transit identity designed for immediate legibility and high user trust.
+**Yara** — high-contrast, accessible, and glanceable public transit identity designed for immediate legibility and high user trust.
 
 ## Evidence on Hand
 Complete research reviews and design specs in [`docs/`](file:///c:/Users/Srivarsan/Desktop/SIH-inthack-2026/docs):

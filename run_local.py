@@ -51,7 +51,7 @@ def free_ports(ports: list):
 
 def main():
     print("=" * 65)
-    print("Launching TransitSense Local Multi-Service Pipeline...")
+    print("Launching Yara Local Multi-Service Pipeline...")
     print("=" * 65)
 
     check_dependencies()
@@ -105,12 +105,12 @@ def main():
         processes.append(("CH-4 Dashboard", p_dash))
 
         print("\n" + "=" * 65)
-        print("  All TransitSense Services Running Successfully!")
-        print("  --> Dashboard UI:  http://localhost:4321")
-        print("  --> Simulator API: http://localhost:8001")
-        print("  --> ETA Stream:    http://localhost:8002/stream")
-        print("  (Press Ctrl+C at any time to stop all services cleanly)")
-        print("=" * 65 + "\n")
+        print("  All Yara Services Running Successfully!")
+        print("=" * 65)
+        print("\n  Dashboard:     http://localhost:4321")
+        print("  ETA Engine:    http://localhost:8002/docs")
+        print("  Simulator API: http://localhost:8001/docs\n")
+        print("  Press Ctrl+C to stop all services cleanly.\n")
 
         # Keep parent script alive to monitor subprocesses
         while True:
@@ -120,7 +120,7 @@ def main():
                     print(f"Warning: Process '{name}' exited unexpectedly with code {proc.returncode}")
 
     except KeyboardInterrupt:
-        print("\nStopping all TransitSense services...")
+        print("\nStopping all Yara services...")
         for name, proc in processes:
             if proc.poll() is None:
                 print(f"  --> Terminating {name}...")

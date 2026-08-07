@@ -414,7 +414,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
           <div className="w-8 h-8 rounded-full bg-[#f7a501] flex items-center justify-center shadow-xs">
             <Bus className="w-[18px] h-[18px] text-white" strokeWidth={2.5} />
           </div>
-          <span className="text-xl font-black tracking-tight text-slate-900">TransitSense</span>
+          <span className="text-xl font-black tracking-tight text-slate-900">Yara</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -456,7 +456,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               <div className="w-9 h-9 rounded-xl bg-[#f7a501] flex items-center justify-center shadow-sm">
                 <Bus className="w-5 h-5 text-white" strokeWidth={2.5} />
               </div>
-              <span className="text-xl font-black tracking-tight text-slate-900">TransitSense</span>
+              <span className="text-xl font-black tracking-tight text-slate-900">Yara</span>
             </button>
 
             {/* Desktop Nav Links */}

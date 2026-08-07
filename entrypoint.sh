@@ -2,7 +2,7 @@
 set -e
 
 echo "============================================================"
-echo " Starting TransitSense All-In-One Container Services..."
+echo " Starting Yara All-In-One Container Services..."
 echo "============================================================"
 
 # 1. Start Mosquitto MQTT Broker
@@ -29,7 +29,7 @@ sleep 2
 # 5. Start CH-4 Dashboard Frontend (:4321)
 echo "[5/5] Starting CH-4 Dashboard UI (:4321)..."
 echo "============================================================"
-echo "  TransitSense is Live! Access Dashboard at: http://localhost:4321"
+echo "  Yara is Live! Access Dashboard at: http://localhost:4321"
 echo "============================================================"
 
 cd dashboard

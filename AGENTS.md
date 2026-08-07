@@ -1,4 +1,4 @@
-# TransitSense — Agent Instructions (ROOT)
+# Yara — Agent Instructions (ROOT)
 
 > **Read this entire file before writing a single line of code.**
 > These instructions apply to every AI coding agent working on this project, regardless of channel.
@@ -7,7 +7,7 @@
 
 ## What This Project Is
 
-**TransitSense** is a Smart India Hackathon (SIH) 2026 public transit intelligence platform.
+**Yara** is a Smart India Hackathon (SIH) 2026 public transit intelligence platform.
 
 The hackathon build is a **simulated-but-real pipeline**: synthetic GPS/sensor data flows through real code (Kalman filter, ETA engine, density aggregator) and surfaces on a real dashboard. Judges see a live, interactive demo — not a mockup.
 

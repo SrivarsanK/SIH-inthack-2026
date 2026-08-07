@@ -131,7 +131,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="TransitSense Control API",
+    title="Yara Control API",
     description="Injects live delays, GNSS dropouts, and crowd spikes into the CH-1 simulator engine.",
     version="1.0.0",
     lifespan=lifespan,

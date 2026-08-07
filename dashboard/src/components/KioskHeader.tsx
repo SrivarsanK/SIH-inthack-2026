@@ -45,7 +45,7 @@ export const KioskHeader: React.FC<KioskHeaderProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">TransitSense</h1>
+              <h1 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Yara</h1>
               <span className="px-2 py-0.5 text-[10px] font-extrabold bg-[#f7a501]/20 text-[#b17816] border border-[#f7a501]/50 rounded-md">
                 SIH 2026
               </span>

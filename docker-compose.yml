@@ -1,9 +1,9 @@
 services:
-  transitsense:
+  yara:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: transitsense-app
+    container_name: yara-app
     ports:
       - "4321:4321"   # Dashboard UI (http://localhost:4321)
       - "8001:8001"   # CH-1 Simulator Control API (http://localhost:8001)

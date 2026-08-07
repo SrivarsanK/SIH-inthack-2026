@@ -1,5 +1,5 @@
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host " Launching TransitSense Local Pipeline..." -ForegroundColor Cyan
+Write-Host " Launching Yara Local Pipeline..." -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 
 $rootDir = Get-Location

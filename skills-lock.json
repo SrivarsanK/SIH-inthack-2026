@@ -6,9 +6,16 @@
       "sourceType": "github",
       "computedHash": "148a9b4c5d9c86250f221cb172f131b4103c7e13f4d6046dedc015ab477fe2c7"
     },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "92704fd0894a2dcb6b524bd5ef458299bf416e81d6240627cea7c956b9099b6f"
+    },
     "neon": {
       "source": "neondatabase/agent-skills",
       "sourceType": "github",
+      "skillPath": "skills/neon/SKILL.md",
       "computedHash": "90370978156046ffe1ef631426bb61a77fe6bf50b633e445061c2821a4bc6419"
     },
     "neon-ai-gateway": {
@@ -29,6 +36,7 @@
     "neon-postgres": {
       "source": "neondatabase/agent-skills",
       "sourceType": "github",
+      "skillPath": "skills/neon-postgres/SKILL.md",
       "computedHash": "fbad97d1eb04c4cc04876852ad71698927902d1a16ebdf45a857e3632508e138"
     },
     "neon-postgres-branches": {

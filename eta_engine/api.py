@@ -18,7 +18,7 @@ from eta_engine.eta import calculate_eta_components, check_and_update_event_log
 from eta_engine.state_store import state_store
 from shared.constants import ETA_API_PORT
 
-app = FastAPI(title="TransitSense CH-3 ETA Engine")
+app = FastAPI(title="Yara CH-3 ETA Engine")
 
 app.add_middleware(
     CORSMiddleware,
