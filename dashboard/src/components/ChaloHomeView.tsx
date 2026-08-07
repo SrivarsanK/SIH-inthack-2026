@@ -170,10 +170,10 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   const [userLocation, setUserLocation] = useState<{lat: number; lon: number} | null>(null);
   const [locationStatus, setLocationStatus] = useState<"idle" | "asking" | "granted" | "denied">("idle");
 
-  // Request geolocation on mount and fetch nearest stops
-  useEffect(() => {
+  const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationStatus("denied");
+      neonRoutes?.fetchNearbyStops?.(13.0827, 80.2707, 5);
       return;
     }
     setLocationStatus("asking");
@@ -184,13 +184,31 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
         setLocationStatus("granted");
         neonRoutes?.fetchNearbyStops?.(loc.lat, loc.lon, 5);
       },
-      () => {
-        setLocationStatus("denied");
-        // Fallback: use Chennai center coords to still show some nearby stops
-        neonRoutes?.fetchNearbyStops?.(13.0827, 80.2707, 5);
+      (err) => {
+        console.warn("[Geolocation] High accuracy failed, trying standard accuracy:", err);
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const loc = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+            setUserLocation(loc);
+            setLocationStatus("granted");
+            neonRoutes?.fetchNearbyStops?.(loc.lat, loc.lon, 5);
+          },
+          () => {
+            setLocationStatus("denied");
+            neonRoutes?.fetchNearbyStops?.(13.0827, 80.2707, 5);
+          },
+          { enableHighAccuracy: false, timeout: 5000 }
+        );
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 5000 }
     );
+  }, [neonRoutes?.fetchNearbyStops]);
+
+  // Request geolocation on mount and immediately load stops
+  useEffect(() => {
+    // Initial fetch so nearest stops are displayed immediately
+    neonRoutes?.fetchNearbyStops?.(13.0827, 80.2707, 5);
+    requestLocation();
   }, []);
 
   useEffect(() => {
@@ -434,16 +452,18 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               <div className="flex items-center justify-between">
                 <h3 className="font-black text-slate-900 text-base">Nearest bus stops</h3>
                 <div className="flex items-center gap-2">
-                  {locationStatus === "granted" && (
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold flex items-center gap-1">
-                      <Navigation className="w-3 h-3" /> GPS
-                    </span>
-                  )}
-                  {locationStatus === "denied" && (
-                    <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-extrabold">
-                      Chennai
-                    </span>
-                  )}
+                  <button
+                    onClick={requestLocation}
+                    title="Click to detect your current location"
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 transition-all ${
+                      locationStatus === "granted"
+                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                        : "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                    }`}
+                  >
+                    <Navigation className="w-3 h-3" />
+                    <span>{locationStatus === "granted" ? "GPS Active" : "Detect GPS"}</span>
+                  </button>
                   <button
                     onClick={() => setActiveNav("routes")}
                     className="text-xs font-extrabold text-[#f7a501] hover:underline flex items-center gap-1 group"
@@ -791,16 +811,18 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   <div className="flex items-center justify-between">
                     <h3 className="font-black text-slate-900 text-base">Nearest bus stops</h3>
                     <div className="flex items-center gap-2">
-                      {locationStatus === "granted" && (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-extrabold flex items-center gap-1">
-                          <Navigation className="w-3 h-3" /> GPS
-                        </span>
-                      )}
-                      {locationStatus === "denied" && (
-                        <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-extrabold">
-                          Chennai
-                        </span>
-                      )}
+                      <button
+                        onClick={requestLocation}
+                        title="Click to detect your current location"
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold flex items-center gap-1 transition-all ${
+                          locationStatus === "granted"
+                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                            : "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                        }`}
+                      >
+                        <Navigation className="w-3 h-3" />
+                        <span>{locationStatus === "granted" ? "GPS Active" : "Detect GPS"}</span>
+                      </button>
                       <button
                         onClick={() => setActiveNav("routes")}
                         className="text-xs font-extrabold text-[#f7a501] hover:underline flex items-center gap-1 group"

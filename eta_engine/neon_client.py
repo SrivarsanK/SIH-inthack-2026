@@ -313,13 +313,13 @@ def search_stops(term: str, limit: int = 20) -> List[Dict[str, Any]]:
 
 
 def query_nearby_stops(lat: float, lon: float, limit: int = 5) -> List[Dict[str, Any]]:
-    """Find stops nearest to given GPS coordinates.
+    """Find stops nearest to given GPS coordinates anywhere in the region.
     
-    Uses Euclidean distance on lat/lon (accurate enough for city-scale distances).
-    Returns stops with distance_km approximation.
+    Uses Euclidean distance with cosine latitude correction.
+    Returns stops sorted strictly by distance_km.
     """
     sql = f"""
-        SELECT DISTINCT ON (stop_name)
+        SELECT
           stop_id,
           stop_name,
           stop_lat,
@@ -332,14 +332,13 @@ def query_nearby_stops(lat: float, lon: float, limit: int = 5) -> List[Dict[str,
               ) AS NUMERIC
             ), 2
           ) AS distance_km
-        FROM stops
-        WHERE stop_lat IS NOT NULL AND stop_lon IS NOT NULL
-          AND CAST(stop_lat AS DOUBLE PRECISION) BETWEEN {lat - 0.1} AND {lat + 0.1}
-          AND CAST(stop_lon AS DOUBLE PRECISION) BETWEEN {lon - 0.1} AND {lon + 0.1}
-        ORDER BY stop_name, distance_km
-        LIMIT {limit * 3};
+        FROM (
+          SELECT DISTINCT ON (stop_name) stop_id, stop_name, stop_lat, stop_lon
+          FROM stops
+          WHERE stop_lat IS NOT NULL AND stop_lon IS NOT NULL
+          ORDER BY stop_name, stop_id
+        ) sub
+        ORDER BY distance_km ASC
+        LIMIT {limit};
     """
-    rows = _rows(_execute(sql))
-    # Sort by distance and take top N unique stops
-    rows.sort(key=lambda r: float(r.get("distance_km", 999)))
-    return rows[:limit]
+    return _rows(_execute(sql))
