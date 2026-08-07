@@ -1348,34 +1348,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                     </div>
                   )}
                 </div>
-
-                {/* Occupancy Card with visual seat gauge */}
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-slate-700" />
-                    </div>
-                    <div>
-                      <span className="text-[11px] font-bold text-slate-400 block uppercase tracking-wider">Bus Occupancy</span>
-                      <span className="font-black text-slate-900 text-sm block">
-                        {OCCUPANCY_LABEL[occupancy_band] ?? "Seats Available"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="hidden sm:flex items-center gap-1">
-                      <span className="w-2 h-4 rounded-full bg-emerald-500" />
-                      <span className="w-2 h-4 rounded-full bg-emerald-500" />
-                      <span className="w-2 h-4 rounded-full bg-emerald-500" />
-                      <span className="w-2 h-4 rounded-full bg-slate-200" />
-                      <span className="w-2 h-4 rounded-full bg-slate-200" />
-                    </div>
-                    <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800 shadow-2xs">
-                      <span>40 / 55 Seats</span>
-                    </span>
-                  </div>
-                </div>
-
               </div>
             </div>
           </div>
