@@ -35,6 +35,7 @@ interface ChaloHomeViewProps {
   data: TransitSnapshot;
   isConnected: boolean;
   selectedAgency: TransitAgency;
+  selectedRouteId?: string | null;
   onSelectAgency: (agency: TransitAgency) => void;
   neonRoutes?: any;
   onRouteSelect?: (routeCode: string) => void;
@@ -62,15 +63,16 @@ const OCCUPANCY_DOT: Record<string, string> = {
 const SIM_API = "http://localhost:8001";
 
 // --- Chalo-style Leaflet Map --------------------------------------------------
-const ChaloMap: React.FC<{ data: TransitSnapshot; selectedAgency: TransitAgency }> = ({
+const ChaloMap: React.FC<{ data: TransitSnapshot; selectedAgency: TransitAgency; selectedRouteId?: string | null }> = ({
   data,
   selectedAgency,
+  selectedRouteId,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
 
-  const route = selectedAgency.routes[0];
+  const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
   const stops = route?.coords ?? [];
 
   useEffect(() => {
@@ -157,6 +159,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   data,
   isConnected,
   selectedAgency,
+  selectedRouteId,
   onSelectAgency,
   neonRoutes,
   onRouteSelect,
@@ -191,7 +194,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     return () => el.removeEventListener("wheel", handleWheel);
   }, []);
 
-  const route = selectedAgency.routes[0];
+  const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
   const stops = route?.coords ?? [];
   const { T_total_sec, T_outbound_sec, T_inbound_sec, occupancy_band } = data.inbound;
   const isDelayed = (data.inbound as any).is_delayed ?? false;
@@ -335,6 +338,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
           <RouteDetailView
             data={data}
             selectedAgency={selectedAgency}
+            selectedRouteId={selectedRouteId}
             onBack={() => setActiveNav("home")}
           />
         </div>

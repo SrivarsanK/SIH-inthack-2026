@@ -10,6 +10,7 @@ export const DashboardApp: React.FC = () => {
   const { data, isConnected } = useTransitStream();
   const neon = useNeonRoutes();
   const [selectedAgency, setSelectedAgency] = useState<TransitAgency>(AGENCY_PRESETS[0]);
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null);
 
   // Load stops for a route and return formatted coords
   const loadRouteCoords = useCallback(async (routeId: string) => {
@@ -75,6 +76,9 @@ export const DashboardApp: React.FC = () => {
       };
 
       setSelectedAgency(enriched);
+      if (enrichedRoutes.length > 0) {
+        setSelectedRouteId(enrichedRoutes[0].id);
+      }
     };
 
     initNeonRoutes();
@@ -84,13 +88,15 @@ export const DashboardApp: React.FC = () => {
     };
   }, [neon.routes, loadRouteCoords]);
 
-  // When user selects a route (by routeId or code), lazy-load stops from Neon DB
+  // When user selects a route (by routeId or code), lazy-load stops from Neon DB and set selectedRouteId
   const handleRouteSelect = useCallback(async (routeIdOrCode: string) => {
     // Match by route_id first (from search results), fall back to code match
     const route = selectedAgency.routes.find(
       (r) => r.id === routeIdOrCode || r.code === routeIdOrCode
     );
     if (!route) return;
+
+    setSelectedRouteId(route.id);
 
     if (route.coords.length === 0) {
       const enrichedCoords = await loadRouteCoords(route.id);
@@ -109,6 +115,9 @@ export const DashboardApp: React.FC = () => {
 
   const handleSelectAgency = useCallback((agency: TransitAgency) => {
     setSelectedAgency(agency);
+    if (agency.routes.length > 0) {
+      setSelectedRouteId(agency.routes[0].id);
+    }
     if (agency.id === "mtc-chennai") {
       neon.fetchRoutes(1, 50);
     }
@@ -120,6 +129,7 @@ export const DashboardApp: React.FC = () => {
         data={data}
         isConnected={isConnected}
         selectedAgency={selectedAgency}
+        selectedRouteId={selectedRouteId}
         onSelectAgency={handleSelectAgency}
         neonRoutes={neon}
         onRouteSelect={handleRouteSelect}

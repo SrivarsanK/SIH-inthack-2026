@@ -21,6 +21,7 @@ import { LiveSignalIcon } from "./LiveSignalIcon";
 interface RouteDetailViewProps {
   data: TransitSnapshot;
   selectedAgency: TransitAgency;
+  selectedRouteId?: string | null;
   onBack: () => void;
 }
 
@@ -28,12 +29,13 @@ interface RouteDetailViewProps {
 const DetailMap: React.FC<{
   data: TransitSnapshot;
   selectedAgency: TransitAgency;
+  selectedRouteId?: string | null;
   selectedStop?: { lat: number; lon: number; name: string } | null;
-}> = ({ data, selectedAgency, selectedStop }) => {
+}> = ({ data, selectedAgency, selectedRouteId, selectedStop }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
 
-  const route = selectedAgency.routes[0];
+  const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
   const stops = route?.coords ?? [];
 
   useEffect(() => {
@@ -384,14 +386,21 @@ const StopTimeline: React.FC<{
 export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
   data,
   selectedAgency,
+  selectedRouteId,
   onBack,
 }) => {
-  const route = selectedAgency.routes[0];
+  const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
   const stops = route?.coords ?? [];
   const { T_total_sec, T_inbound_sec } = data.inbound;
 
   const [selectedStop, setSelectedStop] = useState<typeof stops[0] | null>(stops[0] ?? null);
   const [timetableStop, setTimetableStop] = useState<typeof stops[0] | null>(null);
+
+  useEffect(() => {
+    if (stops.length > 0) {
+      setSelectedStop(stops[0]);
+    }
+  }, [selectedRouteId, stops]);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
@@ -431,7 +440,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
         {/* Left Column: Leaflet Map & Route Overview Card (6 cols) */}
         <div className="lg:col-span-6 space-y-5">
           <div className="relative z-0 rounded-2xl overflow-hidden border border-slate-200 bg-slate-100" style={{ height: 380 }}>
-            <DetailMap data={data} selectedAgency={selectedAgency} selectedStop={selectedStop} />
+            <DetailMap data={data} selectedAgency={selectedAgency} selectedRouteId={selectedRouteId} selectedStop={selectedStop} />
           </div>
 
           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">

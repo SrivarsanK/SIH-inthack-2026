@@ -86,19 +86,15 @@ export const RoutesListView: React.FC<RoutesListViewProps> = ({
 }) => {
   const [showAll, setShowAll] = useState(false);
 
-  const SERVICE_VARIANTS = ["Deluxe", "AC", "Express", "Ordinary", "Fans", "SuperFast"];
+  const realRoutes = selectedAgency.routes.map((r) => ({
+    code: r.code,
+    badge: "MTC",
+    origin: r.origin,
+    destination: r.destination,
+    id: r.id,
+  }));
 
-  const allVariants = selectedAgency.routes.flatMap((r) =>
-    SERVICE_VARIANTS.map((svc) => ({
-      code: r.code,
-      badge: svc,
-      origin: r.origin,
-      destination: r.destination,
-      id: `${r.id}-${svc}`,
-    }))
-  );
-
-  const displayed = showAll ? allVariants : allVariants.slice(0, 4);
+  const displayed = showAll ? realRoutes : realRoutes.slice(0, 10);
 
   const majorStops = selectedAgency.routes[0]?.coords ?? [];
 
@@ -121,7 +117,7 @@ export const RoutesListView: React.FC<RoutesListViewProps> = ({
               Agency Routes ({selectedAgency.shortName})
             </h1>
             <span className="text-xs text-slate-500 font-medium block">
-              {selectedAgency.city} · {allVariants.length} Service Variants
+              {selectedAgency.city} · {realRoutes.length} Active Routes
             </span>
           </div>
         </div>
@@ -137,12 +133,12 @@ export const RoutesListView: React.FC<RoutesListViewProps> = ({
       {/* Responsive 2-Column Desktop Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left Column: All Service Type Variants (7 cols) */}
+        {/* Left Column: All Routes List (7 cols) */}
         <div className="lg:col-span-7 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-black text-slate-900 text-base">Available Route Variants</h2>
+            <h2 className="font-black text-slate-900 text-base">Available Routes</h2>
             <span className="text-xs text-slate-500 font-bold">
-              Showing {displayed.length} of {allVariants.length}
+              Showing {displayed.length} of {realRoutes.length}
             </span>
           </div>
 
@@ -154,17 +150,17 @@ export const RoutesListView: React.FC<RoutesListViewProps> = ({
                 badge={v.badge}
                 origin={v.origin}
                 destination={v.destination}
-                onSelect={() => onSelectRoute?.(v.code)}
+                onSelect={() => onSelectRoute?.(v.id)}
               />
             ))}
           </div>
 
-          {allVariants.length > 4 && (
+          {realRoutes.length > 10 && (
             <button
               onClick={() => setShowAll(!showAll)}
               className="w-full py-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-[#f7a501] text-xs font-extrabold uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
             >
-              <span>{showAll ? "Show Less" : `See All ${allVariants.length} Variants`}</span>
+              <span>{showAll ? "Show Less" : `See All ${realRoutes.length} Routes`}</span>
               <ChevronRight className={`w-4 h-4 transition-transform ${showAll ? "rotate-90" : ""}`} />
             </button>
           )}
