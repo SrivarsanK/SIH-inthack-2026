@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
 import type { TransitAgency } from "../lib/agencies";
+import { AGENCY_PRESETS } from "../lib/agencies";
 import { SearchView } from "./SearchView";
 import { RouteDetailView } from "./RouteDetailView";
 import { RoutesListView } from "./RoutesListView";
@@ -100,8 +101,8 @@ export function abbreviateStopName(name: string): string {
 const OCCUPANCY_LABEL: Record<string, string> = {
   SEATS_AVAILABLE: "Seats Available",
   MODERATE: "Moderate",
-  STANDING_ROOM: "Standing Room",
-  VERY_CROWDED: "Very Crowded",
+  STANDING_ROOM: "Almost Full",
+  VERY_CROWDED: "Overcrowded",
 };
 
 const OCCUPANCY_DOT: Record<string, string> = {
@@ -110,6 +111,95 @@ const OCCUPANCY_DOT: Record<string, string> = {
   STANDING_ROOM: "bg-orange-500",
   VERY_CROWDED: "bg-rose-500",
 };
+
+// Rich per-band config used by the DensityBadge component
+const DENSITY_CONFIG: Record<string, {
+  label: string;
+  sublabel: string;
+  dot: string;
+  bg: string;
+  text: string;
+  border: string;
+  bar: string;
+  barWidth: string;
+  level: "low" | "medium" | "high" | "critical";
+}> = {
+  SEATS_AVAILABLE: {
+    label: "Seats Available",
+    sublabel: "Low · Comfortable",
+    dot: "bg-emerald-500",
+    bg: "bg-emerald-50",
+    text: "text-emerald-800",
+    border: "border-emerald-200",
+    bar: "bg-emerald-500",
+    barWidth: "w-1/4",
+    level: "low",
+  },
+  MODERATE: {
+    label: "Standing Room",
+    sublabel: "Medium · Standing space",
+    dot: "bg-amber-400",
+    bg: "bg-amber-50",
+    text: "text-amber-800",
+    border: "border-amber-200",
+    bar: "bg-amber-400",
+    barWidth: "w-1/2",
+    level: "medium",
+  },
+  STANDING_ROOM: {
+    label: "Almost Full",
+    sublabel: "High · Limited standing",
+    dot: "bg-orange-500",
+    bg: "bg-orange-50",
+    text: "text-orange-800",
+    border: "border-orange-200",
+    bar: "bg-orange-500",
+    barWidth: "w-3/4",
+    level: "high",
+  },
+  VERY_CROWDED: {
+    label: "Overcrowded",
+    sublabel: "No standing space",
+    dot: "bg-rose-500",
+    bg: "bg-rose-50",
+    text: "text-rose-800",
+    border: "border-rose-200",
+    bar: "bg-rose-500",
+    barWidth: "w-full",
+    level: "critical",
+  },
+};
+
+// Compact inline density pill for bus cards
+function DensityPill({ band }: { band: string }) {
+  const cfg = DENSITY_CONFIG[band] ?? DENSITY_CONFIG.SEATS_AVAILABLE;
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
+      {cfg.label}
+    </span>
+  );
+}
+
+// Full density bar widget for detail / overview cards
+function DensityBar({ band }: { band: string }) {
+  const cfg = DENSITY_CONFIG[band] ?? DENSITY_CONFIG.SEATS_AVAILABLE;
+  return (
+    <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border ${cfg.bg} ${cfg.border}`}>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between mb-1">
+          <span className={`text-[11px] font-bold ${cfg.text}`}>{cfg.label}</span>
+          <span className={`text-[10px] font-semibold ${cfg.text} opacity-70`}>{cfg.sublabel}</span>
+        </div>
+        <div className="h-1.5 rounded-full bg-black/10 overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-500 ${cfg.bar} ${cfg.barWidth}`} />
+        </div>
+      </div>
+      <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+    </div>
+  );
+}
+
 
 const SIM_API = "http://localhost:8001";
 
@@ -220,19 +310,51 @@ const ChaloMap: React.FC<{
           .addTo(map)
           .bindPopup("<div style='font-family:sans-serif;padding:2px'><b style='font-size:13px;color:#0f172a'>📍 Your Current Location</b><br/><span style='font-size:11px;color:#64748b'>Ramapuram, Chennai</span></div>");
 
-        // Staggered stop positions to avoid collisions
+        // Fallback offset positions only if ground-truth coordinates are completely missing
         const stopPositions = [
-          { lat: uLat + 0.0018, lon: uLon - 0.0018 }, // Stop 1 (Primary - SRM University)
-          { lat: uLat - 0.0022, lon: uLon + 0.0028 }, // Stop 2 (Rayala Nagar)
-          { lat: uLat + 0.0025, lon: uLon + 0.0032 }, // Stop 3 (Ramapuram Ashram)
-          { lat: uLat + 0.0042, lon: uLon + 0.0015 }, // Stop 4 (L N P Kovil Ramapuram)
+          { lat: uLat + 0.0018, lon: uLon - 0.0018 },
+          { lat: uLat - 0.0022, lon: uLon + 0.0028 },
+          { lat: uLat + 0.0025, lon: uLon + 0.0032 },
+          { lat: uLat + 0.0042, lon: uLon + 0.0015 },
         ];
 
         nearbyStops.forEach((ns: any, idx: number) => {
           const isPrimary = idx === 0;
+
+          // 1. Try direct GPS coordinates from Neon GTFS or preset object
+          const rawLat = ns.stop_lat ?? ns.lat;
+          const rawLon = ns.stop_lon ?? ns.lon;
+          let parsedLat = typeof rawLat === "string" ? parseFloat(rawLat) : rawLat;
+          let parsedLon = typeof rawLon === "string" ? parseFloat(rawLon) : rawLon;
+
+          // 2. If missing/invalid, match stop name in AGENCY_PRESETS ground truth
+          if (!parsedLat || !parsedLon || isNaN(parsedLat) || isNaN(parsedLon)) {
+            for (const agency of AGENCY_PRESETS) {
+              for (const r of agency.routes) {
+                const match = r.coords.find(
+                  (c) => c.name.toLowerCase() === ns.stop_name?.toLowerCase() || c.id === ns.stop_id
+                );
+                if (match) {
+                  parsedLat = match.lat;
+                  parsedLon = match.lon;
+                  break;
+                }
+              }
+              if (parsedLat && parsedLon) break;
+            }
+          }
+
+          const hasRealCoords =
+            typeof parsedLat === "number" &&
+            !isNaN(parsedLat) &&
+            parsedLat !== 0 &&
+            typeof parsedLon === "number" &&
+            !isNaN(parsedLon) &&
+            parsedLon !== 0;
+
           const pos = stopPositions[idx % stopPositions.length];
-          const lat = pos.lat;
-          const lon = pos.lon;
+          const lat = hasRealCoords ? parsedLat : pos.lat;
+          const lon = hasRealCoords ? parsedLon : pos.lon;
 
           // Impeccable Station Pin: Unified pill with icon + label in one clean element
           const stopPin = L.divIcon({
@@ -435,67 +557,75 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   const [activeNav, setActiveNav] = useState<"home" | "track" | "routes" | "search">("home");
   const [timeStr, setTimeStr] = useState("");
   const [isAgencyDropdownOpen, setIsAgencyDropdownOpen] = useState(false);
-  const [userLocation, setUserLocation] = useState<{lat: number; lon: number} | null>(null);
+  const [userLocation, setUserLocation] = useState<{lat: number; lon: number} | null>({ lat: 13.0302, lon: 80.1806 });
   const [locationStatus, setLocationStatus] = useState<"idle" | "asking" | "granted" | "denied">("idle");
 
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
       setLocationStatus("denied");
-      neonRoutes?.fetchNearbyStops?.(13.0827, 80.2707, 5);
+      neonRoutes?.fetchNearbyStops?.(13.0302, 80.1806, 5);
       return;
     }
     setLocationStatus("asking");
+
+    const handleSuccess = (pos: GeolocationPosition) => {
+      const loc = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      setUserLocation(loc);
+      setLocationStatus("granted");
+      neonRoutes?.fetchNearbyStops?.(loc.lat, loc.lon, 5);
+    };
+
+    const handleError = (err: GeolocationPositionError) => {
+      console.warn("[Geolocation] High accuracy failed, falling back to default:", err.message);
+      setLocationStatus("denied");
+      const fallback = { lat: 13.0302, lon: 80.1806 };
+      setUserLocation(fallback);
+      neonRoutes?.fetchNearbyStops?.(fallback.lat, fallback.lon, 5);
+    };
+
+    // 1. Immediate position check
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const loc = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        setUserLocation(loc);
-        setLocationStatus("granted");
-        neonRoutes?.fetchNearbyStops?.(loc.lat, loc.lon, 5);
+      handleSuccess,
+      () => {
+        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, {
+          enableHighAccuracy: false,
+          timeout: 8000,
+          maximumAge: 10000,
+        });
       },
-      (err) => {
-        console.warn("[Geolocation] High accuracy failed, trying standard accuracy:", err);
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const loc = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-            setUserLocation(loc);
-            setLocationStatus("granted");
-            neonRoutes?.fetchNearbyStops?.(loc.lat, loc.lon, 5);
-          },
-          () => {
-            setLocationStatus("denied");
-            neonRoutes?.fetchNearbyStops?.(13.0827, 80.2707, 5);
-          },
-          { enableHighAccuracy: false, timeout: 5000 }
-        );
-      },
-      { enableHighAccuracy: true, timeout: 5000 }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 5000 }
     );
   }, [neonRoutes?.fetchNearbyStops]);
 
-  // Request geolocation on mount and immediately load stops
+  // Request geolocation on mount and start watchPosition for live continuous location updates
   useEffect(() => {
-    // Initial fetch so nearest stops are displayed immediately
-    neonRoutes?.fetchNearbyStops?.(13.0827, 80.2707, 5);
+    // Initial fetch for SRM Ramapuram area default
+    neonRoutes?.fetchNearbyStops?.(13.0302, 80.1806, 5);
     requestLocation();
-  }, []);
 
-  const [activeBusCode, setActiveBusCode] = useState<string>(
-    selectedRouteId && selectedRouteId !== "mtc-21g" ? selectedRouteId : "S26"
-  );
-
-  // Auto-select nearest bus route for the stop sequence timeline if default route is active
-  useEffect(() => {
-    if (selectedRouteId && selectedRouteId !== "mtc-21g") {
-      setActiveBusCode(selectedRouteId);
-    } else if ((neonRoutes?.nearbyStops || []).length > 0) {
-      const firstStop = neonRoutes.nearbyStops[0];
-      const firstBus = (firstStop.buses || [])[0];
-      if (firstBus?.code) {
-        setActiveBusCode(firstBus.code);
-        onRouteSelect?.(firstBus.code);
-      }
+    if (navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const loc = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+          setUserLocation(loc);
+          setLocationStatus("granted");
+          neonRoutes?.fetchNearbyStops?.(loc.lat, loc.lon, 5);
+        },
+        (err) => console.warn("[Geolocation Watch]", err.message),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+      );
+      return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, [selectedRouteId, neonRoutes?.nearbyStops]);
+  }, [requestLocation, neonRoutes?.fetchNearbyStops]);
+
+  const [activeBusCode, setActiveBusCode] = useState<string>(selectedRouteId || "S26");
+
+  // Keep activeBusCode strictly synchronized with selectedRouteId
+  useEffect(() => {
+    if (selectedRouteId) {
+      setActiveBusCode(selectedRouteId);
+    }
+  }, [selectedRouteId]);
 
   const handleBusClick = (busCode: string) => {
     setActiveBusCode(busCode);
@@ -587,13 +717,42 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     let isMounted = true;
     const loadStops = async () => {
       const code = activeBusCode || selectedRouteId || "S26";
-      
+
+      // Helper: look up code (or display-code resolved from Neon route_id) in AGENCY_PRESETS.
+      // DashboardApp.initNeonRoutes sets selectedRouteId to Neon DB route_id (e.g. "24843"),
+      // so activeBusCode can be a numeric Neon ID rather than a display code like "S26".
+      // To handle that, we: (a) try direct match, (b) resolve via selectedAgency.routes to
+      // get the display code, (c) retry the preset lookup with the display code.
+      const findInPresets = (searchCode: string) => {
+        for (const agency of AGENCY_PRESETS) {
+          const match = agency.routes.find((r) => r.code === searchCode || r.id === searchCode);
+          if (match && match.coords.length > 0) return match;
+        }
+        return null;
+      };
+
+      // 1. Direct preset lookup by code/id
+      let presetRoute = findInPresets(code);
+      if (!presetRoute) {
+        // 1b. code might be a Neon route_id — resolve to display code via enriched routes
+        const enrichedRoute = selectedAgency.routes.find((r) => r.code === code || r.id === code);
+        if (enrichedRoute?.code) {
+          presetRoute = findInPresets(enrichedRoute.code);
+        }
+      }
+      if (presetRoute) {
+        if (isMounted) setActiveRouteStops(presetRoute.coords);
+        return;
+      }
+
+      // 2. Route not in any preset — use Neon-enriched selectedAgency coords (already loaded)
       const agencyMatch = selectedAgency.routes.find((r) => r.code === code || r.id === code);
       if (agencyMatch && agencyMatch.coords && agencyMatch.coords.length > 0) {
         if (isMounted) setActiveRouteStops(agencyMatch.coords);
         return;
       }
 
+      // 3. Last resort: fetch live from Neon DB
       if (neonRoutes?.fetchStopsForRoute) {
         const neonStops = await neonRoutes.fetchStopsForRoute(code);
         if (neonStops && neonStops.length > 0 && isMounted) {
@@ -605,14 +764,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               lon: typeof s.stop_lon === "string" ? parseFloat(s.stop_lon) : s.stop_lon,
             }))
           );
-          return;
         }
-      }
-
-      const presetMtc = AGENCY_PRESETS.find((a) => a.id === "mtc-chennai");
-      const presetMatch = presetMtc?.routes.find((r) => r.code === code || r.id === code);
-      if (presetMatch && presetMatch.coords.length > 0 && isMounted) {
-        setActiveRouteStops(presetMatch.coords);
       }
     };
 
@@ -620,14 +772,31 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     return () => { isMounted = false; };
   }, [activeBusCode, selectedRouteId, selectedAgency.id]);
 
-  let matchedRoute = selectedAgency.routes.find((r) => r.code === currentCode || r.id === currentCode);
-  if (!matchedRoute || matchedRoute.coords.length === 0) {
-    const presetMtc = AGENCY_PRESETS.find((a) => a.id === "mtc-chennai");
-    const presetMatch = presetMtc?.routes.find((r) => r.code === currentCode || r.id === currentCode);
-    if (presetMatch && presetMatch.coords.length > 0) {
-      matchedRoute = presetMatch;
+  // Always resolve route metadata from AGENCY_PRESETS first (curated ground truth).
+  // selectedAgency.routes is overridden by Neon DB data in DashboardApp.initNeonRoutes,
+  // which may assign different stop sequences to the same route code.
+  // Also, currentCode may be a Neon route_id (e.g. "24843") when DashboardApp.initNeonRoutes
+  // sets selectedRouteId = route.id (not the display code). Resolve via enriched routes first.
+  let matchedRoute = (() => {
+    // Resolve code: if currentCode is a Neon route_id, resolve to display code
+    const enrichedForCode = selectedAgency.routes.find(
+      (r) => r.code === currentCode || r.id === currentCode
+    );
+    const resolvedCode = enrichedForCode?.code || currentCode;
+
+    // 1. Preset takes priority (search by both original code and resolved display code)
+    for (const agency of AGENCY_PRESETS) {
+      const r =
+        agency.routes.find((r) => r.code === currentCode || r.id === currentCode) ||
+        (resolvedCode !== currentCode
+          ? agency.routes.find((r) => r.code === resolvedCode || r.id === resolvedCode)
+          : undefined);
+      if (r && r.coords.length > 0) return r;
     }
-  }
+    // 2. Neon-enriched selectedAgency (for routes not in preset, e.g. "2B")
+    if (enrichedForCode && enrichedForCode.coords.length > 0) return enrichedForCode;
+    return null;
+  })();
 
   if (!matchedRoute) {
     const defaultPreset = AGENCY_PRESETS[0]?.routes[0];
@@ -665,7 +834,6 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     { id: "track" as const, icon: Bus, label: "Track" },
     { id: "search" as const, icon: Search, label: "Search" },
     { id: "routes" as const, icon: Star, label: "Routes" },
-    { id: "profile" as const, icon: User, label: "Profile" },
   ];
 
   return (
@@ -783,6 +951,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
             data={data}
             selectedAgency={selectedAgency}
             selectedRouteId={selectedRouteId}
+            userLocation={userLocation}
             onBack={() => setActiveNav("home")}
           />
         </div>
@@ -943,17 +1112,24 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                   </div>
                                 </div>
 
-                                <div className="text-right shrink-0">
-                                  <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || formatClockTime(bus.eta_min)}</span>
-                                  <span className="text-[11px] font-bold text-emerald-600">
-                                    {bus.eta_min} min away
-                                  </span>
+                                <div className="flex flex-col items-end gap-1 shrink-0">
+                                  <div className="text-right">
+                                    <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || formatClockTime(bus.eta_min)}</span>
+                                    <span className="text-[11px] font-bold text-emerald-600">
+                                      {bus.eta_min} min away
+                                    </span>
+                                  </div>
+                                  <DensityPill band={occupancy_band} />
                                 </div>
                               </div>
                             ))
                           ) : (
                             <div
-                              onClick={() => setActiveNav("track")}
+                              onClick={() => {
+                                const targetCode = route?.code || route?.id || currentCode || "S26";
+                                onRouteSelect?.(targetCode);
+                                setActiveNav("track");
+                              }}
                               className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer"
                             >
                               <div className="flex items-center gap-3">
@@ -965,9 +1141,12 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                   <span className="text-xs text-slate-500 block">To {route?.destination ?? "Valasaravakkam"}</span>
                                 </div>
                               </div>
-                              <div className="text-right">
-                                <span className="font-extrabold text-slate-900 text-sm block">{formatClockTime(4)}</span>
-                                <span className="text-[11px] font-bold text-emerald-600">4 min away</span>
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="text-right">
+                                  <span className="font-extrabold text-slate-900 text-sm block">{formatClockTime(4)}</span>
+                                  <span className="text-[11px] font-bold text-emerald-600">4 min away</span>
+                                </div>
+                                <DensityPill band={occupancy_band} />
                               </div>
                             </div>
                           )}
@@ -1017,7 +1196,11 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   <h2 className="font-black text-slate-900 text-base sm:text-lg">Buses around you</h2>
                 </div>
                 <button
-                  onClick={() => setActiveNav("track")}
+                  onClick={() => {
+                    const targetCode = route?.code || route?.id || currentCode || "S26";
+                    onRouteSelect?.(targetCode);
+                    setActiveNav("track");
+                  }}
                   className="text-xs font-extrabold text-[#f7a501] hover:underline"
                 >
                   Live tracking
@@ -1062,13 +1245,20 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   </div>
 
                   <button
-                    onClick={() => setActiveNav("track")}
+                    onClick={() => {
+                      const targetCode = route?.code || route?.id || currentCode || "S26";
+                      onRouteSelect?.(targetCode);
+                      setActiveNav("track");
+                    }}
                     className="px-3.5 py-1.5 rounded-full border border-slate-300 bg-white text-xs font-bold text-slate-800 hover:bg-slate-50 flex items-center gap-1 shrink-0"
                   >
                     <span>View full route</span>
                     <ChevronRight className="w-3.5 h-3.5 text-slate-500" />
                   </button>
                 </div>
+
+                {/* Passenger Density */}
+                <DensityBar band={occupancy_band} />
 
                 {/* Stop Sequence Horizontal Timeline */}
                 <div className="pt-3 border-t border-slate-100">
@@ -1239,6 +1429,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
                   {/* Horizontal Timeline Strip */}
                   <div className="pt-4 border-t border-slate-100 space-y-3">
+                    {/* Passenger Density */}
+                    <DensityBar band={occupancy_band} />
+
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block">
                         Stop Sequence Timeline
@@ -1413,17 +1606,24 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                       </div>
                                     </div>
 
-                                    <div className="text-right shrink-0">
-                                      <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || formatClockTime(bus.eta_min)}</span>
-                                      <span className="text-xs font-bold text-emerald-600">
-                                        {bus.eta_min} min away
-                                      </span>
+                                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                      <div className="text-right">
+                                        <span className="font-extrabold text-slate-900 text-sm block">{bus.eta_time || formatClockTime(bus.eta_min)}</span>
+                                        <span className="text-xs font-bold text-emerald-600">
+                                          {bus.eta_min} min away
+                                        </span>
+                                      </div>
+                                      <DensityPill band={occupancy_band} />
                                     </div>
                                   </div>
                                 ))
                               ) : (
                                 <div
-                                  onClick={() => setActiveNav("track")}
+                                  onClick={() => {
+                                    const targetCode = route?.code || route?.id || currentCode || "S26";
+                                    onRouteSelect?.(targetCode);
+                                    setActiveNav("track");
+                                  }}
                                   className="flex items-center justify-between p-3 rounded-2xl hover:bg-slate-50 border border-slate-100 transition-all cursor-pointer"
                                 >
                                   <div className="flex items-center gap-3.5">
@@ -1435,9 +1635,12 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                       <span className="text-xs text-slate-500 block">To {route?.destination ?? "Valasaravakkam"}</span>
                                     </div>
                                   </div>
-                                  <div className="text-right">
-                                    <span className="font-extrabold text-slate-900 text-sm block">{formatClockTime(4)}</span>
-                                    <span className="text-xs font-bold text-emerald-600">4 min away</span>
+                                  <div className="flex flex-col items-end gap-1.5">
+                                    <div className="text-right">
+                                      <span className="font-extrabold text-slate-900 text-sm block">{formatClockTime(4)}</span>
+                                      <span className="text-xs font-bold text-emerald-600">4 min away</span>
+                                    </div>
+                                    <DensityPill band={occupancy_band} />
                                   </div>
                                 </div>
                               )}
@@ -1489,7 +1692,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
       {/* BEAUTIFIED FIXED MOBILE BOTTOM NAVIGATION BAR (< 768px) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] px-2 py-1.5 transition-all" style={{ zIndex: 99999, isolation: "isolate" }}>
-        <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
+        <div className="grid grid-cols-4 gap-1 max-w-md mx-auto">
           {MOBILE_NAV_ITEMS.map(({ id, icon: Icon, label }) => {
             const active = activeNav === id;
             return (

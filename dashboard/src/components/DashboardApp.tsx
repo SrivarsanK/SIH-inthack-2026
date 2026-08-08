@@ -93,6 +93,14 @@ const ACCURATE_CHENNAI_ROUTES: Record<string, Array<{ name: string; lat: number;
   ],
 };
 
+const CHENNAI_HUBS = [
+  { name: "Koyambedu CMBT", lat: 13.0694, lon: 80.1948 },
+  { name: "MGR Central", lat: 13.0827, lon: 80.2707 },
+  { name: "Tambaram", lat: 12.9249, lon: 80.1000 },
+  { name: "Guindy Kathipara", lat: 13.0067, lon: 80.2020 },
+  { name: "T. Nagar", lat: 13.0418, lon: 80.2341 },
+];
+
 function generateFallbackChennaiCoords(routeCode: string) {
   const cleanCode = formatBusShortName(routeCode);
   const accurateStops = ACCURATE_CHENNAI_ROUTES[cleanCode] || ACCURATE_CHENNAI_ROUTES[routeCode];
@@ -127,18 +135,27 @@ export const DashboardApp: React.FC = () => {
   const { data, isConnected } = useTransitStream();
   const neon = useNeonRoutes();
   const [selectedAgency, setSelectedAgency] = useState<TransitAgency>(AGENCY_PRESETS[0]);
-  const [selectedRouteId, setSelectedRouteId] = useState<string | null>("mtc-21g");
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>("S26");
 
   // Load stops for a route and return formatted coords
   const loadRouteCoords = useCallback(async (routeId: string) => {
     const stops = await neon.fetchStopsForRoute(routeId);
     if (stops && stops.length > 0) {
-      return stops.map((s: NeonStop) => ({
+      const formatted = stops.map((s: NeonStop) => ({
         id: s.stop_id,
         name: s.stop_name,
         lat: typeof s.stop_lat === "string" ? parseFloat(s.stop_lat) : s.stop_lat,
         lon: typeof s.stop_lon === "string" ? parseFloat(s.stop_lon) : s.stop_lon,
       }));
+      return formatted.reduce((acc: typeof formatted, curr) => {
+        const prev = acc[acc.length - 1];
+        const currName = (curr.name || "").trim().toLowerCase();
+        const prevName = (prev?.name || "").trim().toLowerCase();
+        if (!prev || (currName !== prevName && curr.id !== prev.id)) {
+          acc.push(curr);
+        }
+        return acc;
+      }, []);
     }
     return generateFallbackChennaiCoords(routeId);
   }, [neon.fetchStopsForRoute]);
@@ -195,7 +212,10 @@ export const DashboardApp: React.FC = () => {
       setSelectedAgency(enriched);
       if (enrichedRoutes.length > 0) {
         const defaultRoute = enrichedRoutes.find((r) => r.code === "S26" || r.id === "S26") || enrichedRoutes[0];
-        setSelectedRouteId((prev) => (prev && prev !== "mtc-21g" ? prev : defaultRoute.id));
+        // Use display code (e.g. "S26"), NOT Neon route_id (e.g. "24843").
+        // ChaloHomeView.activeBusCode is set from selectedRouteId; if it's an opaque Neon ID,
+        // the AGENCY_PRESETS lookup fails and Neon stops (wrong route) are shown instead.
+        setSelectedRouteId((prev) => (prev && prev !== "mtc-21g" ? prev : defaultRoute.code));
       }
     };
 
@@ -238,13 +258,15 @@ export const DashboardApp: React.FC = () => {
           routes: [dynamicRoute, ...prev.routes],
         }));
 
-        setSelectedRouteId(routeIdOrCode);
+        // Use display code (cleanCode) so ChaloHomeView can match AGENCY_PRESETS
+        setSelectedRouteId(cleanCode);
         return;
       }
     }
 
     if (route) {
-      setSelectedRouteId(route.id);
+      // Use display code (route.code) so ChaloHomeView can match AGENCY_PRESETS
+      setSelectedRouteId(route.code);
 
       if (route.coords.length === 0) {
         const enrichedCoords = await loadRouteCoords(route.id);
