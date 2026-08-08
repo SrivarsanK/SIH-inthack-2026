@@ -808,29 +808,43 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
             {/* Mobile Horizontal Route Chips Carousel */}
             <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 touch-pan-x" style={{ scrollbarWidth: "none" }}>
-              {selectedAgency.routes.map((r, idx) => (
-                <div
-                  key={r.id}
-                  onClick={() => setActiveNav("track")}
-                  className="shrink-0 flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs cursor-pointer hover:border-[#f7a501] transition-all min-w-[200px]"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-                    <Bus className="w-4 h-4 text-slate-700" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="font-extrabold text-slate-900 text-sm">{r.code}</span>
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-100 text-amber-900">
-                        Deluxe
+              {selectedAgency.routes.map((r) => {
+                const isActive = r.code === currentCode || r.id === currentCode;
+
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => {
+                      handleBusClick(r.code || r.id);
+                    }}
+                    className={`shrink-0 flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border shadow-2xs cursor-pointer transition-all min-w-[190px] select-none ${
+                      isActive
+                        ? "bg-amber-50/80 border-[#f7a501] ring-2 ring-amber-300/60"
+                        : "bg-white border-slate-200 hover:border-[#f7a501]"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                      isActive ? "bg-[#f7a501] text-slate-950" : "bg-slate-100 text-slate-700"
+                    }`}>
+                      <Bus className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-extrabold text-slate-900 text-sm">{r.code}</span>
+                        {isActive && (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-[#f7a501] text-slate-950">
+                            LIVE
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-slate-500 block truncate mt-0.5">
+                        To {r.destination}
                       </span>
                     </div>
-                    <span className="text-xs text-slate-500 block truncate mt-0.5">
-                      To {r.destination}
-                    </span>
+                    <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Mobile Nearest Bus Stop Card — 1:1 match with Chalo App reference */}
@@ -1104,32 +1118,42 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 className="flex items-center gap-3 overflow-x-auto py-2.5 px-1 -mx-1 scroll-smooth touch-pan-x cursor-grab active:cursor-grabbing flex-1"
                 style={{ scrollbarWidth: "none" }}
               >
-                {selectedAgency.routes.map((r, idx) => (
-                  <div
-                    key={r.id}
-                    onClick={() => {
-                      handleBusClick(r.code || r.id);
-                    }}
-                    className="shrink-0 flex items-center gap-3 px-3.5 py-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs hover:shadow-sm cursor-pointer hover:border-[#f7a501] hover:bg-amber-50/40 transition-all group min-w-[165px] select-none"
-                  >
-                    <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center group-hover:bg-[#f7a501]/20 transition-colors shrink-0">
-                      <Bus className="w-4 h-4 text-slate-600 group-hover:text-[#b17816] transition-colors" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-black text-slate-900 text-sm">{r.code}</span>
-                        {idx === 0 && (
-                          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-[#f7a501] text-slate-950 shrink-0">
-                            LIVE
-                          </span>
-                        )}
+                {selectedAgency.routes.map((r) => {
+                  const isActive = r.code === currentCode || r.id === currentCode;
+
+                  return (
+                    <div
+                      key={r.id}
+                      onClick={() => {
+                        handleBusClick(r.code || r.id);
+                      }}
+                      className={`shrink-0 flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border shadow-2xs hover:shadow-sm cursor-pointer transition-all group min-w-[165px] select-none ${
+                        isActive
+                          ? "bg-amber-50/80 border-[#f7a501] ring-2 ring-amber-300/60 shadow-xs"
+                          : "bg-white border-slate-200 hover:border-[#f7a501] hover:bg-amber-50/30"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center transition-colors shrink-0 ${
+                        isActive ? "bg-[#f7a501] text-slate-950" : "bg-slate-100 text-slate-600 group-hover:bg-[#f7a501]/20 group-hover:text-[#b17816]"
+                      }`}>
+                        <Bus className="w-4 h-4" />
                       </div>
-                      <span className="text-[11px] font-medium text-slate-500 block truncate max-w-[135px]" title={`To ${r.destination}`}>
-                        To {r.destination}
-                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-slate-900 text-sm">{r.code}</span>
+                          {isActive && (
+                            <span className="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-[#f7a501] text-slate-950 shrink-0 shadow-2xs">
+                              LIVE
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[11px] font-medium text-slate-500 block truncate max-w-[135px]" title={`To ${r.destination}`}>
+                          To {r.destination}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Chevron scroll buttons for Active Routes */}
