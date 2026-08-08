@@ -15,16 +15,63 @@ import {
   Zap,
 } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
+import { AGENCY_PRESETS } from "../lib/agencies";
 import type { TransitAgency } from "../lib/agencies";
 import { LiveSignalIcon } from "./LiveSignalIcon";
 
-import { formatBusShortName } from "./DashboardApp";
+
+// Local helper — avoids circular import with DashboardApp
+function formatBusShortName(codeOrId?: string): string {
+  if (!codeOrId) return "S26";
+  const clean = codeOrId.replace(/-dir[01]$/, "").trim();
+  if (clean === "13311") return "S26";
+  if (clean === "16917") return "21G";
+  if (clean === "15421") return "570";
+  return clean;
+}
+
 
 interface RouteDetailViewProps {
   data: TransitSnapshot;
   selectedAgency: TransitAgency;
   selectedRouteId?: string | null;
+  userLocation?: { lat: number; lon: number } | null;
   onBack: () => void;
+}
+
+function deduplicateStops<T extends { name: string; id?: string }>(stops: T[]): T[] {
+  return stops.reduce((acc: T[], curr) => {
+    const prev = acc[acc.length - 1];
+    const currName = (curr.name || "").trim().toLowerCase();
+    const prevName = (prev?.name || "").trim().toLowerCase();
+    if (!prev || (currName !== prevName && curr.id !== prev.id)) {
+      acc.push(curr);
+    }
+    return acc;
+  }, []);
+}
+
+function findRoute(selectedAgency: TransitAgency, selectedRouteId?: string | null) {
+  const code = selectedRouteId || "S26";
+
+  const enrichedMatch = selectedAgency.routes.find((r) => r.id === code || r.code === code);
+  const resolvedCode = enrichedMatch?.code || code;
+
+  // 1. Check AGENCY_PRESETS ground truth first
+  for (const agency of AGENCY_PRESETS) {
+    const r =
+      agency.routes.find((r) => r.code === code || r.id === code) ||
+      (resolvedCode !== code
+        ? agency.routes.find((r) => r.code === resolvedCode || r.id === resolvedCode)
+        : undefined);
+    if (r && r.coords.length > 0) return r;
+  }
+
+  // 2. Check selectedAgency (Neon DB enriched routes)
+  if (enrichedMatch && enrichedMatch.coords.length > 0) return enrichedMatch;
+
+  // 3. Fallback to default preset (S26) or first route
+  return AGENCY_PRESETS[0]?.routes[0] || selectedAgency.routes[0];
 }
 
 // ─── Chalo-style detail map ───────────────────────────────────────────────────
@@ -40,8 +87,8 @@ const DetailMap: React.FC<{
   const mapRef       = useRef<any>(null);
   const stopMarkerRef = useRef<any>(null); // highlighted stop marker
 
-  const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
-  const stops = route?.coords ?? [];
+  const route = findRoute(selectedAgency, selectedRouteId);
+  const stops = deduplicateStops(route?.coords ?? []);
 
   // ── Init / re-init when route changes ──────────────────────────────────────
   useEffect(() => {
@@ -248,10 +295,11 @@ const DetailMap: React.FC<{
 
       stopMarkerRef.current = marker;
 
-      // Only pan to stop when it was explicitly clicked (idx > 0 means user picked it,
-      // idx === 0 is the auto-selected first stop on mount — don’t override fitBounds)
-      if ((selectedStop.idx ?? 0) > 0) {
-        map.flyTo([selectedStop.lat, selectedStop.lon], 15, { animate: true, duration: 0.85 });
+      // Pan & zoom map to selected station whenever user clicks it
+      if (selectedStop && selectedStop.lat && selectedStop.lon) {
+        try {
+          map.flyTo([selectedStop.lat, selectedStop.lon], 15, { animate: true, duration: 0.85 });
+        } catch {}
       }
     });
   }, [selectedStop?.lat, selectedStop?.lon, selectedStop?.name, inboundSec, totalSec]);
@@ -381,12 +429,11 @@ const StopTimeline: React.FC<{
   vehiclePos: { lat: number; lon: number };
   inboundSec: number;
   totalSec: number;
-  selectedStopId: string | null;
+  selectedStop: { id?: string; name: string; lat: number; lon: number } | null;
   onSelectStop: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
   onOpenTimetable: (stop: TransitAgency["routes"][0]["coords"][0]) => void;
   userPos?: { lat: number; lon: number };
-}> = ({ stops, vehiclePos, inboundSec, totalSec, selectedStopId, onSelectStop, onOpenTimetable, userPos = { lat: 13.0400, lon: 80.1740 } }) => {
-  // Dynamically calculate which stop is closest to current vehicle position on map
+}> = ({ stops, vehiclePos, inboundSec, totalSec, selectedStop, onSelectStop, onOpenTimetable, userPos = { lat: 13.0302, lon: 80.1806 } }) => {
   const activeBusIdx = stops.reduce((closestIdx, currStop, i) => {
     const closestStop = stops[closestIdx];
     const distCurr = Math.hypot(currStop.lat - vehiclePos.lat, currStop.lon - vehiclePos.lon);
@@ -394,7 +441,6 @@ const StopTimeline: React.FC<{
     return distCurr < distClosest ? i : closestIdx;
   }, 0);
 
-  // Dynamically calculate which stop is closest to user location
   const nearestUserStopIdx = stops.reduce((closestIdx, currStop, i) => {
     const closestStop = stops[closestIdx];
     const distCurr = Math.hypot(currStop.lat - userPos.lat, currStop.lon - userPos.lon);
@@ -408,92 +454,114 @@ const StopTimeline: React.FC<{
   }
 
   return (
-    <div className="relative py-2">
-      {/* Chalo App Continuous Solid Left Axis Line */}
-      <div className="absolute left-[13px] top-4 bottom-6 w-[2px] bg-slate-800 z-0 pointer-events-none" />
-
-      <div className="space-y-4">
+    <div className="relative py-1">
+      <div className="flex flex-col">
         {stops.map((stop, idx) => {
           const isNearestBus = idx === activeBusIdx;
           const isUserNearestStop = idx === nearestUserStopIdx;
-          const isSelected = selectedStopId === stop.id;
+          const isSelected = selectedStop != null && (
+            (selectedStop.id && stop.id && selectedStop.id === stop.id) ||
+            (selectedStop.name && stop.name && selectedStop.name.trim().toLowerCase() === stop.name.trim().toLowerCase())
+          );
           const isLast = idx === stops.length - 1;
           const isFirst = idx === 0;
           const arrMin = Math.round((totalSec * (idx / Math.max(stops.length - 1, 1))) / 60);
 
           return (
             <div
-              key={stop.id}
+              key={stop.id || idx}
               onClick={() => onSelectStop(stop)}
-              className="relative z-10 flex items-start gap-3 cursor-pointer select-none group"
+              className={`relative flex gap-0 cursor-pointer select-none group transition-colors duration-150 ${
+                isSelected ? "bg-amber-50/50" : "hover:bg-slate-50/70"
+              } rounded-xl`}
             >
-              {/* Chalo App Timeline Circle Nodes with Live Bus Position Badge */}
-              <div className="w-[28px] shrink-0 flex items-center justify-center pt-1">
-                {isNearestBus ? (
-                  /* Live Bus Status Icon: Blue circular bus badge sitting directly on the line (Chalo Style) */
-                  <div className="relative z-20 flex items-center justify-center">
-                    <div className="w-6 h-6 rounded-full bg-blue-600 border-2 border-white shadow-md ring-4 ring-blue-100 flex items-center justify-center text-white shrink-0">
-                      <Bus className="w-3.5 h-3.5 text-white font-black" />
+              {/* ── Left column: connector line + node dot ── */}
+              <div className="relative w-7 shrink-0 flex flex-col items-center">
+                {/* Top connector segment (above dot) */}
+                <div
+                  className={`w-[2px] bg-slate-300 shrink-0 ${isFirst ? "opacity-0" : ""}`}
+                  style={{ height: 12 }}
+                />
+
+                {/* Node dot */}
+                <div className="relative z-10 shrink-0 flex items-center justify-center" style={{ width: 14, height: 14 }}>
+                  {isNearestBus ? (
+                    <div className="w-5 h-5 rounded-full bg-blue-600 border-[3px] border-white shadow-md ring-[3px] ring-blue-200 flex items-center justify-center shrink-0">
+                      <Bus className="w-2.5 h-2.5 text-white" />
                     </div>
-                  </div>
-                ) : isFirst ? (
-                  /* First Stop: Solid black filled circle */
-                  <div className="w-3.5 h-3.5 rounded-full bg-slate-900 border-2 border-slate-900 z-10" />
-                ) : isLast ? (
-                  /* Terminus Stop: Black flag circle node */
-                  <div className="w-4 h-4 rounded-full bg-slate-900 border-2 border-slate-900 z-10 flex items-center justify-center">
-                    <Flag className="w-2 h-2 text-white" />
-                  </div>
-                ) : (
-                  /* Intermediate Stop: Hollow Ring Circle sitting directly on the line */
-                  <div className={`w-3.5 h-3.5 rounded-full border-2 bg-white transition-colors z-10 ${
-                    isSelected ? "border-[#f7a501] ring-2 ring-amber-100" : "border-slate-800 group-hover:border-slate-900"
-                  }`} />
+                  ) : isFirst ? (
+                    <div className="w-3 h-3 rounded-full bg-slate-900 border-2 border-slate-900" />
+                  ) : isLast ? (
+                    <div className="w-3 h-3 rounded-full bg-slate-900 border-2 border-slate-900 flex items-center justify-center">
+                      <Flag className="w-1.5 h-1.5 text-white" />
+                    </div>
+                  ) : (
+                    <div className={`w-3 h-3 rounded-full border-2 bg-white transition-all duration-200 ${
+                      isSelected
+                        ? "border-amber-400 ring-[3px] ring-amber-200 scale-125"
+                        : "border-slate-500 group-hover:border-slate-700"
+                    }`} />
+                  )}
+                </div>
+
+                {/* Bottom connector segment (below dot, grows to fill remaining space) */}
+                {!isLast && (
+                  <div className="w-[2px] bg-slate-300 flex-1 min-h-[8px]" />
                 )}
               </div>
 
-              {/* Stop Content & Selected Action Card */}
-              <div className="flex-1 min-w-0 pr-1">
-                
-                {/* Green Nearest Bus Stop Pill (Chalo Style) — Shown for User's Nearest Stop */}
+              {/* ── Right column: stop content ── */}
+              <div className="flex-1 min-w-0 pl-2 pr-2 pt-[10px] pb-3">
+
+                {/* Nearest stop badge */}
                 {isUserNearestStop && (
-                  <div className="mb-1">
-                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[11px] font-bold">
+                  <div className="mb-1.5">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-wide uppercase">
+                      <MapPin className="w-2.5 h-2.5" />
                       Nearest bus stop
                     </span>
                   </div>
                 )}
 
-                {/* Stop Name & Report Issue Row */}
-                <div className="flex items-center justify-between gap-2">
-                  <span className={`text-slate-800 transition-colors ${
-                    isSelected ? "font-black text-base text-slate-900" : "font-semibold text-sm hover:text-slate-900"
+                {/* Stop name row */}
+                <div className="flex items-center justify-between gap-2 min-h-[20px]">
+                  <span className={`transition-all duration-150 leading-snug ${
+                    isSelected
+                      ? "font-bold text-[15px] text-slate-900"
+                      : "font-medium text-sm text-slate-700 group-hover:text-slate-900"
                   }`}>
                     {stop.name}
                   </span>
 
                   {isSelected && (
-                    <button className="text-[#f7a501] text-xs font-bold hover:underline shrink-0">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onOpenTimetable(stop); }}
+                      className="text-amber-500 hover:text-amber-600 text-[11px] font-semibold shrink-0 transition-colors"
+                    >
                       Report issue
                     </button>
                   )}
                 </div>
 
-                {/* Chalo Style Action Box ONLY when Selected */}
+                {/* Expanded action card */}
                 {isSelected && (
-                  <div className="mt-2.5 p-3 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-center justify-between gap-3">
-                    <span className="text-xs font-medium text-slate-500">
-                      {isNearestBus
-                        ? `Live vehicle approaching (${formatMin(inboundSec)})`
-                        : `Next arrival in ${arrMin} min`}
-                    </span>
+                  <div className="mt-2 p-3 rounded-xl bg-white border border-amber-200/80 shadow-sm flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-slate-800 leading-snug">
+                        {isNearestBus
+                          ? `Vehicle approaching · ${formatMin(inboundSec)} away`
+                          : `Next arrival in ${arrMin} min`}
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium mt-0.5">
+                        Stop {idx + 1} of {stops.length}
+                      </p>
+                    </div>
+
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenTimetable(stop);
-                      }}
-                      className="px-3 py-1.5 rounded-lg bg-amber-50 text-[#b17816] hover:bg-amber-100 text-xs font-bold transition-colors shrink-0"
+                      onClick={(e) => { e.stopPropagation(); onOpenTimetable(stop); }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 text-[12px] font-semibold transition-colors shrink-0 border border-amber-200/60"
                     >
+                      <Calendar className="w-3.5 h-3.5" />
                       View timetable
                     </button>
                   </div>
@@ -506,6 +574,7 @@ const StopTimeline: React.FC<{
       </div>
     </div>
   );
+
 };
 
 // ─── Main Route Detail View ───────────────────────────────────────────────────
@@ -513,15 +582,27 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
   data,
   selectedAgency,
   selectedRouteId,
+  userLocation,
   onBack,
 }) => {
-  const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
-  const stops = route?.coords ?? [];
+  const route = findRoute(selectedAgency, selectedRouteId);
+  // Memoized so SSE updates don’t create a new array ref every tick
+  const stops = React.useMemo(
+    () => deduplicateStops(route?.coords ?? []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedRouteId, selectedAgency.name, selectedAgency.city]
+  );
   const { T_total_sec, T_inbound_sec } = data.inbound;
 
-  const [userPos, setUserPos] = useState<{ lat: number; lon: number }>({ lat: 13.0400, lon: 80.1740 });
+  const [userPos, setUserPos] = useState<{ lat: number; lon: number }>(
+    userLocation || { lat: 13.0302, lon: 80.1806 }
+  );
 
   useEffect(() => {
+    if (userLocation) {
+      setUserPos(userLocation);
+      return;
+    }
     if (typeof window !== "undefined" && "geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setUserPos({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
@@ -529,7 +610,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
         { timeout: 5000 }
       );
     }
-  }, []);
+  }, [userLocation]);
 
   const nearestStopIdx = stops.reduce((closestIdx, currStop, i) => {
     const closestStop = stops[closestIdx];
@@ -541,6 +622,8 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
   const [selectedStop, setSelectedStop] = useState<typeof stops[0] | null>(stops[nearestStopIdx] ?? stops[0] ?? null);
   const [timetableStop, setTimetableStop] = useState<typeof stops[0] | null>(null);
 
+  // Auto-select nearest stop ONLY when route changes or user location changes
+  // NOT on every SSE tick (stops ref is now stable via useMemo)
   useEffect(() => {
     if (stops.length > 0) {
       const idx = stops.reduce((closestIdx, currStop, i) => {
@@ -551,7 +634,9 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
       }, 0);
       setSelectedStop(stops[idx] ?? stops[0]);
     }
-  }, [selectedRouteId, stops, userPos]);
+  // Only re-run when route id or userPos actually changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRouteId, userPos.lat, userPos.lon]);
 
   return (
     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-4 sm:p-6 space-y-6">
@@ -627,6 +712,42 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
                 </span>
               </div>
             </div>
+
+            {/* Passenger Density Bar */}
+            {(() => {
+              const band = data.inbound.occupancy_band;
+              const DCFG: Record<string, { label: string; sublabel: string; dot: string; bg: string; text: string; border: string; bar: string; barPct: number }> = {
+                SEATS_AVAILABLE: { label: "Seats Available", sublabel: "Low · Comfortable",      dot: "bg-emerald-500", bg: "bg-emerald-50", text: "text-emerald-800", border: "border-emerald-200", bar: "bg-emerald-500", barPct: 25 },
+                MODERATE:        { label: "Standing Room",   sublabel: "Medium · Standing space", dot: "bg-amber-400",   bg: "bg-amber-50",   text: "text-amber-800",   border: "border-amber-200",   bar: "bg-amber-400",   barPct: 50 },
+                STANDING_ROOM:   { label: "Almost Full",     sublabel: "High · Limited standing", dot: "bg-orange-500", bg: "bg-orange-50", text: "text-orange-800", border: "border-orange-200", bar: "bg-orange-500", barPct: 75 },
+                VERY_CROWDED:    { label: "Overcrowded",     sublabel: "No standing space",       dot: "bg-rose-500",   bg: "bg-rose-50",   text: "text-rose-800",   border: "border-rose-200",   bar: "bg-rose-500",   barPct: 100 },
+              };
+              const cfg = DCFG[band] ?? DCFG.SEATS_AVAILABLE;
+              return (
+                <div className={`mt-3 flex items-center gap-2.5 px-3 py-2.5 rounded-xl border ${cfg.bg} ${cfg.border}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-[12px] font-bold ${cfg.text} flex items-center gap-1.5`}>
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+                        Passenger Density · {cfg.label}
+                      </span>
+                      <span className={`text-[10px] font-semibold ${cfg.text} opacity-70`}>{cfg.sublabel}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-black/10 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${cfg.bar}`}
+                        style={{ width: `${cfg.barPct}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1">
+                      <span className="text-[9px] font-bold text-slate-400">Empty</span>
+                      <span className="text-[9px] font-bold text-slate-400">Seated (40)</span>
+                      <span className="text-[9px] font-bold text-slate-400">Full (55)</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
@@ -654,7 +775,7 @@ export const RouteDetailView: React.FC<RouteDetailViewProps> = ({
               vehiclePos={{ lat: data.vehicle.lat, lon: data.vehicle.lon }}
               inboundSec={T_inbound_sec}
               totalSec={T_total_sec}
-              selectedStopId={selectedStop?.id ?? null}
+              selectedStop={selectedStop}
               onSelectStop={(stop) => setSelectedStop(stop)}
               onOpenTimetable={(stop) => setTimetableStop(stop)}
               userPos={userPos}
