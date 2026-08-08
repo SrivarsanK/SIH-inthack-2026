@@ -1,4 +1,4 @@
-# 🚌 TransitSense
+# 🚌 Yara
 
 > **Smart India Hackathon (SIH) 2026 Public Transit Intelligence Platform**  
 > *Privacy-First, Offline-Tolerant, Low-Cost Predictive Transit Engine & Live Dashboard*
