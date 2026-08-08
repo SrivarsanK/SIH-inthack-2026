@@ -579,7 +579,46 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     return () => cleanups.forEach((fn) => fn());
   }, []);
 
+  const [activeRouteStops, setActiveRouteStops] = useState<Array<{ id: string; name: string; lat: number; lon: number }>>([]);
+
   const currentCode = activeBusCode || selectedRouteId || "S26";
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadStops = async () => {
+      const code = activeBusCode || selectedRouteId || "S26";
+      
+      const agencyMatch = selectedAgency.routes.find((r) => r.code === code || r.id === code);
+      if (agencyMatch && agencyMatch.coords && agencyMatch.coords.length > 0) {
+        if (isMounted) setActiveRouteStops(agencyMatch.coords);
+        return;
+      }
+
+      if (neonRoutes?.fetchStopsForRoute) {
+        const neonStops = await neonRoutes.fetchStopsForRoute(code);
+        if (neonStops && neonStops.length > 0 && isMounted) {
+          setActiveRouteStops(
+            neonStops.map((s: any) => ({
+              id: s.stop_id,
+              name: s.stop_name,
+              lat: typeof s.stop_lat === "string" ? parseFloat(s.stop_lat) : s.stop_lat,
+              lon: typeof s.stop_lon === "string" ? parseFloat(s.stop_lon) : s.stop_lon,
+            }))
+          );
+          return;
+        }
+      }
+
+      const presetMtc = AGENCY_PRESETS.find((a) => a.id === "mtc-chennai");
+      const presetMatch = presetMtc?.routes.find((r) => r.code === code || r.id === code);
+      if (presetMatch && presetMatch.coords.length > 0 && isMounted) {
+        setActiveRouteStops(presetMatch.coords);
+      }
+    };
+
+    loadStops();
+    return () => { isMounted = false; };
+  }, [activeBusCode, selectedRouteId, selectedAgency.routes, neonRoutes?.fetchStopsForRoute]);
 
   let matchedRoute = selectedAgency.routes.find((r) => r.code === currentCode || r.id === currentCode);
   if (!matchedRoute || matchedRoute.coords.length === 0) {
@@ -591,7 +630,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   }
 
   const route = matchedRoute;
-  const stops = route?.coords ?? [];
+  const stops = activeRouteStops.length > 0 ? activeRouteStops : (route?.coords ?? []);
   const { T_total_sec, T_outbound_sec, T_inbound_sec, occupancy_band } = data.inbound;
   const isDelayed = (data.inbound as any).is_delayed ?? false;
   const delayMin = (data.inbound as any).delay_min ?? 0;
