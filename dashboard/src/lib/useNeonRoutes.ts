@@ -8,12 +8,11 @@ export interface NeonRoute {
   route_long_name: string;
   route_type: number;
   agency_id: number;
-  // Normalized fields from the transit data normalization pipeline
-  canonical_code?: string;     // base route code with CT/service suffixes stripped
-  origin?: string;             // deterministically inferred from MIN stop_sequence
-  destination?: string;        // deterministically inferred from MAX stop_sequence
-  is_cut_trip?: boolean;       // true if route_short_name contains CT suffix
-  service_class?: string;      // Deluxe / Ordinary / Express / AC etc.
+  canonical_code?: string;
+  origin?: string;
+  destination?: string;
+  is_cut_trip?: boolean;
+  service_class?: string;
 }
 
 export interface NeonStop {
@@ -23,6 +22,15 @@ export interface NeonStop {
   stop_lon: number;
   stop_sequence?: number;
   arrival_time?: string;
+  distance_km?: string;
+  walk_min?: number;
+  buses?: Array<{
+    route_id: string;
+    code: string;
+    destination: string;
+    eta_min: number;
+    eta_time: string;
+  }>;
 }
 
 interface RouteStopsCache {
@@ -65,9 +73,10 @@ export function useNeonRoutes() {
       return stopsCache.current[cacheKey];
     }
     try {
+      const encodedId = encodeURIComponent(routeId);
       const url = direction !== undefined 
-        ? `${API_BASE}/api/routes/${routeId}/stops?direction=${direction}`
-        : `${API_BASE}/api/routes/${routeId}/stops`;
+        ? `${API_BASE}/api/routes/${encodedId}/stops?direction=${direction}`
+        : `${API_BASE}/api/routes/${encodedId}/stops`;
       const res = await fetch(url);
       const data = await res.json();
       const stops: NeonStop[] = data.stops || [];

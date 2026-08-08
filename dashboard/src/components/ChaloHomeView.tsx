@@ -582,32 +582,12 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   const currentCode = activeBusCode || selectedRouteId || "S26";
 
   let matchedRoute = selectedAgency.routes.find((r) => r.code === currentCode || r.id === currentCode);
-
-  // Dynamic fallback for local neighborhood buses near user location
   if (!matchedRoute || matchedRoute.coords.length === 0) {
-    const pStop1 = neonRoutes?.nearbyStops?.[0]?.stop_name || "SRM University";
-    const pStop2 = neonRoutes?.nearbyStops?.[1]?.stop_name || "Ramapuram Ashram";
-    const pStop3 = neonRoutes?.nearbyStops?.[2]?.stop_name || "Rayala Nagar";
-    const pStop4 = neonRoutes?.nearbyStops?.[3]?.stop_name || "INP Kovil Ramapuram";
-
-    matchedRoute = {
-      id: currentCode,
-      code: currentCode,
-      name: `Bus ${currentCode}: ${pStop1} → Valasaravakkam`,
-      origin: pStop1,
-      destination: "Valasaravakkam",
-      fare: 15,
-      totalStops: 6,
-      durationMin: 20,
-      coords: [
-        { id: "s1", name: pStop1, lat: 13.0330, lon: 80.1800 },
-        { id: "s2", name: pStop2, lat: 13.0350, lon: 80.1820 },
-        { id: "s3", name: pStop3, lat: 13.0370, lon: 80.1840 },
-        { id: "s4", name: pStop4, lat: 13.0390, lon: 80.1860 },
-        { id: "s5", name: "Valasaravakkam", lat: 13.0400, lon: 80.1740 },
-        { id: "s6", name: "Porur Junction", lat: 13.0350, lon: 80.1580 },
-      ],
-    };
+    const presetMtc = AGENCY_PRESETS.find((a) => a.id === "mtc-chennai");
+    const presetMatch = presetMtc?.routes.find((r) => r.code === currentCode || r.id === currentCode);
+    if (presetMatch && presetMatch.coords.length > 0) {
+      matchedRoute = presetMatch;
+    }
   }
 
   const route = matchedRoute;

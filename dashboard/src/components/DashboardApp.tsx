@@ -194,7 +194,8 @@ export const DashboardApp: React.FC = () => {
 
       setSelectedAgency(enriched);
       if (enrichedRoutes.length > 0) {
-        setSelectedRouteId(enrichedRoutes[0].id);
+        const defaultRoute = enrichedRoutes.find((r) => r.code === "S26" || r.id === "S26") || enrichedRoutes[0];
+        setSelectedRouteId((prev) => (prev && prev !== "mtc-21g" ? prev : defaultRoute.id));
       }
     };
 
