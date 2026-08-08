@@ -618,7 +618,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
     loadStops();
     return () => { isMounted = false; };
-  }, [activeBusCode, selectedRouteId, selectedAgency.routes, neonRoutes?.fetchStopsForRoute]);
+  }, [activeBusCode, selectedRouteId, selectedAgency.id]);
 
   let matchedRoute = selectedAgency.routes.find((r) => r.code === currentCode || r.id === currentCode);
   if (!matchedRoute || matchedRoute.coords.length === 0) {
@@ -627,6 +627,21 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
     if (presetMatch && presetMatch.coords.length > 0) {
       matchedRoute = presetMatch;
     }
+  }
+
+  if (!matchedRoute) {
+    const defaultPreset = AGENCY_PRESETS[0]?.routes[0];
+    matchedRoute = defaultPreset || {
+      id: "S26",
+      code: "S26",
+      name: "Bus S26: SRM University → Valasaravakkam",
+      origin: "SRM University",
+      destination: "Valasaravakkam",
+      fare: 15,
+      totalStops: 6,
+      durationMin: 20,
+      coords: [],
+    };
   }
 
   const route = matchedRoute;
