@@ -222,33 +222,62 @@ All services strictly adhere to locked contracts:
 
 ```
 SIH-inthack-2026/
-├── AGENTS.md                   # Root agent instructions & git rules
-├── PRODUCT.md                  # Impeccable product context & specifications
-├── README.md                   # Project overview & startup guide
-├── shared/
-│   └── constants.py            # Central shared constants
-├── simulator/                  # CH-1: Telemetry simulator & REST API
-│   ├── AGENTS.md
-│   ├── simulator.py
-│   ├── control_api.py
-│   └── route_geometry.py
+├── AGENTS.md                   # Master agent directive & git branching protocol
+├── README.md                   # Project overview & single-command bootstrap
+├── PRODUCT.md                  # Impeccable product brief
+├── requirements.txt            # Python dependencies
+├── run_local.py                # Python multi-process pipeline runner
+├── run_pipeline.ps1            # PowerShell pipeline launcher
+├── entrypoint.sh               # Docker container entrypoint
+├── Dockerfile                  # Container definition
+├── docker-compose.yml          # Container orchestration
+├── assets/                     # Branding logos & graphics
+│   └── logo/                   # Yara logo variants
+├── shared/                     # Shared immutable contracts & GTFS data
+│   ├── constants.py            # Central locked parameters (ports, topics, limits)
+│   ├── mqtt_broker.py          # Embedded local MQTT broker fallback
+│   └── data/                   # Chennai GTFS datasets (MTC & CMRL)
+├── simulator/                  # CH-1: Telemetry simulator & REST Control API
+│   ├── AGENTS.md               # CH-1 agent instructions
+│   ├── simulator.py            # 1Hz GTFS vehicle physics & state machine
+│   └── control_api.py          # Injection REST endpoints (:8001)
 ├── kalman_service/             # CH-2: Kalman sensor fusion engine
-│   ├── AGENTS.md
-│   ├── kalman.py
-│   ├── subscriber.py
-│   └── verify.py
-├── eta_engine/                 # CH-3: State machine, ETA & density API
-│   ├── AGENTS.md
-│   ├── state_store.py
-│   ├── consumers.py
-│   ├── eta.py
-│   ├── density.py
-│   └── api.py
-├── dashboard/                  # CH-4: Astro/React Leaflet dashboard UI
-│   ├── AGENTS.md
-│   ├── src/
-│   └── public/
-└── docs/                       # Literature reviews & research reports
+│   ├── AGENTS.md               # CH-2 agent instructions
+│   ├── kalman.py               # Pure-Python KalmanTracker filter
+│   ├── subscriber.py           # MQTT consumer & publisher
+│   ├── verify.py               # Fusion verification script
+│   └── test_edge_cases.py      # Sensor dropout test suite
+├── eta_engine/                 # CH-3: ETA calculator & density aggregator
+│   ├── AGENTS.md               # CH-3 agent instructions
+│   ├── api.py                  # FastAPI SSE streaming server (:8002)
+│   ├── consumers.py            # Multi-topic MQTT subscribers
+│   ├── eta.py                  # Compound ETA calculation & recovery
+│   ├── density.py              # Rolling MAC window density estimator
+│   └── state_store.py          # In-memory synchronized state store
+├── dashboard/                  # CH-4: Real-time web kiosk & control UI
+│   ├── AGENTS.md               # CH-4 agent instructions
+│   ├── astro.config.mjs        # Astro configuration
+│   ├── public/                 # Favicons and web assets
+│   └── src/
+│       ├── components/         # React UI components (Kiosk, Map, Inject, Timeline)
+│       ├── lib/                # SSE hooks & agency data
+│       └── pages/              # Astro pages (index, kiosk, admin)
+├── docs/                       # Project specifications & PRDs
+│   ├── README.md               # Documentation catalog
+│   ├── Bus_ETA_Hackathon_Simulation_PRD.md
+│   ├── Bus_ETA_App_PRD_Formulation.md
+│   ├── CODEBASE_REALITY_REPORT.md
+│   ├── DESIGN_BRIEF.md
+│   ├── POSTHOG_DESIGN_SPEC.md
+│   └── literature_reviews/     # Literature review PDFs
+└── research/                   # Research extraction pipeline & papers
+    ├── README.md               # Research toolkit overview
+    ├── download_worker.py      # arXiv PDF paper downloader
+    ├── research_workflow.py    # Methodology extraction & parsing
+    ├── run_research_workflow.py# Extraction pipeline runner
+    ├── downloads/              # Downloaded PDF papers
+    ├── markdown/               # Converted markdown files
+    └── findings/               # Extracted methodology notes & JSON
 ```
 
 ---
