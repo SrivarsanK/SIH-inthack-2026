@@ -9,14 +9,12 @@
 !.env.example
 deep_research_agent/.env
 
-# --- Research Outputs (generated, not source) ---
+# --- Research Outputs & Downloads (generated / heavy) ---
 uploads/
-visualizations/
+research/downloads/
+research/visualizations/
 deep_research_agent/uploads/
 deep_research_agent/visualizations/
-docs/deep_research_report.md
-test_report.md
-report.md
 
 # --- Python ---
 __pycache__/

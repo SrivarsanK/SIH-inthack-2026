@@ -192,16 +192,86 @@ When an agent receives this prompt (or any channel assignment request):
 
 ---
 
-## Channel-Specific Instructions
+## Channel-Specific Instructions & Directory Navigation
 
-Each channel folder has its own `AGENTS.md` with detailed per-channel rules. Read your channel's `AGENTS.md` **in addition to this root file**.
+Each channel folder has its own dedicated `AGENTS.md` with strict channel rules. Read your channel's instructions **in addition to this root file**.
 
-| Channel | Folder | Agent Instructions |
+| Channel / Area | Folder | Instructions & Purpose |
 |---|---|---|
-| CH-1 Simulator | `simulator/` | `simulator/AGENTS.md` |
-| CH-2 Kalman Fusion | `kalman_service/` | `kalman_service/AGENTS.md` |
-| CH-3 ETA Engine | `eta_engine/` | `eta_engine/AGENTS.md` |
-| CH-4 Dashboard | `dashboard/` | `dashboard/AGENTS.md` |
+| **CH-1 Simulator** | [`simulator/`](./simulator/) | [`simulator/AGENTS.md`](./simulator/AGENTS.md) — 1Hz telemetry publisher & fault injection API |
+| **CH-2 Kalman Fusion** | [`kalman_service/`](./kalman_service/) | [`kalman_service/AGENTS.md`](./kalman_service/AGENTS.md) — Noise suppression & trajectory smoothing |
+| **CH-3 ETA Engine** | [`eta_engine/`](./eta_engine/) | [`eta_engine/AGENTS.md`](./eta_engine/AGENTS.md) — Compounding ETA calculation & SSE stream |
+| **CH-4 Dashboard** | [`dashboard/`](./dashboard/) | [`dashboard/AGENTS.md`](./dashboard/AGENTS.md) — Kiosk display, mobile web view & judge controls |
+| **Shared Contracts** | [`shared/`](./shared/) | [`shared/constants.py`](./shared/constants.py) — Locked MQTT topics, ports & capacities |
+| **Documentation** | [`docs/`](./docs/) | [`docs/README.md`](./docs/README.md) — PRDs, specs, reality audit report & research |
+| **Research & Papers** | [`research/`](./research/) | [`research/README.md`](./research/README.md) — Paper extraction pipeline, downloads & notes |
+| **Scripts & GTFS** | [`scripts/`](./scripts/) | GTFS database import scripts & utilities |
+| **Assets & Branding** | [`assets/`](./assets/) | Official high-resolution logos & visuals |
+
+---
+
+## 🗺️ Project File Structure
+
+```
+SIH-inthack-2026/
+├── AGENTS.md                   # Master agent directive & git branching protocol
+├── README.md                   # Project overview & single-command bootstrap
+├── PRODUCT.md                  # Impeccable product brief
+├── requirements.txt            # Python dependencies
+├── run_local.py                # Python multi-process pipeline runner
+├── run_pipeline.ps1            # PowerShell pipeline launcher
+├── entrypoint.sh               # Docker container entrypoint
+├── Dockerfile                  # Container definition
+├── docker-compose.yml          # Container orchestration
+├── assets/                     # Branding logos & graphics
+│   └── logo/                   # Yara logo variants
+├── shared/                     # Shared immutable contracts & GTFS data
+│   ├── constants.py            # Central locked parameters (ports, topics, limits)
+│   ├── mqtt_broker.py          # Embedded local MQTT broker fallback
+│   └── data/                   # Chennai GTFS datasets (MTC & CMRL)
+├── simulator/                  # CH-1: Telemetry simulator & REST Control API
+│   ├── AGENTS.md               # CH-1 agent instructions
+│   ├── simulator.py            # 1Hz GTFS vehicle physics & state machine
+│   └── control_api.py          # Injection REST endpoints (:8001)
+├── kalman_service/             # CH-2: Kalman sensor fusion engine
+│   ├── AGENTS.md               # CH-2 agent instructions
+│   ├── kalman.py               # Pure-Python KalmanTracker filter
+│   ├── subscriber.py           # MQTT consumer & publisher
+│   ├── verify.py               # Fusion verification script
+│   └── test_edge_cases.py      # Sensor dropout test suite
+├── eta_engine/                 # CH-3: ETA calculator & density aggregator
+│   ├── AGENTS.md               # CH-3 agent instructions
+│   ├── api.py                  # FastAPI SSE streaming server (:8002)
+│   ├── consumers.py            # Multi-topic MQTT subscribers
+│   ├── eta.py                  # Compound ETA calculation & recovery
+│   ├── density.py              # Rolling MAC window density estimator
+│   ├── state_store.py          # In-memory synchronized state store
+│   └── neon_client.py          # Neon DB GTFS integration
+├── dashboard/                  # CH-4: Real-time web kiosk & control UI
+│   ├── AGENTS.md               # CH-4 agent instructions
+│   ├── astro.config.mjs        # Astro configuration
+│   ├── public/                 # Favicons and web assets
+│   └── src/
+│       ├── components/         # React UI components (Kiosk, Map, Inject, Timeline)
+│       ├── lib/                # SSE hooks & agency data
+│       └── pages/              # Astro pages (index, kiosk, admin)
+├── docs/                       # Project specifications & PRDs
+│   ├── README.md               # Documentation catalog
+│   ├── Bus_ETA_Hackathon_Simulation_PRD.md
+│   ├── Bus_ETA_App_PRD_Formulation.md
+│   ├── CODEBASE_REALITY_REPORT.md
+│   ├── DESIGN_BRIEF.md
+│   ├── POSTHOG_DESIGN_SPEC.md
+│   └── literature_reviews/     # Literature review PDFs
+└── research/                   # Research extraction pipeline & papers
+    ├── README.md               # Research toolkit overview
+    ├── download_worker.py      # arXiv PDF paper downloader
+    ├── research_workflow.py    # Methodology extraction & parsing
+    ├── run_research_workflow.py# Extraction pipeline runner
+    ├── downloads/              # Downloaded PDF papers
+    ├── markdown/               # Converted markdown files
+    └── findings/               # Extracted methodology notes & JSON
+```
 
 ---
 
