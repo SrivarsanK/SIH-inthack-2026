@@ -1,7 +1,20 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
 import type { TransitAgency } from "../lib/agencies";
-import { Bus, Clock, ShieldCheck, Navigation, Users, Radio, ArrowRight } from "lucide-react";
+import {
+  Bus,
+  Clock,
+  ShieldCheck,
+  Navigation,
+  Users,
+  Radio,
+  ArrowRight,
+  MapPin,
+  Sparkles,
+  AlertCircle,
+  Activity,
+  ArrowLeft
+} from "lucide-react";
 
 interface KioskDisplayViewProps {
   data: TransitSnapshot;
@@ -16,127 +29,353 @@ function formatMMSS(sec: number): string {
   return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
-export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({ data, onExit, selectedAgency }) => {
-  const { T_total_sec } = data.inbound;
+const DENSITY_CONFIG: Record<string, {
+  label: string;
+  sublabel: string;
+  dot: string;
+  bg: string;
+  text: string;
+  border: string;
+  bar: string;
+  barPct: number;
+}> = {
+  SEATS_AVAILABLE: {
+    label: "Seats Available",
+    sublabel: "Comfortable · Seats Open",
+    dot: "bg-emerald-500",
+    bg: "bg-emerald-50",
+    text: "text-emerald-800",
+    border: "border-emerald-200",
+    bar: "bg-emerald-500",
+    barPct: 25,
+  },
+  MODERATE: {
+    label: "Standing Room",
+    sublabel: "Moderate · Standing space",
+    dot: "bg-amber-400",
+    bg: "bg-amber-50",
+    text: "text-amber-800",
+    border: "border-amber-200",
+    bar: "bg-amber-400",
+    barPct: 50,
+  },
+  STANDING_ROOM: {
+    label: "Almost Full",
+    sublabel: "High Density · Limited space",
+    dot: "bg-orange-500",
+    bg: "bg-orange-50",
+    text: "text-orange-800",
+    border: "border-orange-200",
+    bar: "bg-orange-500",
+    barPct: 75,
+  },
+  VERY_CROWDED: {
+    label: "Overcrowded",
+    sublabel: "Capacity Full · No standing",
+    dot: "bg-rose-500",
+    bg: "bg-rose-50",
+    text: "text-rose-800",
+    border: "border-rose-200",
+    bar: "bg-rose-500",
+    barPct: 100,
+  },
+};
 
+export const KioskDisplayView: React.FC<KioskDisplayViewProps> = ({
+  data,
+  onExit,
+  selectedAgency,
+}) => {
+  const { T_total_sec, T_outbound_sec, T_dwell_sec, T_inbound_sec, occupancy_band } = data.inbound;
   const activeRoute = selectedAgency?.routes[0];
-  const routeCode = activeRoute?.code || "101";
-  const originName = activeRoute?.origin || "Station A";
-  const destName = activeRoute?.destination || "Station B";
-  const agencyName = selectedAgency?.shortName || "Yara";
+  const routeCode = activeRoute?.code || "S26";
+  const originName = activeRoute?.origin || "Ashok Pillar";
+  const destName = activeRoute?.destination || "Valasaravakkam";
+  const agencyName = selectedAgency?.shortName || "MTC Chennai";
 
-  const bandConfig = {
-    SEATS_AVAILABLE: { label: "Seats Available", bg: "bg-emerald-500", text: "text-emerald-950" },
-    MODERATE:        { label: "Moderate Crowd",   bg: "bg-amber-500",   text: "text-amber-950" },
-    STANDING_ROOM:   { label: "Standing Room",    bg: "bg-orange-500",  text: "text-orange-950" },
-    VERY_CROWDED:    { label: "Very Crowded",     bg: "bg-rose-500",    text: "text-white" },
-  }[data.inbound.occupancy_band] || { label: "Seats Available", bg: "bg-emerald-500", text: "text-emerald-950" };
+  const [timeStr, setTimeStr] = useState<string>("");
+
+  useEffect(() => {
+    const updateTime = () => {
+      setTimeStr(new Date().toLocaleTimeString("en-US", { hour12: false }));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const density = DENSITY_CONFIG[occupancy_band] || DENSITY_CONFIG.SEATS_AVAILABLE;
+  const leg = data.vehicle.leg;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans p-6 sm:p-8 flex flex-col justify-between select-none">
-      {/* Top Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-6">
+    <div className="min-h-screen bg-transparent text-slate-900 font-sans p-4 sm:p-6 lg:p-8 flex flex-col justify-between select-none max-w-7xl mx-auto space-y-6">
+      
+      {/* ── Top Kiosk Header Bar ────────────────────────────────────────── */}
+      <header className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200 shadow-sm px-6 py-4 flex items-center justify-between gap-4">
+        {/* Brand & Terminal Station */}
         <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#f7a501] flex items-center justify-center text-slate-950 shadow-xl shadow-amber-500/20 shrink-0">
-            <Bus className="w-7 h-7 text-slate-950" strokeWidth={2.5} />
-          </div>
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">{destName} Bus Kiosk</h1>
-              <span className="px-3 py-1 bg-amber-500/10 text-[#f7a501] border border-amber-500/30 rounded-xl text-xs font-black tracking-wider uppercase">
-                {agencyName} KIOSK
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-slate-400 font-semibold mt-0.5">SIH 2026 Continuous Transit Intelligence Network</p>
-          </div>
-        </div>
-
-        <button
-          onClick={onExit}
-          className="px-4 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-200 rounded-xl text-xs font-extrabold transition-all shadow-lg hover:border-slate-600"
-        >
-          Exit Kiosk Mode ✕
-        </button>
-      </div>
-
-      {/* Main Kiosk Dashboard Content */}
-      <div className="my-auto py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        {/* Left Column: Giant Live Arrival Countdown Display */}
-        <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800/90 rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col items-center text-center">
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 text-[#f7a501] border border-amber-500/30 text-xs font-black tracking-wider uppercase mb-4">
-            <Navigation className="w-4 h-4 text-[#f7a501]" />
-            <span>ROUTE {routeCode} — NEXT ARRIVAL</span>
-          </div>
-
-          <span className="text-xs text-slate-400 font-extrabold tracking-widest uppercase">ARRIVING IN</span>
-          <div className="text-8xl sm:text-9xl font-black font-mono tracking-tight text-white my-4 drop-shadow-2xl">
-            {formatMMSS(T_total_sec)}
-          </div>
-
-          <div className={`mt-2 px-6 py-3 rounded-2xl text-base font-black flex items-center gap-3 shadow-xl ${bandConfig.bg} ${bandConfig.text}`}>
-            <Users className="w-5 h-5" />
-            <span>{bandConfig.label.toUpperCase()} ONBOARD</span>
-          </div>
-        </div>
-
-        {/* Right Column: Upcoming Scheduled Departures List */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
-            <div className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-[#f7a501]" />
-              <h3 className="text-base font-black text-slate-200">Upcoming Departures ({destName})</h3>
-            </div>
-            <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-              <Radio className="w-3 h-3 animate-pulse text-emerald-400" />
-              Live Feed
+          <div className="flex items-center gap-2.5">
+            <img src="/yara_animated_logo.svg" alt="Yara" className="h-11 w-auto object-contain" />
+            <span className="px-2 py-0.5 rounded-md bg-[#f7a501] text-slate-950 text-[10px] font-black tracking-wider">
+              KIOSK
             </span>
           </div>
 
-          <div className="space-y-3">
-            <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-[#f7a501]/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-[#f7a501] text-slate-950 font-black text-sm flex items-center justify-center shrink-0">{routeCode}</span>
-                <div>
-                  <span className="font-extrabold text-white block text-base">Route {routeCode} to {originName}</span>
-                  <span className="text-xs text-amber-300 font-bold">Live Block Chained</span>
-                </div>
-              </div>
-              <span className="text-2xl font-black font-mono text-[#f7a501]">{formatMMSS(T_total_sec)}</span>
-            </div>
+          <div className="h-6 w-px bg-slate-200 hidden sm:block" />
 
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-slate-800 text-slate-200 font-extrabold text-sm flex items-center justify-center shrink-0">16C</span>
-                <div>
-                  <span className="font-extrabold text-slate-200 block text-base">Route 16C Express</span>
-                  <span className="text-xs text-slate-400 font-semibold">Scheduled Departure</span>
-                </div>
-              </div>
-              <span className="text-xl font-black font-mono text-slate-300">18:00</span>
+          <div className="hidden sm:flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#b17816]">
+              <MapPin className="w-4 h-4" />
             </div>
-
-            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="w-10 h-10 rounded-xl bg-slate-800 text-slate-200 font-extrabold text-sm flex items-center justify-center shrink-0">24E</span>
-                <div>
-                  <span className="font-extrabold text-slate-200 block text-base">Route 24E Feeder</span>
-                  <span className="text-xs text-slate-400 font-semibold">Scheduled Departure</span>
-                </div>
-              </div>
-              <span className="text-xl font-black font-mono text-slate-300">26:00</span>
+            <div>
+              <h1 className="text-base font-black text-slate-900 leading-tight">{originName} Terminal</h1>
+              <p className="text-xs font-semibold text-slate-500">{agencyName} • Platform 2</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Bottom Information Ticker */}
-      <div className="border-t border-slate-800/80 pt-4 flex items-center justify-between text-xs text-slate-400 font-semibold">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Real-time Kalman GNSS + Cell Triangulation Active</span>
+        {/* Right Status & Exit Button */}
+        <div className="flex items-center gap-3">
+          {/* Live Clock */}
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 shadow-2xs">
+            <Clock className="w-4 h-4 text-[#f7a501]" />
+            <span className="font-mono text-sm font-black text-slate-900">{timeStr || "12:00:00"}</span>
+          </div>
+
+          {/* Connection Beacon */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold shadow-2xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>LIVE FEED</span>
+          </div>
+
+          {/* Exit Button */}
+          <button
+            onClick={onExit}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-extrabold shadow-2xs transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Exit Kiosk</span>
+          </button>
         </div>
-        <div>Press ESC or click Exit to return to Command Center</div>
-      </div>
+      </header>
+
+      {/* ── Main Kiosk Content Grid ────────────────────────────────────── */}
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch flex-1">
+        
+        {/* ── Left 7 Cols: Giant Live Arrival Countdown Card ─────────── */}
+        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-6 sm:p-8 flex flex-col justify-between space-y-6">
+          
+          {/* Card Top: Route Info & Status */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-14 h-14 rounded-2xl bg-[#f7a501] text-slate-950 flex items-center justify-center font-black text-xl shadow-sm shrink-0">
+                {routeCode}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[11px] font-black uppercase">
+                    Next Approaching Bus
+                  </span>
+                  <span className="text-xs font-mono font-bold text-slate-400">
+                    GTFS Block: {data.vehicle.block_id}
+                  </span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-1 leading-tight">
+                  To {destName}
+                </h2>
+              </div>
+            </div>
+
+            <div className="text-right shrink-0">
+              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-50 text-blue-800 border border-blue-200 inline-flex items-center gap-1.5 shadow-2xs">
+                <Activity className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                {leg === "outbound" ? "Completing Route A" : leg === "dwell" ? "Terminal Halt" : "Inbound Leg"}
+              </span>
+            </div>
+          </div>
+
+          {/* Center: Giant Sunlight-Readable Countdown Timer */}
+          <div className="bg-slate-50/80 rounded-3xl border border-slate-200/80 p-6 sm:p-8 text-center space-y-2 flex flex-col items-center justify-center">
+            <span className="text-xs font-black text-slate-400 tracking-widest uppercase">
+              ESTIMATED ARRIVAL AT THIS STOP
+            </span>
+            <div className="text-7xl sm:text-8xl lg:text-9xl font-black font-mono tracking-tight text-slate-900 leading-none my-2 drop-shadow-xs">
+              {formatMMSS(T_total_sec)}
+            </div>
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-slate-600">
+              <Clock className="w-4 h-4 text-[#f7a501]" />
+              <span>
+                {Math.ceil(T_total_sec / 60)} min {T_total_sec % 60} sec remaining
+              </span>
+            </div>
+          </div>
+
+          {/* Compound ETA Breakdown Strip */}
+          <div className="grid grid-cols-3 gap-2 text-center border-t border-slate-100 pt-4">
+            <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase block">Outbound Leg</span>
+              <span className="text-sm font-black text-slate-800 font-mono">{formatMMSS(T_outbound_sec)}</span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase block">Terminal Halt</span>
+              <span className="text-sm font-black text-slate-800 font-mono">{formatMMSS(T_dwell_sec)}</span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-extrabold text-slate-400 uppercase block">Inbound Leg</span>
+              <span className="text-sm font-black text-slate-800 font-mono">{formatMMSS(T_inbound_sec)}</span>
+            </div>
+          </div>
+
+          {/* Live Passenger Density Bar */}
+          <div className={`p-4 rounded-2xl border ${density.bg} ${density.border} space-y-2`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className={`w-2.5 h-2.5 rounded-full ${density.dot}`} />
+                <span className={`text-sm font-extrabold ${density.text}`}>
+                  Passenger Density: {density.label}
+                </span>
+              </div>
+              <span className={`text-xs font-bold ${density.text} opacity-80`}>
+                {density.sublabel}
+              </span>
+            </div>
+            
+            <div className="h-2 rounded-full bg-black/10 overflow-hidden">
+              <div
+                className={`h-full rounded-full transition-all duration-700 ${density.bar}`}
+                style={{ width: `${density.barPct}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+              <span>Empty</span>
+              <span>Seated Capacity (40)</span>
+              <span>Standing Limit (55)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Right 5 Cols: Station Departures Board ──────────────────── */}
+        <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-6 flex flex-col justify-between space-y-4">
+          
+          {/* Departures Board Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-[#f7a501]/20 text-[#b17816] flex items-center justify-center">
+                <Radio className="w-4 h-4 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-slate-900">Station Departures</h3>
+                <p className="text-xs text-slate-400 font-medium">{originName} Terminal</p>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold">
+              Live Updates
+            </span>
+          </div>
+
+          {/* Departures List */}
+          <div className="space-y-3 flex-1 overflow-y-auto pr-0.5" style={{ maxHeight: "420px" }}>
+            
+            {/* 1. Live Approaching Vehicle (Hero Highlight) */}
+            <div className="p-3.5 rounded-2xl bg-amber-50/70 border-2 border-[#f7a501] ring-2 ring-amber-200/50 shadow-xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-[#f7a501] text-slate-950 font-black text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                  {routeCode}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-black text-slate-900 text-sm truncate">To {destName}</span>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[#f7a501] text-slate-950 shrink-0">
+                      LIVE
+                    </span>
+                  </div>
+                  <span className="text-xs text-[#b17816] font-bold block mt-0.5">
+                    Live Block Chained ({density.label})
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-right shrink-0">
+                <span className="text-xl font-black font-mono text-[#b17816] block leading-tight">
+                  {formatMMSS(T_total_sec)}
+                </span>
+                <span className="text-[10px] font-extrabold text-emerald-600">Approaching</span>
+              </div>
+            </div>
+
+            {/* 2. Other Scheduled Departures */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 transition-colors flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-sm flex items-center justify-center shrink-0">
+                  21G
+                </span>
+                <div className="min-w-0">
+                  <span className="font-extrabold text-slate-800 text-sm block truncate">To Broadway Terminus</span>
+                  <span className="text-xs text-slate-400 font-semibold block">Via Guindy Kathipara • Bay 3</span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-base font-black font-mono text-slate-700 block">18:30</span>
+                <span className="text-[10px] font-bold text-slate-400">On Schedule</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 transition-colors flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-sm flex items-center justify-center shrink-0">
+                  570
+                </span>
+                <div className="min-w-0">
+                  <span className="font-extrabold text-slate-800 text-sm block truncate">To Siruseri IT Park</span>
+                  <span className="text-xs text-slate-400 font-semibold block">Via OMR Express • Bay 1</span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-base font-black font-mono text-slate-700 block">25:00</span>
+                <span className="text-[10px] font-bold text-slate-400">On Schedule</span>
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 border border-slate-200 transition-colors flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-10 h-10 rounded-xl bg-slate-900 text-white font-black text-sm flex items-center justify-center shrink-0">
+                  101
+                </span>
+                <div className="min-w-0">
+                  <span className="font-extrabold text-slate-800 text-sm block truncate">To Thiruvottiyur B.T.</span>
+                  <span className="text-xs text-slate-400 font-semibold block">Via Central Station • Bay 4</span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-base font-black font-mono text-slate-700 block">32:00</span>
+                <span className="text-[10px] font-bold text-slate-400">On Schedule</span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Passenger Notice Callout */}
+          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-3 text-xs text-slate-600 font-semibold">
+            <Sparkles className="w-4 h-4 text-[#f7a501] shrink-0" />
+            <span>Digital Smart Pass NFC valid on all Deluxe & MTC Express routes.</span>
+          </div>
+
+        </div>
+      </main>
+
+      {/* ── Bottom Information Ticker Bar ───────────────────────────────── */}
+      <footer className="bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 px-5 py-3 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500 font-bold">
+        <div className="flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>Real-Time Kalman Sensor Fusion Active • Sub-2s Continuous ETA Engine</span>
+        </div>
+        <div className="text-slate-400 text-[11px]">
+          Smart India Hackathon 2026 • Yara Public Transit Intelligence Platform
+        </div>
+      </footer>
+
     </div>
   );
 };
+

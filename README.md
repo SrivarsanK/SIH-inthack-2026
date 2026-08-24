@@ -35,30 +35,39 @@ In public transit networks, when a bus runs late on **Route A (Outbound)**, pass
 
 ---
 
-## 🏗️ Pipeline Architecture
+## 🏗️ System Interaction Overview
 
 ```mermaid
-flowchart LR
-    subgraph Judges["🎮 Judge Controls"]
+flowchart TB
+    subgraph T1["🟠 Simulation & Sensor Tier (CH-1 :8001)"]
         direction TB
-        J1["⚠️ Delay"] ~~~ J2["📡 Dropout"] ~~~ J3["👥 Crowd"]
+        SIM["<b>Telemetry Simulator Engine</b><br/>• 1Hz GNSS Physics & GTFS Shape Tracking<br/>• WiFi MAC Sensor Simulator (mac_count)"]
+        API["<b>Fault Injection REST API</b><br/>• POST /inject/delay<br/>• POST /inject/dropout<br/>• POST /inject/crowd<br/>• POST /reset"]
     end
 
-    subgraph Pipeline["Data Pipeline"]
-        direction LR
-        SIM["🟠 CH-1\nSimulator\n:8001"]
-        KAL["🟡 CH-2\nKalman\nFusion"]
-        ETA["🔵 CH-3\nETA Engine\n:8002"]
+    subgraph T2["🟡 Message Broker Tier (:1883)"]
+        MQTT["<b>Mosquitto MQTT Broker</b><br/>• <code>fleet/bus_1/telemetry</code> (Raw GNSS)<br/>• <code>fleet/bus_1/fused</code> (Smoothed Position)"]
     end
 
-    DASH["🟢 CH-4\nDashboard\nUI"]
+    subgraph T3["🔵 Fusion & Intelligence Tier (CH-2 & CH-3)"]
+        direction TB
+        KAL["<b>CH-2: Kalman Fusion Service</b><br/>• 4D State Tracking [lat, lon, vx, vy]<br/>• Dead-Reckoning during Sensor Dropout<br/>• Covariance Noise Suppression"]
+        ETA["<b>CH-3: ETA & Density Engine (:8002)</b><br/>• Compound ETA: T_outbound + T_dwell + T_inbound<br/>• Dynamic Dwell Recovery Factor<br/>• 4-Band Occupancy Classifier<br/>• FastSSE Live Stream (<code>/stream</code>)"]
+    end
 
-    Judges -- "POST /inject/*" --> SIM
-    SIM -- "MQTT · telemetry · 1 Hz" --> KAL
-    SIM -- "MQTT · mac_count" --> ETA
-    KAL -- "MQTT · fused position" --> ETA
-    ETA -- "SSE · JSON stream · 1 Hz" --> DASH
-    DASH -. "inject buttons" .-> SIM
+    subgraph T4["🟢 Presentation & Control Tier (CH-4 :4321)"]
+        direction TB
+        UI["<b>Passenger App & Stop Kiosks</b><br/>• Moving Map & Station Timeline<br/>• Live ETA Countdown & Timetables<br/>• 4-Tier Passenger Density Badges"]
+        JUDGE["<b>Judge Fault Injection Panel</b><br/>• Delay, Dropout & Crowd Injections<br/>• Event Causality Log (&lt; 2s Latency)"]
+    end
+
+    SIM -->|"MQTT 1Hz Raw Telemetry"| MQTT
+    SIM -->|"MQTT Sensor mac_count"| ETA
+    MQTT -->|"Sub Raw Telemetry"| KAL
+    KAL -->|"Pub Fused Coordinates"| MQTT
+    MQTT -->|"Sub Fused Position"| ETA
+    ETA -->|"SSE /stream (Live JSON at 1Hz)"| UI
+    JUDGE -->|"HTTP POST /inject/*"| API
 ```
 
 ### Bus Lifecycle State Machine

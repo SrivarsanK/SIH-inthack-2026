@@ -22,6 +22,9 @@ import {
   Users,
   Wifi,
   Zap,
+  Sparkles,
+  Compass,
+  Terminal,
 } from "lucide-react";
 import type { TransitSnapshot } from "../lib/useTransitStream";
 import type { TransitAgency } from "../lib/agencies";
@@ -31,6 +34,7 @@ import { RouteDetailView } from "./RouteDetailView";
 import { RoutesListView } from "./RoutesListView";
 import { AgencySelector } from "./AgencySelector";
 import { LiveSignalIcon } from "./LiveSignalIcon";
+import { ProjectLandingHome } from "./ProjectLandingHome";
 
 interface ChaloHomeViewProps {
   data: TransitSnapshot;
@@ -554,7 +558,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   neonRoutes,
   onRouteSelect,
 }) => {
-  const [activeNav, setActiveNav] = useState<"home" | "track" | "routes" | "search">("home");
+  const [activeNav, setActiveNav] = useState<"overview" | "home" | "track" | "routes" | "search">("overview");
   const [timeStr, setTimeStr] = useState("");
   const [isAgencyDropdownOpen, setIsAgencyDropdownOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number; lon: number} | null>({ lat: 13.0302, lon: 80.1806 });
@@ -823,17 +827,19 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   );
 
   const TOP_NAV_ITEMS = [
-    { id: "home" as const, icon: Home, label: "Home" },
+    { id: "overview" as const, icon: Sparkles, label: "Overview" },
+    { id: "home" as const, icon: Compass, label: "Live Map" },
     { id: "track" as const, icon: Bus, label: "Track Bus" },
     { id: "routes" as const, icon: Star, label: "Routes" },
     { id: "search" as const, icon: Search, label: "Search" },
   ];
 
   const MOBILE_NAV_ITEMS = [
-    { id: "home" as const, icon: Home, label: "Home" },
+    { id: "overview" as const, icon: Sparkles, label: "Home" },
+    { id: "home" as const, icon: Compass, label: "Map" },
     { id: "track" as const, icon: Bus, label: "Track" },
-    { id: "search" as const, icon: Search, label: "Search" },
     { id: "routes" as const, icon: Star, label: "Routes" },
+    { id: "search" as const, icon: Search, label: "Search" },
   ];
 
   return (
@@ -844,7 +850,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       {/* MOBILE APP HEADER (Mobile/Tablet UI for < 1024px) */}
       <div className="lg:hidden flex items-center justify-between px-4 py-2.5 bg-white border-b border-slate-200 sticky top-0 z-40 shadow-2xs">
         <div className="flex items-center gap-2 select-none">
-          <img src="/logo.png" alt="Yara" className="h-9 w-auto object-contain" />
+          <img src="/yara_animated_logo.svg" alt="Yara" className="h-10 sm:h-11 w-auto object-contain transition-transform duration-300 hover:scale-105" />
         </div>
 
         <div className="flex items-center gap-2">
@@ -883,7 +889,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
               onClick={() => setActiveNav("home")}
               className="flex items-center gap-2.5 hover:opacity-90 transition-opacity"
             >
-              <img src="/logo.png" alt="Yara" className="h-10 sm:h-11 w-auto object-contain" />
+              <img src="/yara_animated_logo.svg" alt="Yara" className="h-10 sm:h-11 w-auto object-contain transition-transform duration-300 hover:scale-105" />
             </button>
 
             {/* Desktop Nav Links */}
@@ -910,6 +916,22 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
           {/* Right Header Actions */}
           <div className="flex items-center gap-2.5">
+            <a
+              href="/kiosk"
+              className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-xs font-extrabold text-slate-700 transition-colors shadow-2xs"
+            >
+              <Tv className="w-3.5 h-3.5 text-[#b17816]" />
+              <span>Kiosk</span>
+            </a>
+
+            <a
+              href="/admin"
+              className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-slate-200 bg-slate-900 hover:bg-slate-800 text-xs font-extrabold text-white transition-colors shadow-2xs"
+            >
+              <Terminal className="w-3.5 h-3.5 text-amber-400" />
+              <span>Judge Controls</span>
+            </a>
+
             <div className="relative">
               <button
                 onClick={() => setIsAgencyDropdownOpen(!isAgencyDropdownOpen)}
@@ -932,7 +954,19 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
       </header>
 
       {/* BODY CONTENT AREAS */}
+      {activeNav === "overview" && (
+        <div className="max-w-[1720px] mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+          <ProjectLandingHome
+            data={data}
+            isConnected={isConnected}
+            selectedAgency={selectedAgency}
+            onNavigateTab={(tab) => setActiveNav(tab)}
+          />
+        </div>
+      )}
+
       {activeNav === "search" && (
+
         <div className="max-w-[1600px] mx-auto w-full px-4 sm:px-6 py-6 flex-1">
           <SearchView
             selectedAgency={selectedAgency}
