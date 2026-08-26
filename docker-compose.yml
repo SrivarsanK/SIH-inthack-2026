@@ -1,12 +1,27 @@
 services:
+  db:
+    image: mysql:8.0
+    container_name: yara_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: yara_transit
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
   yara:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: yara-app
     ports:
-      - "4321:4321"   # Dashboard UI (http://localhost:4321)
-      - "8001:8001"   # CH-1 Simulator Control API (http://localhost:8001)
-      - "8002:8002"   # CH-3 ETA & Density Engine (http://localhost:8002)
-      - "1883:1883"   # Mosquitto MQTT Broker
+      - "4321:4321"
+      - "8001:8001"
+      - "8002:8002"
+      - "1883:1883"
     restart: unless-stopped
+
+volumes:
+  mysql_data:

@@ -1,0 +1,3 @@
+stop_id,stop_name,stop_lat,stop_lon  
+101,Kashmere Gate ISBT,28.6665,77.2332  
+102,Connaught Place,28.6315,77.2167 
