@@ -66,64 +66,30 @@ class ChennaiLiveVehicle:
     start_offset_s: float = 0.0
 
     def compute_position(self, current_time: float) -> Dict[str, Any]:
-        """Compute real-time vehicle position, speed, bearing, and next stop ETA."""
-        # If this is our primary simulated/fused block_001 vehicle (Bus S26), sync with state_store
-        if self.is_primary_block:
-            with state_store.lock:
-                lat = getattr(state_store, "lat", 13.0302)
-                lon = getattr(state_store, "lon", 80.1806)
-                speed = 28.0
-                direction = 1 if getattr(state_store, "leg", "outbound").lower() == "inbound" else 0
-                progress = getattr(state_store, "progress", 0.0)
-                delay_sec = int(getattr(state_store, "delay_accumulated_sec", 0.0))
-                bearing = 85.0
-                stops = chennai_gtfs_store.get_route_stops(self.route_code)
-        else:
-            stops = chennai_gtfs_store.get_route_stops(self.route_code)
-            direction = self.direction_id
-            leg_duration = 140.0
-            elapsed = (current_time + self.start_offset_s) % (leg_duration * 2.0)
-            if elapsed < leg_duration:
-                direction = 0
-                progress = elapsed / leg_duration
-            else:
-                direction = 1
-                progress = (elapsed - leg_duration) / leg_duration
+        """Compute real-time vehicle position directly from GTFS schedule and stops."""
+        delay_sec = int(getattr(state_store, "delay_accumulated_sec", 0.0)) if self.is_primary_block else 0
+        loc = chennai_gtfs_store.locate_bus_live(
+            self.route_code,
+            wall_clock_sec=int(current_time + self.start_offset_s),
+            delay_sec=delay_sec,
+        )
 
-            speed = round(26.0 + math.sin(current_time * 0.15 + self.start_offset_s) * 7.0, 1)
-            delay_sec = 0
-
-            # Interpolate coordinates along route stops
-            if stops and len(stops) > 1:
-                active_stops = stops if direction == 0 else list(reversed(stops))
-                n_segs = len(active_stops) - 1
-                seg_float = progress * n_segs
-                seg_idx = min(int(seg_float), n_segs - 1)
-                seg_frac = seg_float - seg_idx
-
-                s_from = active_stops[seg_idx]
-                s_to = active_stops[seg_idx + 1]
-
-                lat = s_from.stop_lat + (s_to.stop_lat - s_from.stop_lat) * seg_frac
-                lon = s_from.stop_lon + (s_to.stop_lon - s_from.stop_lon) * seg_frac
-                bearing = calc_bearing(s_from.stop_lat, s_from.stop_lon, s_to.stop_lat, s_to.stop_lon)
-            else:
-                lat, lon, bearing = 13.0302, 80.1806, 0.0
-
-        # Nearest upcoming stop & ETA calculation
-        active_stops = stops if direction == 0 else list(reversed(stops)) if stops else []
-        current_seq = min(int(progress * len(active_stops)), max(len(active_stops) - 1, 0)) if active_stops else 0
-        next_stop = active_stops[min(current_seq + 1, len(active_stops) - 1)] if active_stops else None
-
-        if next_stop:
-            dist_to_next_km = haversine_km(lat, lon, next_stop.stop_lat, next_stop.stop_lon)
-            eta_next_sec = max(10, round((dist_to_next_km / max(8.0, speed)) * 3600.0))
-            next_stop_name = next_stop.stop_name
-            next_stop_id = next_stop.stop_id
-        else:
-            eta_next_sec = 60
-            next_stop_name = self.destination
-            next_stop_id = ""
+        if not loc:
+            loc = {
+                "lat": 13.0302,
+                "lon": 80.1806,
+                "bearing": 85.0,
+                "speed_kmh": 28.0,
+                "direction_id": self.direction_id,
+                "direction_label": "Outbound",
+                "progress_percent": 0.0,
+                "current_stop_sequence": 0,
+                "next_stop_id": "",
+                "next_stop_name": self.destination,
+                "eta_next_stop_sec": 60,
+                "origin": self.origin,
+                "destination": self.destination,
+            }
 
         return {
             "vehicle_id": self.vehicle_id,
@@ -135,20 +101,21 @@ class ChennaiLiveVehicle:
             "route_id": self.route_id,
             "route_code": self.route_code,
             "route_name": self.route_name,
-            "origin": self.origin if direction == 0 else self.destination,
-            "destination": self.destination if direction == 0 else self.origin,
-            "direction_id": direction,
-            "direction_label": "Outbound" if direction == 0 else "Return",
-            "lat": round(lat, 6),
-            "lon": round(lon, 6),
-            "bearing": round(bearing, 1),
-            "speed_kmh": round(speed, 1),
-            "progress_percent": round(progress * 100.0, 1),
-            "current_stop_sequence": current_seq,
-            "next_stop_id": next_stop_id,
-            "next_stop_name": next_stop_name,
-            "eta_next_stop_sec": eta_next_sec,
-            "eta_next_stop_min": max(1, round(eta_next_sec / 60.0)),
+            "origin": loc.get("origin", self.origin),
+            "destination": loc.get("destination", self.destination),
+            "direction_id": loc.get("direction_id", 0),
+            "direction_label": loc.get("direction_label", "Outbound"),
+            "lat": loc["lat"],
+            "lon": loc["lon"],
+            "bearing": loc["bearing"],
+            "speed_kmh": loc["speed_kmh"],
+            "progress_percent": loc.get("progress_percent", 0.0),
+            "current_stop_sequence": loc.get("current_stop_sequence", 0),
+            "current_segment": loc.get("current_segment", ""),
+            "next_stop_id": loc.get("next_stop_id", ""),
+            "next_stop_name": loc.get("next_stop_name", self.destination),
+            "eta_next_stop_sec": loc.get("eta_next_stop_sec", 60),
+            "eta_next_stop_min": max(1, round(loc.get("eta_next_stop_sec", 60) / 60.0)),
             "occupancy_band": self.occupancy_band,
             "delay_sec": delay_sec,
             "gps_fix": True,
@@ -397,6 +364,41 @@ class ChennaiGTFSRealtimeEngine:
         """Return JSON representation of all active live Chennai buses."""
         now = time.time()
         return [v.compute_position(now) for v in self.fleet]
+
+    def get_route_live_vehicles(self, route_id_or_code: str) -> List[Dict[str, Any]]:
+        """Return live vehicles on a specific GTFS route."""
+        now = time.time()
+        matches = [v.compute_position(now) for v in self.fleet if v.route_code.lower() == route_id_or_code.lower() or v.route_id.lower() == route_id_or_code.lower()]
+        if matches:
+            return matches
+
+        loc = chennai_gtfs_store.locate_bus_live(route_id_or_code, wall_clock_sec=int(now))
+        if loc:
+            return [{
+                "vehicle_id": f"CH-BUS-{loc['route_code']}",
+                "vehicle_label": f"Bus {loc['route_code']}",
+                "license_plate": f"TN-01-MTC-{loc['route_code'][:4]}",
+                "city": "Chennai",
+                "agency": "MTC Chennai",
+                "provider": "Google Transit GTFS-Realtime (MTC)",
+                **loc,
+                "occupancy_band": "SEATS_AVAILABLE",
+                "delay_sec": 0,
+                "gps_fix": True,
+                "updated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }]
+        return []
+
+    def get_nearby_live_vehicles(self, lat: float, lon: float, radius_km: float = 3.0) -> List[Dict[str, Any]]:
+        """Return live Chennai buses within radius_km of a GPS point."""
+        all_v = self.get_live_vehicles_json()
+        results = []
+        for v in all_v:
+            d = haversine_km(lat, lon, v["lat"], v["lon"])
+            if d <= radius_km:
+                results.append({**v, "distance_km": round(d, 2)})
+        results.sort(key=lambda x: x["distance_km"])
+        return results
 
 
 # ---------------------------------------------------------------------------

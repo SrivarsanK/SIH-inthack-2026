@@ -381,6 +381,32 @@ def api_chennai_vehicle_live(vehicle_id: str) -> Dict[str, Any]:
     return {"error": f"Vehicle {vehicle_id} not found in live fleet", "city": "Chennai"}
 
 
+@app.get("/api/live/chennai/route/{route_id}")
+def api_chennai_route_live(route_id: str) -> Dict[str, Any]:
+    """Live GTFS-located vehicles on a specific Chennai route."""
+    vehicles = chennai_gtfs_rt.chennai_gtfs_rt_engine.get_route_live_vehicles(route_id)
+    return {
+        "city": "Chennai",
+        "route_id": route_id,
+        "total": len(vehicles),
+        "buses": vehicles,
+    }
+
+
+@app.get("/api/live/chennai/nearby")
+def api_chennai_nearby_live(lat: float = 13.0302, lon: float = 80.1806, radius_km: float = 3.0) -> Dict[str, Any]:
+    """Live GTFS-located buses in Chennai near a GPS coordinate."""
+    vehicles = chennai_gtfs_rt.chennai_gtfs_rt_engine.get_nearby_live_vehicles(lat, lon, radius_km)
+    return {
+        "city": "Chennai",
+        "lat": lat,
+        "lon": lon,
+        "radius_km": radius_km,
+        "total": len(vehicles),
+        "buses": vehicles,
+    }
+
+
 @app.get("/api/gtfs/chennai/routes")
 def api_gtfs_chennai_routes() -> Dict[str, Any]:
     """List of all GTFS static routes for Chennai."""
