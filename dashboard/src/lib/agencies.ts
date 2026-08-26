@@ -315,6 +315,23 @@ export const AGENCY_PRESETS: TransitAgency[] = [
     dataStatus: "Open Real-time Feed",
     routes: [
       {
+        id: "dtc-101",
+        code: "101",
+        name: "Route 101: Kashmere Gate to Mehrauli",
+        origin: "Kashmere Gate ISBT",
+        destination: "Mehrauli Terminal",
+        fare: 20,
+        totalStops: 5,
+        durationMin: 50,
+        coords: [
+          { id: "S1", name: "Kashmere Gate ISBT", lat: 28.6665, lon: 77.2332 },
+          { id: "S2", name: "Old Delhi Rly Station", lat: 28.6580, lon: 77.2300 },
+          { id: "S3", name: "Connaught Place", lat: 28.6315, lon: 77.2167 },
+          { id: "S4", name: "AIIMS Bus Stop", lat: 28.5672, lon: 77.2100 },
+          { id: "S5", name: "Mehrauli Terminal (Qutub)", lat: 28.5245, lon: 77.1855 }
+        ]
+      },
+      {
         id: "dtc-534",
         code: "534",
         name: "Route 534: Anand Vihar to Nehru Place",
@@ -329,6 +346,40 @@ export const AGENCY_PRESETS: TransitAgency[] = [
           { id: "S3", name: "ITO Crossing", lat: 28.6289, lon: 77.2415 },
           { id: "S4", name: "AIIMS Bus Stop", lat: 28.5672, lon: 77.2100 },
           { id: "S5", name: "Nehru Place Terminal", lat: 28.5492, lon: 77.2517 }
+        ]
+      },
+      {
+        id: "dtc-502",
+        code: "502",
+        name: "Route 502: Old Delhi Rly to Mehrauli",
+        origin: "Old Delhi Railway Station",
+        destination: "Mehrauli Terminal",
+        fare: 25,
+        totalStops: 5,
+        durationMin: 55,
+        coords: [
+          { id: "S1", name: "Old Delhi Rly Station", lat: 28.6580, lon: 77.2300 },
+          { id: "S2", name: "Red Fort (Lal Qila)", lat: 28.6562, lon: 77.2410 },
+          { id: "S3", name: "Delhi Gate", lat: 28.6405, lon: 77.2405 },
+          { id: "S4", name: "AIIMS Bus Stop", lat: 28.5672, lon: 77.2100 },
+          { id: "S5", name: "Mehrauli Terminal", lat: 28.5245, lon: 77.1855 }
+        ]
+      },
+      {
+        id: "dtc-73",
+        code: "73",
+        name: "Route 73: Anand Vihar to Shivaji Stadium",
+        origin: "Anand Vihar ISBT",
+        destination: "Shivaji Stadium",
+        fare: 15,
+        totalStops: 5,
+        durationMin: 35,
+        coords: [
+          { id: "S1", name: "Anand Vihar ISBT", lat: 28.6469, lon: 77.3160 },
+          { id: "S2", name: "Laxmi Nagar Metro", lat: 28.6304, lon: 77.2772 },
+          { id: "S3", name: "ITO Crossing", lat: 28.6289, lon: 77.2415 },
+          { id: "S4", name: "Connaught Place", lat: 28.6315, lon: 77.2167 },
+          { id: "S5", name: "Shivaji Stadium", lat: 28.6280, lon: 77.2110 }
         ]
       }
     ]
