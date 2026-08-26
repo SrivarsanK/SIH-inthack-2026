@@ -6,12 +6,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from eta_engine import delhi_live, eta_predictor, gtfs_loader, neon_client
+from eta_engine import chennai_gtfs, chennai_gtfs_rt, delhi_live, eta_predictor, gtfs_loader, neon_client
 from eta_engine.consumers import start_mqtt_consumer
 from eta_engine.density import clean_and_get_mac_count, map_mac_to_band
 from eta_engine.eta import calculate_eta_components, check_and_update_event_log
@@ -312,12 +312,123 @@ def api_live_buses(city: str = "Delhi") -> Dict[str, Any]:
             "total_active_buses": stats.get("total_vehicles", len(buses)),
             "buses": buses,
         }
+    elif city.lower() in ("chennai", "mtc", "cmrl"):
+        buses = chennai_gtfs_rt.chennai_gtfs_rt_engine.get_live_vehicles_json()
+        return {
+            "city": "Chennai",
+            "agency": "MTC Chennai",
+            "provider": "Google Transit GTFS-Realtime (MTC)",
+            "total_active_buses": len(buses),
+            "buses": buses,
+        }
     return {
         "city": city,
         "total_active_buses": 0,
         "buses": [],
     }
 
+
+# ---------------------------------------------------------------------------
+# Google Transit GTFS-Realtime Protocol Buffer Feeds (Chennai)
+# Official spec: https://developers.google.com/transit/gtfs-realtime
+# ---------------------------------------------------------------------------
+
+@app.get("/gtfs-rt/chennai/vehicle-positions.pb")
+def gtfs_rt_chennai_vehicle_positions() -> Response:
+    """Official Google Transit GTFS-Realtime VehiclePositions binary Protocol Buffer."""
+    pb_bytes = chennai_gtfs_rt.chennai_gtfs_rt_engine.get_vehicle_positions_pb()
+    return Response(content=pb_bytes, media_type="application/x-protobuf")
+
+
+@app.get("/gtfs-rt/chennai/trip-updates.pb")
+def gtfs_rt_chennai_trip_updates() -> Response:
+    """Official Google Transit GTFS-Realtime TripUpdates binary Protocol Buffer."""
+    pb_bytes = chennai_gtfs_rt.chennai_gtfs_rt_engine.get_trip_updates_pb()
+    return Response(content=pb_bytes, media_type="application/x-protobuf")
+
+
+@app.get("/gtfs-rt/chennai/alerts.pb")
+def gtfs_rt_chennai_alerts() -> Response:
+    """Official Google Transit GTFS-Realtime ServiceAlerts binary Protocol Buffer."""
+    pb_bytes = chennai_gtfs_rt.chennai_gtfs_rt_engine.get_alerts_pb()
+    return Response(content=pb_bytes, media_type="application/x-protobuf")
+
+
+# ---------------------------------------------------------------------------
+# Chennai GTFS-RT JSON REST Endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/live/chennai")
+def api_chennai_live() -> Dict[str, Any]:
+    """JSON representation of all active live Chennai buses with stop ETAs, speed, occupancy, and GPS fix."""
+    vehicles = chennai_gtfs_rt.chennai_gtfs_rt_engine.get_live_vehicles_json()
+    return {
+        "city": "Chennai",
+        "agency": "MTC Chennai",
+        "provider": "Google Transit GTFS-Realtime (MTC)",
+        "total_active_buses": len(vehicles),
+        "buses": vehicles,
+    }
+
+
+@app.get("/api/live/chennai/{vehicle_id}")
+def api_chennai_vehicle_live(vehicle_id: str) -> Dict[str, Any]:
+    """JSON telemetry for a specific Chennai vehicle."""
+    vehicles = chennai_gtfs_rt.chennai_gtfs_rt_engine.get_live_vehicles_json()
+    for v in vehicles:
+        if v["vehicle_id"] == vehicle_id or v["route_code"].lower() == vehicle_id.lower() or v["license_plate"].lower() == vehicle_id.lower():
+            return {"city": "Chennai", "vehicle": v}
+    return {"error": f"Vehicle {vehicle_id} not found in live fleet", "city": "Chennai"}
+
+
+@app.get("/api/gtfs/chennai/routes")
+def api_gtfs_chennai_routes() -> Dict[str, Any]:
+    """List of all GTFS static routes for Chennai."""
+    routes_list = [
+        {
+            "route_id": r.route_id,
+            "route_short_name": r.route_short_name,
+            "route_long_name": r.route_long_name,
+            "route_type": r.route_type,
+            "origin": r.origin,
+            "destination": r.destination,
+            "canonical_code": r.canonical_code,
+        }
+        for r in chennai_gtfs.chennai_gtfs_store.routes.values()
+    ]
+    return {"city": "Chennai", "total": len(routes_list), "routes": routes_list}
+
+
+@app.get("/api/gtfs/chennai/routes/{route_id}/stops")
+def api_gtfs_chennai_route_stops(route_id: str) -> Dict[str, Any]:
+    """Ordered stops for a Chennai GTFS route."""
+    stops = chennai_gtfs.chennai_gtfs_store.get_route_stops(route_id)
+    return {
+        "city": "Chennai",
+        "route_id": route_id,
+        "total": len(stops),
+        "stops": [
+            {
+                "stop_id": s.stop_id,
+                "stop_name": s.stop_name,
+                "stop_lat": s.stop_lat,
+                "stop_lon": s.stop_lon,
+            }
+            for s in stops
+        ],
+    }
+
+
+@app.get("/api/gtfs/chennai/stops/nearby")
+def api_gtfs_chennai_nearby_stops(lat: float = 13.0302, lon: float = 80.1806, radius_km: float = 3.0) -> Dict[str, Any]:
+    """Find nearest stops in Chennai to GPS coordinates."""
+    stops = chennai_gtfs.chennai_gtfs_store.get_nearby_stops(lat, lon, radius_km)
+    return {"city": "Chennai", "lat": lat, "lon": lon, "total": len(stops), "stops": stops}
+
+
+# ---------------------------------------------------------------------------
+# Delhi Endpoints
+# ---------------------------------------------------------------------------
 
 @app.get("/api/delhi/stops")
 def api_delhi_stops() -> Dict[str, Any]:
@@ -348,4 +459,5 @@ def api_delhi_stats() -> Dict[str, Any]:
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=ETA_API_PORT)
+
 
