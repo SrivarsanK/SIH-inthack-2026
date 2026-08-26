@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from eta_engine import eta_predictor, gtfs_loader, neon_client
+from eta_engine import delhi_live, eta_predictor, gtfs_loader, neon_client
 from eta_engine.consumers import start_mqtt_consumer
 from eta_engine.density import clean_and_get_mac_count, map_mac_to_band
 from eta_engine.eta import calculate_eta_components, check_and_update_event_log
@@ -229,5 +229,123 @@ def api_stops_nearby(lat: float = 0.0, lon: float = 0.0, limit: int = 5) -> Dict
         return {"error": str(err), "stops": []}
 
 
+# ---------------------------------------------------------------------------
+# Delhi Live Telemetry & OTD Endpoints (Real GTFS-Realtime)
+# ---------------------------------------------------------------------------
+
+@app.on_event("startup")
+def startup_delhi_poller() -> None:
+    """Start the OTD Delhi GTFS-Realtime background poller."""
+    try:
+        store = delhi_live.get_store()
+        print(f"[api] OTD Delhi live poller started (interval={delhi_live.POLL_INTERVAL_SEC}s)")
+    except Exception as exc:
+        print(f"[api] OTD Delhi poller failed to start: {exc}")
+
+
+@app.get("/api/live/delhi")
+def api_delhi_live(limit: int = 0) -> Dict[str, Any]:
+    """Return real-time GPS positions for all active Delhi buses from OTD.
+    Optional ?limit=N to cap results (default: all ~4800+ vehicles)."""
+    buses = delhi_live.fetch_delhi_live_telemetry()
+    if limit > 0:
+        buses = buses[:limit]
+    stats = delhi_live.get_delhi_stats()
+    return {
+        "city": "Delhi",
+        "agency": "DTC Delhi",
+        "provider": "Delhi Open Transit Data (OTD)",
+        "source": "https://otd.delhi.gov.in",
+        "total_active_buses": stats.get("total_vehicles", len(buses)),
+        "total_routes": stats.get("total_routes", 0),
+        "feed_timestamp": stats.get("feed_timestamp", 0),
+        "returned": len(buses),
+        "buses": buses,
+    }
+
+
+@app.get("/api/live/delhi/{bus_id}")
+def api_delhi_bus_live(bus_id: str) -> Dict[str, Any]:
+    """Return real-time telemetry for a specific Delhi bus (by registration plate)."""
+    bus = delhi_live.fetch_delhi_bus(bus_id)
+    if not bus:
+        return {"error": f"Bus {bus_id} not found in live feed", "city": "Delhi"}
+    return {"city": "Delhi", "bus": bus}
+
+
+@app.get("/api/live/delhi/route/{route_id}")
+def api_delhi_route_vehicles(route_id: str) -> Dict[str, Any]:
+    """Return all live vehicles on a specific OTD route ID."""
+    buses = delhi_live.fetch_delhi_route_vehicles(route_id)
+    return {
+        "city": "Delhi",
+        "route_id": route_id,
+        "total": len(buses),
+        "buses": buses,
+    }
+
+
+@app.get("/api/live/delhi/nearby")
+def api_delhi_nearby(lat: float = 28.6315, lon: float = 77.2167, radius_km: float = 2.0) -> Dict[str, Any]:
+    """Return live buses near a GPS coordinate within radius_km."""
+    buses = delhi_live.fetch_delhi_nearby(lat, lon, radius_km)
+    return {
+        "city": "Delhi",
+        "lat": lat,
+        "lon": lon,
+        "radius_km": radius_km,
+        "total": len(buses),
+        "buses": buses,
+    }
+
+
+@app.get("/api/live/buses")
+def api_live_buses(city: str = "Delhi") -> Dict[str, Any]:
+    """Multi-city live bus telemetry endpoint."""
+    if city.lower() in ("delhi", "new delhi", "dtc"):
+        buses = delhi_live.fetch_delhi_live_telemetry()
+        stats = delhi_live.get_delhi_stats()
+        return {
+            "city": "Delhi",
+            "agency": "DTC Delhi",
+            "provider": "Delhi Open Transit Data (OTD)",
+            "total_active_buses": stats.get("total_vehicles", len(buses)),
+            "buses": buses,
+        }
+    return {
+        "city": city,
+        "total_active_buses": 0,
+        "buses": [],
+    }
+
+
+@app.get("/api/delhi/stops")
+def api_delhi_stops() -> Dict[str, Any]:
+    """Return registered major Delhi stops."""
+    stops = delhi_live.get_delhi_stops()
+    return {"city": "Delhi", "total": len(stops), "stops": stops}
+
+
+@app.get("/api/delhi/routes")
+def api_delhi_routes() -> Dict[str, Any]:
+    """Return all active OTD route IDs with live vehicles."""
+    store = delhi_live.get_store()
+    store.ensure_fresh()
+    route_ids = store.get_route_ids()
+    return {
+        "city": "Delhi",
+        "provider": "Delhi Open Transit Data (OTD)",
+        "total": len(route_ids),
+        "route_ids": route_ids,
+    }
+
+
+@app.get("/api/delhi/stats")
+def api_delhi_stats() -> Dict[str, Any]:
+    """Return OTD feed stats: vehicle count, route count, last fetch time."""
+    return delhi_live.get_delhi_stats()
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=ETA_API_PORT)
+
