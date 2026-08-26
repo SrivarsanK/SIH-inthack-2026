@@ -35,6 +35,8 @@ import { RoutesListView } from "./RoutesListView";
 import { AgencySelector } from "./AgencySelector";
 import { LiveSignalIcon } from "./LiveSignalIcon";
 import { ProjectLandingHome } from "./ProjectLandingHome";
+import { useDelhiLive } from "../lib/useDelhiLive";
+import type { DelhiLiveBus } from "../lib/useDelhiLive";
 
 interface ChaloHomeViewProps {
   data: TransitSnapshot;
@@ -217,6 +219,7 @@ const ChaloMap: React.FC<{
   userLocation?: { lat: number; lon: number } | null;
   nearbyStops?: any[];
   mode?: "nearby" | "route";
+  delhiBuses?: DelhiLiveBus[];
 }> = ({
   data,
   selectedAgency,
@@ -224,6 +227,7 @@ const ChaloMap: React.FC<{
   userLocation,
   nearbyStops = [],
   mode = "route",
+  delhiBuses = [],
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -231,6 +235,7 @@ const ChaloMap: React.FC<{
 
   const route = selectedAgency.routes.find((r) => r.id === selectedRouteId || r.code === selectedRouteId) ?? selectedAgency.routes[0];
   const stops = route?.coords ?? [];
+  const isDelhi = selectedAgency.id === "dtc-delhi" || selectedAgency.city.toLowerCase().includes("delhi");
 
   useEffect(() => {
     if (typeof window === "undefined" || !containerRef.current) return;
@@ -245,8 +250,8 @@ const ChaloMap: React.FC<{
       }
 
       // --- Nearby Mode vs Route Mode Center & Zoom ---
-      const defaultUserLat = userLocation?.lat ?? 13.0302;
-      const defaultUserLon = userLocation?.lon ?? 80.1806;
+      const defaultUserLat = isDelhi ? (stops[0]?.lat ?? 28.6315) : (userLocation?.lat ?? 13.0302);
+      const defaultUserLon = isDelhi ? (stops[0]?.lon ?? 77.2167) : (userLocation?.lon ?? 80.1806);
 
       const center: [number, number] = mode === "nearby"
         ? [defaultUserLat, defaultUserLon]
@@ -258,7 +263,7 @@ const ChaloMap: React.FC<{
       const disableInteraction = mode === "nearby" && isMobileDevice;
       const map = L.map(containerRef.current!, {
         center,
-        zoom: mode === "nearby" ? 16 : 13,
+        zoom: mode === "nearby" ? 14.5 : 13,
         zoomControl: false,
         attributionControl: false,
         dragging: !disableInteraction,
@@ -287,11 +292,11 @@ const ChaloMap: React.FC<{
         const uLat = defaultUserLat;
         const uLon = defaultUserLon;
 
-        // Walking radius halo (350m radius)
+        // Walking radius halo (500m radius)
         L.circle([uLat, uLon], {
-          radius: 350,
-          color: "#059669",
-          fillColor: "#10b981",
+          radius: 500,
+          color: isDelhi ? "#16a34a" : "#059669",
+          fillColor: isDelhi ? "#22c55e" : "#10b981",
           fillOpacity: 0.07,
           weight: 1.5,
           dashArray: "4, 6",
@@ -301,9 +306,9 @@ const ChaloMap: React.FC<{
         const userIcon = L.divIcon({
           className: "",
           html: `<div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center">
-            <div style="position:absolute;inset:0;border-radius:50%;background:rgba(16,185,129,0.25);animation:ping 2.2s cubic-bezier(0,0,0.2,1) infinite"></div>
-            <div style="position:absolute;inset:6px;border-radius:50%;background:rgba(16,185,129,0.4)"></div>
-            <div style="position:relative;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,#10b981,#059669);border:3px solid #ffffff;box-shadow:0 3px 10px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center">
+            <div style="position:absolute;inset:0;border-radius:50%;background:${isDelhi ? 'rgba(34,197,94,0.25)' : 'rgba(16,185,129,0.25)'};animation:ping 2.2s cubic-bezier(0,0,0.2,1) infinite"></div>
+            <div style="position:absolute;inset:6px;border-radius:50%;background:${isDelhi ? 'rgba(34,197,94,0.4)' : 'rgba(16,185,129,0.4)'}"></div>
+            <div style="position:relative;width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,${isDelhi ? '#22c55e,#16a34a' : '#10b981,#059669'});border:3px solid #ffffff;box-shadow:0 3px 10px rgba(5,150,105,0.4);display:flex;align-items:center;justify-content:center">
               <div style="width:7px;height:7px;border-radius:50%;background:#ffffff"></div>
             </div>
           </div>`,
@@ -312,15 +317,17 @@ const ChaloMap: React.FC<{
         });
         L.marker([uLat, uLon], { icon: userIcon, zIndexOffset: 1000 })
           .addTo(map)
-          .bindPopup("<div style='font-family:sans-serif;padding:2px'><b style='font-size:13px;color:#0f172a'>📍 Your Current Location</b><br/><span style='font-size:11px;color:#64748b'>Ramapuram, Chennai</span></div>");
+          .bindPopup(`<div style='font-family:sans-serif;padding:2px'><b style='font-size:13px;color:#0f172a'>📍 Your Location</b><br/><span style='font-size:11px;color:#64748b'>${isDelhi ? 'Connaught Place, New Delhi' : 'Ramapuram, Chennai'}</span></div>`);
 
         // Fallback offset positions only if ground-truth coordinates are completely missing
-        const stopPositions = [
-          { lat: uLat + 0.0018, lon: uLon - 0.0018 },
-          { lat: uLat - 0.0022, lon: uLon + 0.0028 },
-          { lat: uLat + 0.0025, lon: uLon + 0.0032 },
-          { lat: uLat + 0.0042, lon: uLon + 0.0015 },
-        ];
+        const stopPositions = isDelhi
+          ? stops.map((s) => ({ lat: s.lat, lon: s.lon, name: s.name }))
+          : [
+              { lat: uLat + 0.0018, lon: uLon - 0.0018 },
+              { lat: uLat - 0.0022, lon: uLon + 0.0028 },
+              { lat: uLat + 0.0025, lon: uLon + 0.0032 },
+              { lat: uLat + 0.0042, lon: uLon + 0.0015 },
+            ];
 
         nearbyStops.forEach((ns: any, idx: number) => {
           const isPrimary = idx === 0;
@@ -439,12 +446,25 @@ const ChaloMap: React.FC<{
         };
 
         // Impeccable Live Buses: Floating vehicle cards colored by occupancy level
-        const liveBuses = [
-          { code: "S26", dest: "Valasaravakkam", lat: uLat + 0.0035, lon: uLon - 0.0036, eta: 2, occupancy: "low" },
-          { code: "26G R", dest: "Ramapuram", lat: uLat - 0.0032, lon: uLon + 0.0040, eta: 3, occupancy: "medium" },
-          { code: "S86", dest: "Ramapuram", lat: uLat + 0.0038, lon: uLon + 0.0022, eta: 2, occupancy: "high" },
-          { code: "70CCT R", dest: "Ramapuram", lat: uLat - 0.0026, lon: uLon - 0.0042, eta: 4, occupancy: "overcrowded" },
-        ];
+        const liveBuses = isDelhi && delhiBuses && delhiBuses.length > 0
+          ? delhiBuses.slice(0, 25).map((b) => ({
+              code: b.route_id ? `Rt ${b.route_id}` : (b.vehicle_label || b.bus_id),
+              dest: b.nearest_stop_name ? `Near ${b.nearest_stop_name}` : "Delhi Transit",
+              lat: b.lat,
+              lon: b.lon,
+              eta: b.eta_nearest_stop_min > 0 ? b.eta_nearest_stop_min : 3,
+              speed: b.speed_kmh,
+              segment: b.bus_id,
+              occupancy: b.speed_kmh > 20 ? "low" : b.speed_kmh > 5 ? "medium" : "high"
+            }))
+          : isDelhi
+          ? []
+          : [
+              { code: "S26", dest: "Valasaravakkam", lat: uLat + 0.0035, lon: uLon - 0.0036, eta: 2, speed: 24.0, segment: "SRM → Valasaravakkam", occupancy: "low" },
+              { code: "26G R", dest: "Ramapuram", lat: uLat - 0.0032, lon: uLon + 0.0040, eta: 3, speed: 27.5, segment: "Ashok Pillar → Ramapuram", occupancy: "medium" },
+              { code: "S86", dest: "Ramapuram", lat: uLat + 0.0038, lon: uLon + 0.0022, eta: 2, speed: 29.0, segment: "Porur → SRM", occupancy: "high" },
+              { code: "70CCT R", dest: "Ramapuram", lat: uLat - 0.0026, lon: uLon - 0.0042, eta: 4, speed: 22.0, segment: "Guindy → Ramapuram", occupancy: "overcrowded" },
+            ];
 
         liveBuses.forEach((b) => {
           const occ = OCCUPANCY_CONFIG[b.occupancy] || OCCUPANCY_CONFIG.low;
@@ -465,7 +485,7 @@ const ChaloMap: React.FC<{
 
           L.marker([b.lat, b.lon], { icon: liveBusIcon, zIndexOffset: 800 })
             .addTo(map)
-            .bindPopup(`<div style="min-width:160px;font-family:sans-serif;padding:3px"><b style="font-size:13px;color:#0f172a">🚌 Bus ${b.code}</b><br/><span style="color:#64748b;font-size:11px">To ${b.dest}</span><br/><div style="margin-top:5px;display:flex;align-items:center;gap:6px"><span style="color:#0f172a;font-weight:800;font-size:12px">ETA: ${b.eta} min</span><span style="background:${occ.badgeBg};color:${occ.badgeText};border:1px solid ${occ.badgeBorder};padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800">${occ.sub}</span></div></div>`);
+            .bindPopup(`<div style="min-width:170px;font-family:sans-serif;padding:3px"><b style="font-size:13px;color:#0f172a">🚌 Bus ${b.code} ${isDelhi ? '(DTC OTD)' : ''}</b><br/><span style="color:#64748b;font-size:11px">To ${b.dest}</span><br/><span style="color:#0284c7;font-size:10px;font-weight:700">${b.segment || ''}</span><br/><div style="margin-top:5px;display:flex;align-items:center;gap:6px"><span style="color:#0f172a;font-weight:800;font-size:12px">ETA: ${b.eta} min</span><span style="background:${occ.badgeBg};color:${occ.badgeText};border:1px solid ${occ.badgeBorder};padding:1px 6px;border-radius:6px;font-size:10px;font-weight:800">${occ.sub}</span></div></div>`);
         });
 
         // Focus bounds around the local neighborhood
@@ -474,7 +494,7 @@ const ChaloMap: React.FC<{
           ...stopPositions.map((p) => [p.lat, p.lon] as [number, number]),
           ...liveBuses.map((b) => [b.lat, b.lon] as [number, number]),
         ];
-        map.fitBounds(L.latLngBounds(localPoints), { padding: [40, 40], maxZoom: 16 });
+        map.fitBounds(L.latLngBounds(localPoints), { padding: [40, 40], maxZoom: 15 });
       }
 
       // ══════════════════════════════════════════════════════════════════════
@@ -483,7 +503,7 @@ const ChaloMap: React.FC<{
       if (mode === "route" && stops.length > 1) {
         const latLons = stops.map((s) => [s.lat, s.lon] as [number, number]);
         L.polyline(latLons, {
-          color: "#f7a501",
+          color: isDelhi ? "#16a34a" : "#f7a501",
           weight: 5,
           opacity: 0.9,
           lineCap: "round",
@@ -494,7 +514,7 @@ const ChaloMap: React.FC<{
           const isEnd = idx === 0 || idx === stops.length - 1;
           L.circleMarker([s.lat, s.lon], {
             radius: isEnd ? 6 : 4,
-            fillColor: isEnd ? "#f7a501" : "#fff",
+            fillColor: isEnd ? (isDelhi ? "#16a34a" : "#f7a501") : "#fff",
             fillOpacity: 1,
             color: "#1e293b",
             weight: 2,
@@ -503,13 +523,14 @@ const ChaloMap: React.FC<{
 
         const busIcon = L.divIcon({
           className: "",
-          html: `<div style="position:relative;width:38px;height:38px"><div style="position:absolute;inset:0;border-radius:50%;background:rgba(37,99,235,0.25);animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div><div style="position:relative;width:38px;height:38px;border-radius:50%;background:#2563eb;border:3px solid #fff;box-shadow:0 4px 12px rgba(37,99,235,0.4);display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18h2"/><path d="M4 18h2"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/></svg></div></div>`,
+          html: `<div style="position:relative;width:38px;height:38px"><div style="position:absolute;inset:0;border-radius:50%;background:${isDelhi ? 'rgba(22,163,74,0.25)' : 'rgba(37,99,235,0.25)'};animation:ping 2s cubic-bezier(0,0,0.2,1) infinite"></div><div style="position:relative;width:38px;height:38px;border-radius:50%;background:${isDelhi ? '#16a34a' : '#2563eb'};border:3px solid #fff;box-shadow:0 4px 12px ${isDelhi ? 'rgba(22,163,74,0.4)' : 'rgba(37,99,235,0.4)'};display:flex;align-items:center;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v6"/><path d="M16 6v6"/><path d="M2 12h20"/><path d="M18 18h2"/><path d="M4 18h2"/><path d="M18 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M6 20a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/><path d="M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10H3V6Z"/></svg></div></div>`,
           iconSize: [38, 38],
           iconAnchor: [19, 19],
         });
 
-        const vLat = data.vehicle?.lat && Math.abs(data.vehicle.lat - 12.975) > 0.01 ? data.vehicle.lat : stops[0].lat;
-        const vLon = data.vehicle?.lon && Math.abs(data.vehicle.lon - 77.598) > 0.01 ? data.vehicle.lon : stops[0].lon;
+        const activeDelhiBus = isDelhi && delhiBuses.length > 0 ? (delhiBuses.find((b) => b.route_code === route?.code || b.route_id === route?.id) || delhiBuses[0]) : null;
+        const vLat = activeDelhiBus ? activeDelhiBus.lat : (data.vehicle?.lat && Math.abs(data.vehicle.lat - 12.975) > 0.01 ? data.vehicle.lat : stops[0].lat);
+        const vLon = activeDelhiBus ? activeDelhiBus.lon : (data.vehicle?.lon && Math.abs(data.vehicle.lon - 77.598) > 0.01 ? data.vehicle.lon : stops[0].lon);
 
         markerRef.current = L.marker([vLat, vLon], { icon: busIcon }).addTo(map);
         map.fitBounds(L.latLngBounds(latLons), { padding: [40, 40] });
@@ -563,6 +584,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   const [isAgencyDropdownOpen, setIsAgencyDropdownOpen] = useState(false);
   const [userLocation, setUserLocation] = useState<{lat: number; lon: number} | null>({ lat: 13.0302, lon: 80.1806 });
   const [locationStatus, setLocationStatus] = useState<"idle" | "asking" | "granted" | "denied">("idle");
+
+  const isDelhi = selectedAgency.id === "dtc-delhi" || selectedAgency.city.toLowerCase().includes("delhi");
+  const { delhiBuses } = useDelhiLive(isDelhi);
 
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -825,6 +849,48 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
   const stopTimes = stops.map((_, i) =>
     Math.round((T_total_sec * (i / Math.max(stops.length - 1, 1))) / 60)
   );
+
+  const delhiFeaturedBuses = delhiBuses.slice(0, 8).map((b: any) => ({
+    route_id: b.route_id || b.bus_id,
+    code: b.route_id ? `Rt ${b.route_id}` : (b.vehicle_label || b.bus_id),
+    destination: b.nearest_stop_name ? `Near ${b.nearest_stop_name}` : "Delhi Transit",
+    eta_min: b.eta_nearest_stop_min > 0 ? b.eta_nearest_stop_min : 3,
+    eta_time: formatClockTime(b.eta_nearest_stop_min > 0 ? b.eta_nearest_stop_min : 3),
+    occupancy_band: b.speed_kmh > 20 ? "SEATS_AVAILABLE" : b.speed_kmh > 5 ? "MODERATE" : "STANDING_ROOM"
+  }));
+
+  const effectiveNearbyStops = isDelhi
+    ? [
+        {
+          stop_id: "DL-ST-106",
+          stop_name: "Connaught Place (Palika Bazar)",
+          distance_km: "0.2",
+          walk_min: 3,
+          buses: delhiFeaturedBuses.slice(0, 4),
+        },
+        {
+          stop_id: "DL-ST-101",
+          stop_name: "Kashmere Gate ISBT",
+          distance_km: "1.4",
+          walk_min: 8,
+          buses: delhiFeaturedBuses.slice(2, 6),
+        },
+        {
+          stop_id: "DL-ST-109",
+          stop_name: "Anand Vihar ISBT",
+          distance_km: "2.1",
+          walk_min: 12,
+          buses: delhiFeaturedBuses.slice(4, 8),
+        },
+        {
+          stop_id: "DL-ST-107",
+          stop_name: "AIIMS Hospital",
+          distance_km: "2.8",
+          walk_min: 15,
+          buses: delhiFeaturedBuses.slice(0, 4),
+        }
+      ]
+    : (neonRoutes?.nearbyStops || []);
 
   const TOP_NAV_ITEMS = [
     { id: "overview" as const, icon: Sparkles, label: "Overview" },
@@ -1091,14 +1157,14 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                 </div>
               </div>
 
-              {neonRoutes?.nearbyLoading ? (
+              {neonRoutes?.nearbyLoading && !isDelhi ? (
                 <div className="bg-white rounded-3xl border border-slate-200 p-6 flex items-center justify-center">
                   <div className="w-6 h-6 border-2 border-[#f7a501] border-t-transparent rounded-full animate-spin" />
                   <span className="ml-2 text-sm text-slate-500 font-medium">Finding nearest bus stops...</span>
                 </div>
-              ) : (neonRoutes?.nearbyStops || []).length > 0 ? (
+              ) : effectiveNearbyStops.length > 0 ? (
                 (() => {
-                  const primaryStop = neonRoutes.nearbyStops[0];
+                  const primaryStop = effectiveNearbyStops[0];
                   const primaryBuses = primaryStop.buses || [];
 
                   return (
@@ -1115,6 +1181,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                               <h4 className="font-black text-slate-900 text-base sm:text-lg leading-tight">
                                 {primaryStop.stop_name}
                               </h4>
+                              {isDelhi && (
+                                <span className="text-[10px] font-bold text-emerald-600">Delhi Open Transit Data (Live)</span>
+                              )}
                             </div>
                           </div>
 
@@ -1127,11 +1196,11 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                         {/* Available Buses at this Stop (matching reference image) */}
                         <div className="border-t border-slate-100 pt-3 space-y-2.5">
                           {primaryBuses.length > 0 ? (
-                            primaryBuses.slice(0, 2).map((bus: any, bIdx: number) => (
+                            primaryBuses.slice(0, 4).map((bus: any, bIdx: number) => (
                               <div
                                 key={bus.route_id || bIdx}
                                 onClick={() => {
-                                  onRouteSelect?.(bus.route_id);
+                                  onRouteSelect?.(bus.code || bus.route_id);
                                   setActiveNav("track");
                                 }}
                                 className="flex items-center justify-between p-2.5 rounded-2xl hover:bg-slate-50 transition-all cursor-pointer group"
@@ -1141,7 +1210,14 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                     <Bus className="w-4 h-4 text-amber-700" />
                                   </div>
                                   <div className="min-w-0">
-                                    <span className="font-black text-slate-900 text-sm block">{bus.code}</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="font-black text-slate-900 text-sm block">{bus.code}</span>
+                                      {isDelhi && (
+                                        <span className="px-1 py-0.2 rounded text-[8px] font-extrabold bg-emerald-100 text-emerald-800">
+                                          LIVE
+                                        </span>
+                                      )}
+                                    </div>
                                     <span className="text-xs text-slate-500 block truncate">To {bus.destination}</span>
                                   </div>
                                 </div>
@@ -1153,7 +1229,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                       {bus.eta_min} min away
                                     </span>
                                   </div>
-                                  <DensityPill band={occupancy_band} />
+                                  <DensityPill band={bus.occupancy_band || occupancy_band} />
                                 </div>
                               </div>
                             ))
@@ -1188,16 +1264,16 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       </div>
 
                       {/* Other Nearby Stops Horizontal Carousel */}
-                      {neonRoutes.nearbyStops.length > 1 && (
+                      {effectiveNearbyStops.length > 1 && (
                         <div className="space-y-1.5 pt-1 overflow-hidden">
                           <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider px-1">Other nearby stops</span>
                           <div className="flex items-center gap-2.5 overflow-x-auto pb-2 -mx-4 px-4 touch-pan-x" style={{ scrollbarWidth: "none" }}>
-                            {neonRoutes.nearbyStops.slice(1).map((ns: any, idx: number) => (
+                            {effectiveNearbyStops.slice(1).map((ns: any, idx: number) => (
                               <div
                                 key={ns.stop_id || idx}
                                 onClick={() => {
                                   if (ns.buses && ns.buses.length > 0) {
-                                    onRouteSelect?.(ns.buses[0].route_id);
+                                    onRouteSelect?.(ns.buses[0].code || ns.buses[0].route_id);
                                     setActiveNav("track");
                                   }
                                 }}
@@ -1248,13 +1324,14 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   selectedAgency={selectedAgency}
                   selectedRouteId={selectedRouteId}
                   userLocation={userLocation}
-                  nearbyStops={neonRoutes?.nearbyStops || []}
+                  nearbyStops={effectiveNearbyStops}
                   mode="nearby"
+                  delhiBuses={delhiBuses}
                 />
 
                 <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-xs font-extrabold text-slate-900 border border-slate-200 shadow-md flex items-center gap-1.5">
                   <Bus className="w-3.5 h-3.5 text-[#f7a501]" />
-                  <span>Bus {route?.code ?? "S26"}</span>
+                  <span>Bus {route?.code ?? (isDelhi ? "101" : "S26")}</span>
                   <span className="text-[10px] text-slate-400 font-bold">• In {formatMin(T_inbound_sec)}</span>
                 </div>
 
@@ -1439,8 +1516,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       selectedAgency={selectedAgency}
                       selectedRouteId={selectedRouteId}
                       userLocation={userLocation}
-                      nearbyStops={neonRoutes?.nearbyStops || []}
+                      nearbyStops={effectiveNearbyStops}
                       mode="nearby"
+                      delhiBuses={delhiBuses}
                     />
 
                     {/* GPS indicator — top-right */}
@@ -1450,7 +1528,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                         : "bg-white/95 border-slate-200 text-slate-700"
                     }`}>
                       <Navigation className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>{locationStatus === "granted" ? "GPS Active" : "Chennai"}</span>
+                      <span>{locationStatus === "granted" ? "GPS Active" : (isDelhi ? "Delhi OTD" : "Chennai")}</span>
                     </div>
 
                     {isDelayed && (
@@ -1585,14 +1663,14 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                     </div>
                   </div>
 
-                  {neonRoutes?.nearbyLoading ? (
+                  {neonRoutes?.nearbyLoading && !isDelhi ? (
                     <div className="bg-white rounded-3xl border border-slate-200 p-10 flex items-center justify-center shadow-xs flex-1">
                       <div className="w-6 h-6 border-2 border-[#f7a501] border-t-transparent rounded-full animate-spin" />
                       <span className="ml-3 text-sm text-slate-500 font-semibold">Finding nearest bus stops...</span>
                     </div>
-                  ) : (neonRoutes?.nearbyStops || []).length > 0 ? (
+                  ) : effectiveNearbyStops.length > 0 ? (
                     (() => {
-                      const primaryStop = neonRoutes.nearbyStops[0];
+                      const primaryStop = effectiveNearbyStops[0];
                       const primaryBuses = primaryStop.buses || [];
 
                       return (
@@ -1609,7 +1687,9 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                   <h4 className="font-black text-slate-900 text-lg leading-tight">
                                     {primaryStop.stop_name}
                                   </h4>
-                                  <span className="text-xs font-medium text-slate-400">Primary Station</span>
+                                  <span className="text-xs font-medium text-slate-400">
+                                    {isDelhi ? "Delhi Transport Corp · Open Data" : "Primary Station"}
+                                  </span>
                                 </div>
                               </div>
 
@@ -1635,7 +1715,14 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                         <Bus className="w-4.5 h-4.5 text-amber-700" />
                                       </div>
                                       <div className="min-w-0">
-                                        <span className="font-black text-slate-900 text-base block group-hover:text-amber-900 transition-colors">{bus.code}</span>
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="font-black text-slate-900 text-base block group-hover:text-amber-900 transition-colors">{bus.code}</span>
+                                          {isDelhi && (
+                                            <span className="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-800">
+                                              LIVE
+                                            </span>
+                                          )}
+                                        </div>
                                         <span className="text-xs text-slate-500 block truncate">To {bus.destination}</span>
                                       </div>
                                     </div>
@@ -1647,14 +1734,14 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                           {bus.eta_min} min away
                                         </span>
                                       </div>
-                                      <DensityPill band={occupancy_band} />
+                                      <DensityPill band={bus.occupancy_band || occupancy_band} />
                                     </div>
                                   </div>
                                 ))
                               ) : (
                                 <div
                                   onClick={() => {
-                                    const targetCode = route?.code || route?.id || currentCode || "S26";
+                                    const targetCode = route?.code || route?.id || currentCode || (isDelhi ? "101" : "S26");
                                     onRouteSelect?.(targetCode);
                                     setActiveNav("track");
                                   }}
@@ -1665,8 +1752,8 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                                       <Bus className="w-4.5 h-4.5 text-amber-700" />
                                     </div>
                                     <div>
-                                      <span className="font-black text-slate-900 text-sm block">{route?.code ?? "S26"}</span>
-                                      <span className="text-xs text-slate-500 block">To {route?.destination ?? "Valasaravakkam"}</span>
+                                      <span className="font-black text-slate-900 text-base block">{route?.code ?? (isDelhi ? "101" : "S26")}</span>
+                                      <span className="text-xs text-slate-500 block">To {route?.destination ?? (isDelhi ? "Mehrauli Terminal" : "Valasaravakkam")}</span>
                                     </div>
                                   </div>
                                   <div className="flex flex-col items-end gap-1.5">
@@ -1682,15 +1769,15 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                           </div>
 
                           {/* Other Nearby Stops List */}
-                          {neonRoutes.nearbyStops.length > 1 && (
+                          {effectiveNearbyStops.length > 1 && (
                             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-5 space-y-3">
                               <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider block px-1">Other nearby stops</span>
-                              {neonRoutes.nearbyStops.slice(1, 4).map((ns: any, idx: number) => (
+                              {effectiveNearbyStops.slice(1, 4).map((ns: any, idx: number) => (
                                 <div
                                   key={ns.stop_id || idx}
                                   onClick={() => {
                                     if (ns.buses && ns.buses.length > 0) {
-                                      onRouteSelect?.(ns.buses[0].route_id);
+                                      handleBusClick(ns.buses[0].code || ns.buses[0].route_id);
                                       setActiveNav("track");
                                     }
                                   }}

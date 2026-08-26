@@ -70,8 +70,8 @@ function findRoute(selectedAgency: TransitAgency, selectedRouteId?: string | nul
   // 2. Check selectedAgency (Neon DB enriched routes)
   if (enrichedMatch && enrichedMatch.coords.length > 0) return enrichedMatch;
 
-  // 3. Fallback to default preset (S26) or first route
-  return AGENCY_PRESETS[0]?.routes[0] || selectedAgency.routes[0];
+  // 3. Fallback to active selectedAgency route or first preset
+  return selectedAgency.routes[0] || AGENCY_PRESETS[0]?.routes[0];
 }
 
 // ─── Chalo-style detail map ───────────────────────────────────────────────────

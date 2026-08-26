@@ -88,7 +88,7 @@ export const RoutesListView: React.FC<RoutesListViewProps> = ({
 
   const realRoutes = selectedAgency.routes.map((r) => ({
     code: r.code,
-    badge: "MTC",
+    badge: selectedAgency.shortName || "Transit",
     origin: r.origin,
     destination: r.destination,
     id: r.id,
