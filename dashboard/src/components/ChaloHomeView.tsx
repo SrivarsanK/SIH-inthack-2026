@@ -37,6 +37,8 @@ import { LiveSignalIcon } from "./LiveSignalIcon";
 import { ProjectLandingHome } from "./ProjectLandingHome";
 import { useDelhiLive } from "../lib/useDelhiLive";
 import type { DelhiLiveBus } from "../lib/useDelhiLive";
+import { useChennaiLive } from "../lib/useChennaiLive";
+import type { ChennaiLiveVehicle } from "../lib/useChennaiLive";
 
 interface ChaloHomeViewProps {
   data: TransitSnapshot;
@@ -220,6 +222,7 @@ const ChaloMap: React.FC<{
   nearbyStops?: any[];
   mode?: "nearby" | "route";
   delhiBuses?: DelhiLiveBus[];
+  chennaiBuses?: ChennaiLiveVehicle[];
 }> = ({
   data,
   selectedAgency,
@@ -228,6 +231,7 @@ const ChaloMap: React.FC<{
   nearbyStops = [],
   mode = "route",
   delhiBuses = [],
+  chennaiBuses = [],
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -457,6 +461,17 @@ const ChaloMap: React.FC<{
               segment: b.bus_id,
               occupancy: b.speed_kmh > 20 ? "low" : b.speed_kmh > 5 ? "medium" : "high"
             }))
+          : !isDelhi && chennaiBuses && chennaiBuses.length > 0
+          ? chennaiBuses.map((b) => ({
+              code: b.route_code,
+              dest: b.destination,
+              lat: b.lat,
+              lon: b.lon,
+              eta: b.eta_next_stop_min > 0 ? b.eta_next_stop_min : 2,
+              speed: b.speed_kmh,
+              segment: `${b.license_plate} · ${b.direction_label}`,
+              occupancy: b.occupancy_band === "SEATS_AVAILABLE" ? "low" : b.occupancy_band === "MODERATE" ? "medium" : "high"
+            }))
           : isDelhi
           ? []
           : [
@@ -587,6 +602,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
 
   const isDelhi = selectedAgency.id === "dtc-delhi" || selectedAgency.city.toLowerCase().includes("delhi");
   const { delhiBuses } = useDelhiLive(isDelhi);
+  const { chennaiBuses } = useChennaiLive(!isDelhi);
 
   const requestLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -1327,6 +1343,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                   nearbyStops={effectiveNearbyStops}
                   mode="nearby"
                   delhiBuses={delhiBuses}
+                  chennaiBuses={chennaiBuses}
                 />
 
                 <div className="absolute top-3 left-3 z-10 px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-xs font-extrabold text-slate-900 border border-slate-200 shadow-md flex items-center gap-1.5">
@@ -1519,6 +1536,7 @@ export const ChaloHomeView: React.FC<ChaloHomeViewProps> = ({
                       nearbyStops={effectiveNearbyStops}
                       mode="nearby"
                       delhiBuses={delhiBuses}
+                      chennaiBuses={chennaiBuses}
                     />
 
                     {/* GPS indicator — top-right */}
